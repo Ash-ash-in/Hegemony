@@ -1,16 +1,6 @@
 from dataclasses import dataclass
 
-@dataclass(frozen = True)
-class GameState:
-    player_count: int
-    turn: int
-    round: int
-    active_player: int
-    players: list[PlayerState]
-    victory_points: list[int]
-    
-
-
+  
 @dataclass(frozen = True)
 class PlayerState:
     faction: str
@@ -59,11 +49,37 @@ class PlayerState:
     capitalist_legitimacy: int
 
 
+
+@dataclass(frozen = True)
+class Event:
+    name: str
+    description: str
+    effect: dict[str, int]
+    forfeit: str
+
+
+@dataclass(frozen = True)
 class Worker:
-    def __init__(self, faction: Faction, skill: int):
-        self.faction = faction
-        self.skill = skill
+    faction: str
+    skill: str
+    alive: bool
+    employed: bool
 
 
 
+@dataclass(frozen = True)
+class GameState:
+    player_count: int
+    turn: int
+    round: int
+    active_player: int
+    players: list[PlayerState]
 
+
+@dataclass(frozen = True)
+class BoardState:
+    laws: dict[str, int]
+    victory_points: list[int]
+    tax_multiplier: int
+    votes: list[int]
+    events: list[Event]

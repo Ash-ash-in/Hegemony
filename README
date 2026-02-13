@@ -1,0 +1,7 @@
+Last Session:
+Some planning and organising
+Tried to set up a simple game state but can't get the files to talk to each other outside of the same folder.
+
+To-Do:
+Get the files talking to each other, some kind of way of managing the directories
+Continue setting up some really simple parts of the setup
