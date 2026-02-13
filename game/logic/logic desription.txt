@@ -1,0 +1,1 @@
+This folder exists to store all logic, rules and transformations that can occur through the running of the game.
