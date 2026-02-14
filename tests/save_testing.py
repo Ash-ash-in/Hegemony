@@ -20,14 +20,21 @@ def test_save_and_load():
     # Create a test gamestate
     logger.debug("Creating test gamestate")
     test_gamestate = save.new_game(2, "test_save", overwrite=False)
-    logger.debug(f"Test gamestate created")
+    logger.info(f"Test gamestate created")
+
+    # Confirm new file exists
+    if test_save_path.exists():
+        logger.debug("Test save file created successfully.")
+    else:
+        logger.warning("Test save file was not created.")
+        assert False, "Test save file was not created."
 
     # Attempt to save without overwrite permission, should raise FileExistsError
     logger.debug("Testing save without overwrite permission")
     try:
         save.new_game(2, "test_save", overwrite=False)
     except FileExistsError:
-        logger.debug("File already exists, as expected.")
+        logger.info("File already exists, as expected.")
     else:   
         logger.warning("File should have existed but didn't.")
         assert False, "File should have existed but didn't."
@@ -35,21 +42,23 @@ def test_save_and_load():
     # Save the gamestate
     logger.debug("Saving test gamestate")
     save.save_game(test_gamestate, "test_save", overwrite=False)
-    logger.debug("Test gamestate saved")
+    logger.info("Test gamestate saved")
 
     # Load the gamestate
     logger.debug("Loading test gamestate")
     loaded_gamestate = save.load_game("test_save")
-    print(f"Original gamestate: {test_gamestate}")
-    print(f"Type of original gamestate: {type(test_gamestate)}")
-    print(f"Loaded gamestate: {loaded_gamestate}")
-    print(f"Type of loaded gamestate: {type(loaded_gamestate)}")
-    logger.debug("Test gamestate loaded")
+    logger.debug(f"Original gamestate: {test_gamestate}")
+    logger.debug(f"Type of original gamestate: {type(test_gamestate)}")
+    logger.debug(f"Loaded gamestate: {loaded_gamestate}")
+    logger.debug(f"Type of loaded gamestate: {type(loaded_gamestate)}")
+    logger.info("Test gamestate loaded")
 
     # Check if the loaded gamestate matches the original gamestate
     logger.debug("Comparing original and loaded gamestate")
     assert loaded_gamestate == test_gamestate, "Loaded gamestate does not match the original gamestate"
 
+    # Test overwrite functionality
+    logger.debug("Testing overwrite functionality")
     save.new_game(2, "test_save", overwrite=True)
     logger.info("File overwritten successfully.")
 

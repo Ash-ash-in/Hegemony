@@ -5,7 +5,7 @@ logger.debug("importing save_control module")
 from pathlib import Path
 from datetime import datetime
 import json
-from dataclasses import asdict
+from dataclasses import asdict, replace
 
 import game.data.states as states
 
@@ -22,7 +22,7 @@ def save_game(gamestate, filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     :param gamestate: GameState object to be saved
     :param filename: str - Name of the file to save the gamestate to. 
     """
-    logger.debug(f"Saving game to saves/{filename}.json")
+    logger.debug(f"save_game called with filename:{filename}, overwrite:{overwrite}")
 
     # Write a new file if not exists, write a new file if exists
     filepath = directory / filename
@@ -52,7 +52,7 @@ def new_game(player_count, filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S
     :param player_count: int - Number of factions to set up
     :param filename: str - Name of the save file to create. Defaults to a timestamp.
     """
-    logger.debug(f"Setting up new game with {player_count} players")
+    logger.debug(f"new_game called with player_count: {player_count}")
     from game.data.common import faction_list
 
     active_factions = faction_list[:player_count]
@@ -68,7 +68,7 @@ def new_game(player_count, filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S
         f = open(f"{filepath}.json", "w" if overwrite else "x")
     except FileExistsError:
         logger.error(f"File {filename}.json already exists.")
-        return
+        raise FileExistsError(f"File {filename}.json already exists. Use overwrite=True to overwrite the file.")
     
     # Parse various state instances to dicts and write to file
     save = {
@@ -78,7 +78,7 @@ def new_game(player_count, filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S
     f.write(json.dumps(save, indent=4))
     f.close()
 
-    logger.info(f"New game set up with player count: {player_count}")
+    logger.info(f"New game set up with player_count: {player_count}")
     return gamestate
 
 
@@ -88,7 +88,7 @@ def load_game(filename):
     
     :param filename: str - Name of the save file to load
     """
-    logger.debug(f"Loading game from saves/{filename}.json")
+    logger.debug(f"load_game called with filename:{filename}")
 
     # Read the file
     from game.data.states import GameState
@@ -102,7 +102,7 @@ def load_game(filename):
         # Convert the string back to a GameState object
         save_dict = json.loads(gamestate_str)
         gamestate = GameState(**save_dict['Game'])
-        save_dict['Players'] = {k: states.PlayerState(**v) for k, v in save_dict['Players'].items()}
+        gamestate = replace(gamestate, players = {k: states.PlayerState(**v) for k, v in save_dict['Players'].items()})
         f.close()
 
     logger.info(f"Game loaded from saves/{filename}.json")
