@@ -1,2 +1,3 @@
 This folder should contain data only.
 No functions, no logic, it purely exists to set up structures and frameworks for storing information about the Game
+Data should never import from any other folder, only within /data/!

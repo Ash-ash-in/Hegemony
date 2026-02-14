@@ -1,0 +1,17 @@
+2026-02-14 13:41:06,989 [DEBUG] tests.save_testing: Importing save_testing module
+2026-02-14 13:41:06,989 [DEBUG] tests.save_testing: save_testing module imported
+2026-02-14 13:41:06,999 [DEBUG] game.engine.save_control: importing save_control module
+2026-02-14 13:41:07,018 [DEBUG] game.engine.save_control: save_control module imported
+2026-02-14 13:41:07,018 [INFO] tests.save_testing: Starting test_save_and_load
+2026-02-14 13:41:07,018 [DEBUG] tests.save_testing: Checking for existing test save file
+2026-02-14 13:41:07,019 [INFO] tests.save_testing: Existing test save file removed.
+2026-02-14 13:41:07,019 [DEBUG] tests.save_testing: Creating test gamestate
+2026-02-14 13:41:07,019 [DEBUG] game.engine.save_control: Setting up new game with 2 players
+2026-02-14 13:41:07,020 [INFO] game.engine.save_control: Active factions: ['Working Class', 'Middle Class']
+2026-02-14 13:41:07,020 [INFO] game.engine.save_control: New game set up with player count: 2
+2026-02-14 13:41:07,020 [DEBUG] tests.save_testing: Test gamestate created
+2026-02-14 13:41:07,021 [DEBUG] tests.save_testing: Testing save without overwrite permission
+2026-02-14 13:41:07,021 [DEBUG] game.engine.save_control: Setting up new game with 2 players
+2026-02-14 13:41:07,021 [INFO] game.engine.save_control: Active factions: ['Working Class', 'Middle Class']
+2026-02-14 13:41:07,021 [ERROR] game.engine.save_control: File test_save.json already exists.
+2026-02-14 13:41:07,021 [WARNING] tests.save_testing: File should have existed but didn't.
