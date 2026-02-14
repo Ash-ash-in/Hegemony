@@ -1,5 +1,5 @@
-import subprocess
-subprocess.call(["python", "game/data/objects.py"])
+import logging
+logger = logging.getLogger(__name__)
 
 from dataclasses import dataclass  
 

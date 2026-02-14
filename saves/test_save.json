@@ -1,0 +1,28 @@
+{
+    "Game": {
+        "player_count": 2,
+        "players": {
+            "Working Class": {
+                "faction": "Working Class",
+                "victory_points": 0
+            },
+            "Middle Class": {
+                "faction": "Middle Class",
+                "victory_points": 0
+            }
+        },
+        "turn": 0,
+        "round": 0,
+        "active_player": 0
+    },
+    "Players": {
+        "Working Class": {
+            "faction": "Working Class",
+            "victory_points": 0
+        },
+        "Middle Class": {
+            "faction": "Middle Class",
+            "victory_points": 0
+        }
+    }
+}
