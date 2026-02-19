@@ -13,10 +13,9 @@ The project serves primarily as an educational and entertainment tool for myself
 ---
 ## Development Notes
 ### Last Session:
-- Some planning and organising
-- Files sort of talk to each other but not very well, they seem to break depending on where I call them from.
+- Added delete function
+- Formatted readme
+- Experimented with victory point function
 
 ### To-Do:
-- Saving is not working but I feel like it's close. Need to test running directly in document and in main file
-- Figure out how the files talk to each other, and set this up across each file
-- Continue setting up the core parts of the game - set up a process for branching decisions for a really simple process, and slowly scale up from there
+- Explore moving functions into class methods

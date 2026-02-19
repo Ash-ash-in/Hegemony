@@ -10,8 +10,13 @@ class PlayerState:
 
     It is stored in the Gamestate
     """
+    ### Attributes ###
     faction: str
     victory_points: int = 0
+
+    ### Methods ###
+    # def add_victory_points(self, points):
+    #     return
 
 @dataclass(frozen = True)
 class GameState:
