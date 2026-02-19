@@ -108,4 +108,20 @@ def load_game(filename):
     logger.info(f"Game loaded from saves/{filename}.json")
     return gamestate
 
+
+def delete_save(filename):
+    """
+    Deletes a save file.
+    
+    :param filename: str - Name of the save file to delete
+    """
+    logger.debug(f"delete_save called with filename:{filename}")
+    filepath = directory / f"{filename}.json"
+    try:
+        filepath.unlink()
+        logger.info(f"Save file {filename}.json deleted successfully.")
+    except FileNotFoundError:
+        logger.error(f"File {filename}.json not found in saves folder.")
+    return
+
 logger.debug("save_control module imported")

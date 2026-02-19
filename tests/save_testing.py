@@ -62,6 +62,15 @@ def test_save_and_load():
     save.new_game(2, "test_save", overwrite=True)
     logger.info("File overwritten successfully.")
 
+    # Test delete save functionality
+    logger.debug("Testing delete save functionality")
+    save.delete_save("test_save")
+    if not test_save_path.exists():
+        logger.info("Test save file deleted successfully.")
+    else:
+        logger.warning("Test save file was not deleted.")
+        assert False, "Test save file was not deleted."
+
     return
 
 logger.debug("save_testing module imported")

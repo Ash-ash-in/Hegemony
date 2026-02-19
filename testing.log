@@ -207,3 +207,79 @@
 2026-02-14 15:01:25,040 [INFO] game.engine.save_control: Active factions: ['Working Class', 'Middle Class']
 2026-02-14 15:01:25,041 [INFO] game.engine.save_control: New game set up with player_count: 2
 2026-02-14 15:01:25,041 [INFO] tests.save_testing: File overwritten successfully.
+2026-02-19 19:28:35,690 [DEBUG] tests.save_testing: Importing save_testing module
+2026-02-19 19:28:35,690 [DEBUG] tests.save_testing: save_testing module imported
+2026-02-19 19:28:35,706 [DEBUG] game.engine.save_control: importing save_control module
+2026-02-19 19:28:35,735 [DEBUG] game.engine.save_control: save_control module imported
+2026-02-19 19:28:35,735 [INFO] tests.save_testing: Starting test_save_and_load
+2026-02-19 19:28:35,736 [DEBUG] tests.save_testing: Checking for existing test save file
+2026-02-19 19:28:35,736 [DEBUG] tests.save_testing: No existing test save file found, proceeding with test.
+2026-02-19 19:28:35,736 [DEBUG] tests.save_testing: Creating test gamestate
+2026-02-19 19:28:35,736 [DEBUG] game.engine.save_control: new_game called with player_count: 2
+2026-02-19 19:28:35,740 [INFO] game.engine.save_control: Active factions: ['Working Class', 'Middle Class']
+2026-02-19 19:28:35,741 [INFO] game.engine.save_control: New game set up with player_count: 2
+2026-02-19 19:28:35,741 [INFO] tests.save_testing: Test gamestate created
+2026-02-19 19:28:35,741 [DEBUG] tests.save_testing: Test save file created successfully.
+2026-02-19 19:28:35,741 [DEBUG] tests.save_testing: Testing save without overwrite permission
+2026-02-19 19:28:35,741 [DEBUG] game.engine.save_control: new_game called with player_count: 2
+2026-02-19 19:28:35,741 [INFO] game.engine.save_control: Active factions: ['Working Class', 'Middle Class']
+2026-02-19 19:28:35,741 [ERROR] game.engine.save_control: File test_save.json already exists.
+2026-02-19 19:28:35,742 [INFO] tests.save_testing: File already exists, as expected.
+2026-02-19 19:28:35,742 [DEBUG] tests.save_testing: Saving test gamestate
+2026-02-19 19:28:35,742 [DEBUG] game.engine.save_control: save_game called with filename:test_save, overwrite:False
+2026-02-19 19:28:35,742 [ERROR] game.engine.save_control: File test_save.json already exists. Use overwrite=True to overwrite the file.
+2026-02-19 19:28:35,742 [INFO] tests.save_testing: Test gamestate saved
+2026-02-19 19:28:35,742 [DEBUG] tests.save_testing: Loading test gamestate
+2026-02-19 19:28:35,742 [DEBUG] game.engine.save_control: load_game called with filename:test_save
+2026-02-19 19:28:35,748 [INFO] game.engine.save_control: Game loaded from saves/test_save.json
+2026-02-19 19:28:35,748 [DEBUG] tests.save_testing: Original gamestate: GameState(player_count=2, players={'Working Class': PlayerState(faction='Working Class', victory_points=0), 'Middle Class': PlayerState(faction='Middle Class', victory_points=0)}, turn=0, round=0, active_player=0)
+2026-02-19 19:28:35,748 [DEBUG] tests.save_testing: Type of original gamestate: <class 'game.data.states.GameState'>
+2026-02-19 19:28:35,748 [DEBUG] tests.save_testing: Loaded gamestate: GameState(player_count=2, players={'Working Class': PlayerState(faction='Working Class', victory_points=0), 'Middle Class': PlayerState(faction='Middle Class', victory_points=0)}, turn=0, round=0, active_player=0)
+2026-02-19 19:28:35,748 [DEBUG] tests.save_testing: Type of loaded gamestate: <class 'game.data.states.GameState'>
+2026-02-19 19:28:35,748 [INFO] tests.save_testing: Test gamestate loaded
+2026-02-19 19:28:35,748 [DEBUG] tests.save_testing: Comparing original and loaded gamestate
+2026-02-19 19:28:35,748 [DEBUG] tests.save_testing: Testing overwrite functionality
+2026-02-19 19:28:35,749 [DEBUG] game.engine.save_control: new_game called with player_count: 2
+2026-02-19 19:28:35,749 [INFO] game.engine.save_control: Active factions: ['Working Class', 'Middle Class']
+2026-02-19 19:28:35,749 [INFO] game.engine.save_control: New game set up with player_count: 2
+2026-02-19 19:28:35,749 [INFO] tests.save_testing: File overwritten successfully.
+2026-02-19 22:01:09,017 [DEBUG] tests.save_testing: Importing save_testing module
+2026-02-19 22:01:09,018 [DEBUG] tests.save_testing: save_testing module imported
+2026-02-19 22:01:09,030 [DEBUG] game.engine.save_control: importing save_control module
+2026-02-19 22:01:09,052 [DEBUG] game.engine.save_control: save_control module imported
+2026-02-19 22:01:09,052 [INFO] tests.save_testing: Starting test_save_and_load
+2026-02-19 22:01:09,052 [DEBUG] tests.save_testing: Checking for existing test save file
+2026-02-19 22:01:09,053 [INFO] tests.save_testing: Existing test save file removed.
+2026-02-19 22:01:09,053 [DEBUG] tests.save_testing: Creating test gamestate
+2026-02-19 22:01:09,053 [DEBUG] game.engine.save_control: new_game called with player_count: 2
+2026-02-19 22:01:09,054 [INFO] game.engine.save_control: Active factions: ['Working Class', 'Middle Class']
+2026-02-19 22:01:09,055 [INFO] game.engine.save_control: New game set up with player_count: 2
+2026-02-19 22:01:09,055 [INFO] tests.save_testing: Test gamestate created
+2026-02-19 22:01:09,055 [DEBUG] tests.save_testing: Test save file created successfully.
+2026-02-19 22:01:09,055 [DEBUG] tests.save_testing: Testing save without overwrite permission
+2026-02-19 22:01:09,055 [DEBUG] game.engine.save_control: new_game called with player_count: 2
+2026-02-19 22:01:09,055 [INFO] game.engine.save_control: Active factions: ['Working Class', 'Middle Class']
+2026-02-19 22:01:09,055 [ERROR] game.engine.save_control: File test_save.json already exists.
+2026-02-19 22:01:09,055 [INFO] tests.save_testing: File already exists, as expected.
+2026-02-19 22:01:09,056 [DEBUG] tests.save_testing: Saving test gamestate
+2026-02-19 22:01:09,056 [DEBUG] game.engine.save_control: save_game called with filename:test_save, overwrite:False
+2026-02-19 22:01:09,056 [ERROR] game.engine.save_control: File test_save.json already exists. Use overwrite=True to overwrite the file.
+2026-02-19 22:01:09,056 [INFO] tests.save_testing: Test gamestate saved
+2026-02-19 22:01:09,056 [DEBUG] tests.save_testing: Loading test gamestate
+2026-02-19 22:01:09,056 [DEBUG] game.engine.save_control: load_game called with filename:test_save
+2026-02-19 22:01:09,057 [INFO] game.engine.save_control: Game loaded from saves/test_save.json
+2026-02-19 22:01:09,057 [DEBUG] tests.save_testing: Original gamestate: GameState(player_count=2, players={'Working Class': PlayerState(faction='Working Class', victory_points=0), 'Middle Class': PlayerState(faction='Middle Class', victory_points=0)}, turn=0, round=0, active_player=0)
+2026-02-19 22:01:09,057 [DEBUG] tests.save_testing: Type of original gamestate: <class 'game.data.states.GameState'>
+2026-02-19 22:01:09,057 [DEBUG] tests.save_testing: Loaded gamestate: GameState(player_count=2, players={'Working Class': PlayerState(faction='Working Class', victory_points=0), 'Middle Class': PlayerState(faction='Middle Class', victory_points=0)}, turn=0, round=0, active_player=0)
+2026-02-19 22:01:09,057 [DEBUG] tests.save_testing: Type of loaded gamestate: <class 'game.data.states.GameState'>
+2026-02-19 22:01:09,057 [INFO] tests.save_testing: Test gamestate loaded
+2026-02-19 22:01:09,058 [DEBUG] tests.save_testing: Comparing original and loaded gamestate
+2026-02-19 22:01:09,058 [DEBUG] tests.save_testing: Testing overwrite functionality
+2026-02-19 22:01:09,058 [DEBUG] game.engine.save_control: new_game called with player_count: 2
+2026-02-19 22:01:09,058 [INFO] game.engine.save_control: Active factions: ['Working Class', 'Middle Class']
+2026-02-19 22:01:09,058 [INFO] game.engine.save_control: New game set up with player_count: 2
+2026-02-19 22:01:09,058 [INFO] tests.save_testing: File overwritten successfully.
+2026-02-19 22:01:09,059 [DEBUG] tests.save_testing: Testing delete save functionality
+2026-02-19 22:01:09,059 [DEBUG] game.engine.save_control: delete_save called with filename:test_save
+2026-02-19 22:01:09,060 [INFO] game.engine.save_control: Save file test_save.json deleted successfully.
+2026-02-19 22:01:09,060 [INFO] tests.save_testing: Test save file deleted successfully.
