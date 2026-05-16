@@ -1,24 +1,25 @@
 import logging
 logger = logging.getLogger(__name__)
 
-from dataclasses import dataclass  
-
-@dataclass(frozen = True)
 class PlayerState:
     """
     PlayerState contains all the information unique to a player
 
     It is stored in the Gamestate
     """
-    ### Attributes ###
-    faction: str
-    victory_points: int = 0
+    ### Setup ### 
+    def __init__(self, faction, victory_points):
+        self.faction = faction
+        self.victory_points = victory_points
 
     ### Methods ###
-    # def add_victory_points(self, points):
-    #     return
+    def add_victory_points(self, points):
+        if points < 0 and self.victory_points < -1 * points:
+            self.victory_points = 0
+        else:
+            self.victory_points += points
+        return
 
-@dataclass(frozen = True)
 class GameState:
     """
     GameState is the master storage location for all game information. 
