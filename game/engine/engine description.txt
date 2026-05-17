@@ -1,0 +1,2 @@
+This folder handles all the assembly, routines and interactions within the game.
+It is the highest level of the game program, and can call data and rules

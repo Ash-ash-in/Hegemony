@@ -15,7 +15,7 @@ logging.basicConfig(
 
 
 ###### User Inputs #######
-player_count = 4
+player_count = 2
 save_file = None
 ###### User Inputs #######
 
