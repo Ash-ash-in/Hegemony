@@ -33,9 +33,15 @@ def save_game(gamestate, filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         return
     
     # Parse various state instances to dicts and write to file
+    players_dict = {}
+    i = 1
+    for player_instance in gamestate.players:
+        players_dict[i] = asdict(player_instance)
+        i += 1
+    
     save = {
         "Game": asdict(gamestate),
-        "Players": {k: asdict(v) for k, v in gamestate.players.items()}
+        "Players": players_dict
     }
     f.write(json.dumps(save, indent=4))
     f.close()
@@ -55,13 +61,14 @@ def new_game(player_count, filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S
     logger.debug(f"new_game called with player_count: {player_count}")
     from game.data.common import faction_list, GameState
 
+    # Initialise gamestate
     active_factions = faction_list[:player_count]
     logger.info(f"Active factions: {active_factions}")
     gamestate = GameState(
         player_count = player_count,
-        players = {faction_name: factions.Player(faction=faction_name) for faction_name in active_factions}
+        players = [factions.Player(faction=faction_name) for faction_name in active_factions]
     )
-    print(gamestate)
+
     # Write a new file
     filepath = directory / filename
     try:
@@ -73,7 +80,7 @@ def new_game(player_count, filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S
     # Parse various state instances to dicts and write to file
     save = {
         "Game": asdict(gamestate),
-        "Players": {k: asdict(v) for k, v in gamestate.players.items()}
+        "Players": {asdict(player) for player in gamestate.players}
     }
     f.write(json.dumps(save, indent=4))
     f.close()
