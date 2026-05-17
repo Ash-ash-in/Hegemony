@@ -421,3 +421,139 @@
 2026-05-17 16:20:56,458 [DEBUG] game.data.common: Importing data.common
 2026-05-17 16:20:56,466 [DEBUG] game.data.common: Finished importing data.common
 2026-05-17 16:20:56,467 [INFO] game.engine.save_control: Active factions: ['Working Class', 'Middle Class']
+2026-05-17 17:24:57,792 [DEBUG] game.tests: Importing save_testing module
+2026-05-17 17:24:57,793 [DEBUG] game.tests: Finished importing tests module
+2026-05-17 17:24:57,793 [INFO] game.tests: Starting test_save_and_load
+2026-05-17 17:24:57,818 [DEBUG] game.engine.save_control: importing save_control module
+2026-05-17 17:24:57,841 [DEBUG] game.engine.save_control: save_control module imported
+2026-05-17 17:24:57,841 [DEBUG] game.tests: Checking for existing test save file
+2026-05-17 17:24:57,842 [INFO] game.tests: Existing test save file removed.
+2026-05-17 17:24:57,842 [DEBUG] game.tests: Creating test gamestate
+2026-05-17 17:24:57,842 [DEBUG] game.engine.save_control: new_game called with player_count: 2
+2026-05-17 17:24:57,849 [DEBUG] game.data.common: Importing data.common
+2026-05-17 17:24:57,851 [DEBUG] game.data.common: Finished importing data.common
+2026-05-17 17:24:57,851 [INFO] game.engine.save_control: Active factions: ['Working Class', 'Middle Class']
+2026-05-17 17:29:10,244 [DEBUG] game.tests: Importing save_testing module
+2026-05-17 17:29:10,244 [DEBUG] game.tests: Finished importing tests module
+2026-05-17 17:29:10,244 [INFO] game.tests: Starting test_save_and_load
+2026-05-17 17:29:10,259 [DEBUG] game.engine.save_control: importing save_control module
+2026-05-17 17:29:10,287 [DEBUG] game.engine.save_control: save_control module imported
+2026-05-17 17:29:10,287 [DEBUG] game.tests: Checking for existing test save file
+2026-05-17 17:29:10,288 [INFO] game.tests: Existing test save file removed.
+2026-05-17 17:29:10,288 [DEBUG] game.tests: Creating test gamestate
+2026-05-17 17:29:10,288 [DEBUG] game.engine.save_control: new_game called with player_count: 2
+2026-05-17 17:29:10,292 [DEBUG] game.data.common: Importing data.common
+2026-05-17 17:29:10,295 [DEBUG] game.data.common: Finished importing data.common
+2026-05-17 17:29:10,295 [INFO] game.engine.save_control: Active factions: ['Working Class', 'Middle Class']
+2026-05-17 17:34:14,120 [DEBUG] game.tests: Importing save_testing module
+2026-05-17 17:34:14,120 [DEBUG] game.tests: Finished importing tests module
+2026-05-17 17:34:14,120 [INFO] game.tests: Starting test_save_and_load
+2026-05-17 17:34:14,135 [DEBUG] game.engine.save_control: importing save_control module
+2026-05-17 17:34:14,156 [DEBUG] game.engine.save_control: save_control module imported
+2026-05-17 17:34:14,156 [DEBUG] game.tests: Checking for existing test save file
+2026-05-17 17:34:14,157 [INFO] game.tests: Existing test save file removed.
+2026-05-17 17:34:14,157 [DEBUG] game.tests: Creating test gamestate
+2026-05-17 17:34:14,157 [DEBUG] game.engine.save_control: new_game called with player_count: 2
+2026-05-17 17:34:14,165 [DEBUG] game.data.common: Importing data.common
+2026-05-17 17:34:14,167 [DEBUG] game.data.common: Finished importing data.common
+2026-05-17 17:34:14,167 [INFO] game.engine.save_control: Active factions: ['Working Class', 'Capitalist Class']
+2026-05-17 17:37:35,027 [DEBUG] game.tests: Importing save_testing module
+2026-05-17 17:37:35,028 [DEBUG] game.tests: Finished importing tests module
+2026-05-17 17:37:35,028 [INFO] game.tests: Starting test_save_and_load
+2026-05-17 17:37:35,034 [DEBUG] game.engine.save_control: importing save_control module
+2026-05-17 17:37:35,056 [DEBUG] game.engine.save_control: save_control module imported
+2026-05-17 17:37:35,056 [DEBUG] game.tests: Checking for existing test save file
+2026-05-17 17:37:35,057 [INFO] game.tests: Existing test save file removed.
+2026-05-17 17:37:35,057 [DEBUG] game.tests: Creating test gamestate
+2026-05-17 17:37:35,057 [DEBUG] game.engine.save_control: new_game called with player_count: 2
+2026-05-17 17:37:35,068 [DEBUG] game.data.common: Importing data.common
+2026-05-17 17:37:35,071 [DEBUG] game.data.common: Finished importing data.common
+2026-05-17 17:37:35,071 [INFO] game.engine.save_control: Active factions: ['Working Class', 'Capitalist Class']
+2026-05-17 17:38:28,001 [DEBUG] game.tests: Importing save_testing module
+2026-05-17 17:38:28,001 [DEBUG] game.tests: Finished importing tests module
+2026-05-17 17:38:28,001 [INFO] game.tests: Starting test_save_and_load
+2026-05-17 17:38:28,013 [DEBUG] game.engine.save_control: importing save_control module
+2026-05-17 17:38:28,033 [DEBUG] game.engine.save_control: save_control module imported
+2026-05-17 17:38:28,033 [DEBUG] game.tests: Checking for existing test save file
+2026-05-17 17:38:28,034 [INFO] game.tests: Existing test save file removed.
+2026-05-17 17:38:28,034 [DEBUG] game.tests: Creating test gamestate
+2026-05-17 17:38:28,035 [DEBUG] game.engine.save_control: new_game called with player_count: 2
+2026-05-17 17:38:28,040 [DEBUG] game.data.common: Importing data.common
+2026-05-17 17:38:28,042 [DEBUG] game.data.common: Finished importing data.common
+2026-05-17 17:38:28,042 [INFO] game.engine.save_control: Active factions: ['Working Class', 'Capitalist Class']
+2026-05-17 17:39:04,760 [DEBUG] game.tests: Importing save_testing module
+2026-05-17 17:39:04,761 [DEBUG] game.tests: Finished importing tests module
+2026-05-17 17:39:04,761 [INFO] game.tests: Starting test_save_and_load
+2026-05-17 17:39:04,775 [DEBUG] game.engine.save_control: importing save_control module
+2026-05-17 17:39:04,795 [DEBUG] game.engine.save_control: save_control module imported
+2026-05-17 17:39:04,795 [DEBUG] game.tests: Checking for existing test save file
+2026-05-17 17:39:04,796 [INFO] game.tests: Existing test save file removed.
+2026-05-17 17:39:04,796 [DEBUG] game.tests: Creating test gamestate
+2026-05-17 17:39:04,797 [DEBUG] game.engine.save_control: new_game called with player_count: 2
+2026-05-17 17:39:04,797 [DEBUG] game.data.common: Importing data.common
+2026-05-17 17:39:04,799 [DEBUG] game.data.common: Finished importing data.common
+2026-05-17 17:39:04,799 [INFO] game.engine.save_control: Active factions: ['Working Class', 'Capitalist Class']
+2026-05-17 17:39:04,800 [INFO] game.engine.save_control: New game set up with player_count: 2
+2026-05-17 17:39:04,800 [INFO] game.tests: Test gamestate created
+2026-05-17 17:39:04,800 [DEBUG] game.tests: Test save file created successfully.
+2026-05-17 17:39:04,800 [DEBUG] game.tests: Testing save without overwrite permission
+2026-05-17 17:39:04,800 [DEBUG] game.engine.save_control: new_game called with player_count: 2
+2026-05-17 17:39:04,800 [INFO] game.engine.save_control: Active factions: ['Working Class', 'Capitalist Class']
+2026-05-17 17:39:04,801 [ERROR] game.engine.save_control: File test_save.json already exists.
+2026-05-17 17:39:04,801 [INFO] game.tests: File already exists, as expected.
+2026-05-17 17:39:04,801 [DEBUG] game.tests: Saving test gamestate
+2026-05-17 17:39:04,801 [DEBUG] game.engine.save_control: save_game called with filename:test_save, overwrite:False
+2026-05-17 17:39:04,801 [ERROR] game.engine.save_control: File test_save.json already exists. Use overwrite=True to overwrite the file.
+2026-05-17 17:39:04,801 [INFO] game.tests: Test gamestate saved
+2026-05-17 17:39:04,801 [DEBUG] game.tests: Loading test gamestate
+2026-05-17 17:39:04,801 [DEBUG] game.engine.save_control: load_game called with filename:test_save
+2026-05-17 17:40:33,635 [DEBUG] game.tests: Importing save_testing module
+2026-05-17 17:40:33,636 [DEBUG] game.tests: Finished importing tests module
+2026-05-17 17:40:33,636 [INFO] game.tests: Starting test_save_and_load
+2026-05-17 17:40:33,651 [DEBUG] game.engine.save_control: importing save_control module
+2026-05-17 17:40:33,673 [DEBUG] game.engine.save_control: save_control module imported
+2026-05-17 17:40:33,673 [DEBUG] game.tests: Checking for existing test save file
+2026-05-17 17:40:33,674 [INFO] game.tests: Existing test save file removed.
+2026-05-17 17:40:33,675 [DEBUG] game.tests: Creating test gamestate
+2026-05-17 17:40:33,675 [DEBUG] game.engine.save_control: new_game called with player_count: 2
+2026-05-17 17:40:33,675 [DEBUG] game.data.common: Importing data.common
+2026-05-17 17:40:33,677 [DEBUG] game.data.common: Finished importing data.common
+2026-05-17 17:40:33,677 [INFO] game.engine.save_control: Active factions: ['Working Class', 'Capitalist Class']
+2026-05-17 17:40:33,678 [INFO] game.engine.save_control: New game set up with player_count: 2
+2026-05-17 17:40:33,678 [INFO] game.tests: Test gamestate created
+2026-05-17 17:40:33,678 [DEBUG] game.tests: Test save file created successfully.
+2026-05-17 17:40:33,678 [DEBUG] game.tests: Testing save without overwrite permission
+2026-05-17 17:40:33,678 [DEBUG] game.engine.save_control: new_game called with player_count: 2
+2026-05-17 17:40:33,678 [INFO] game.engine.save_control: Active factions: ['Working Class', 'Capitalist Class']
+2026-05-17 17:40:33,678 [ERROR] game.engine.save_control: File test_save.json already exists.
+2026-05-17 17:40:33,679 [INFO] game.tests: File already exists, as expected.
+2026-05-17 17:40:33,679 [DEBUG] game.tests: Saving test gamestate
+2026-05-17 17:40:33,679 [DEBUG] game.engine.save_control: save_game called with filename:test_save, overwrite:False
+2026-05-17 17:40:33,679 [ERROR] game.engine.save_control: File test_save.json already exists. Use overwrite=True to overwrite the file.
+2026-05-17 17:40:33,679 [INFO] game.tests: Test gamestate saved
+2026-05-17 17:40:33,679 [DEBUG] game.tests: Loading test gamestate
+2026-05-17 17:40:33,679 [DEBUG] game.engine.save_control: load_game called with filename:test_save
+2026-05-17 17:40:33,680 [INFO] game.engine.save_control: Game loaded from saves/test_save.json
+2026-05-17 17:40:33,680 [DEBUG] game.tests: Original gamestate: GameState(player_count=2, players=[Player(faction='Working Class', victory_points=0, money=0, loans=0), Player(faction='Capitalist Class', victory_points=0, money=0, loans=0)], round=0, turn=0, active_player=0)
+2026-05-17 17:40:33,680 [DEBUG] game.tests: Type of original gamestate: <class 'game.data.common.GameState'>
+2026-05-17 17:40:33,680 [DEBUG] game.tests: Loaded gamestate: GameState(player_count=2, players=[Player(faction='Working Class', victory_points=0, money=0, loans=0), Player(faction='Capitalist Class', victory_points=0, money=0, loans=0)], round=0, turn=0, active_player=0)
+2026-05-17 17:40:33,680 [DEBUG] game.tests: Type of loaded gamestate: <class 'game.data.common.GameState'>
+2026-05-17 17:40:33,681 [INFO] game.tests: Test gamestate loaded
+2026-05-17 17:40:33,681 [DEBUG] game.tests: Comparing original and loaded gamestate
+2026-05-17 17:40:33,681 [DEBUG] game.tests: Testing overwrite functionality
+2026-05-17 17:40:33,681 [DEBUG] game.engine.save_control: new_game called with player_count: 2
+2026-05-17 17:40:33,681 [INFO] game.engine.save_control: Active factions: ['Working Class', 'Capitalist Class']
+2026-05-17 17:40:33,681 [INFO] game.engine.save_control: New game set up with player_count: 2
+2026-05-17 17:40:33,681 [INFO] game.tests: File overwritten successfully.
+2026-05-17 17:40:33,681 [DEBUG] game.tests: Testing delete save functionality
+2026-05-17 17:40:33,681 [DEBUG] game.engine.save_control: delete_save called with filename:test_save
+2026-05-17 17:40:33,682 [INFO] game.engine.save_control: Save file test_save.json deleted successfully.
+2026-05-17 17:40:33,683 [INFO] game.tests: Test save file deleted successfully.
+2026-05-17 17:40:33,683 [DEBUG] game.engine.save_control: new_game called with player_count: 2
+2026-05-17 17:40:33,683 [INFO] game.engine.save_control: Active factions: ['Working Class', 'Capitalist Class']
+2026-05-17 17:40:33,683 [INFO] game.engine.save_control: New game set up with player_count: 2
+2026-05-17 17:40:33,683 [DEBUG] game.tests: Starting test_player_functions
+2026-05-17 17:40:33,711 [DEBUG] game.rules.rules: Importing rules.rules module
+2026-05-17 17:40:33,712 [DEBUG] game.rules.rules: Establishing MoneyTransfer rules
+2026-05-17 17:40:33,712 [DEBUG] game.rules.rules: Finished importing rules.rules module
+2026-05-17 17:40:33,712 [INFO] game.tests: Testing validity of non-mandatory transfers

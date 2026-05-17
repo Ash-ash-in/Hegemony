@@ -1,0 +1,36 @@
+{
+    "Game": {
+        "player_count": 2,
+        "players": [
+            {
+                "faction": "Working Class",
+                "victory_points": 0,
+                "money": 0,
+                "loans": 0
+            },
+            {
+                "faction": "Capitalist Class",
+                "victory_points": 0,
+                "money": 0,
+                "loans": 0
+            }
+        ],
+        "round": 0,
+        "turn": 0,
+        "active_player": 0
+    },
+    "Players": [
+        {
+            "faction": "Working Class",
+            "victory_points": 0,
+            "money": 0,
+            "loans": 0
+        },
+        {
+            "faction": "Capitalist Class",
+            "victory_points": 0,
+            "money": 0,
+            "loans": 0
+        }
+    ]
+}

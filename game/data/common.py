@@ -11,9 +11,17 @@ class GameState:
     """
     player_count: int
     players: dict
-    turn: int = 0
     round: int = 0
+    turn: int = 0
     active_player: int = 0
+
+    def __hash__(self): # Used for converting into a dict when saving
+        return hash((
+            self.player_count, 
+            self.players, 
+            self.round, 
+            self.turn, 
+            self.active_player))
 
 @dataclass(frozen = True)
 class Worker:
@@ -43,8 +51,8 @@ class Event:
 
 # ---------- References ----------- #
 # Handy variables for building data in setup
-faction_list = ["Working Class", "Middle Class", "Capitalist Class", "State"]
-
+faction_play_order = ["Working Class", "Middle Class", "Capitalist Class", "State"]
+faction_instantiate_order = ["Working Class", "Capitalist Class", "Middle Class", "State"]
 
 # ----------- END ---------- #
 logger.debug("Finished importing data.common")

@@ -59,10 +59,10 @@ def new_game(player_count, filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S
     :param filename: str - Name of the save file to create. Defaults to a timestamp.
     """
     logger.debug(f"new_game called with player_count: {player_count}")
-    from game.data.common import faction_list, GameState
+    from game.data.common import faction_instantiate_order, GameState
 
     # Initialise gamestate
-    active_factions = faction_list[:player_count]
+    active_factions = faction_instantiate_order[:player_count]
     logger.info(f"Active factions: {active_factions}")
     gamestate = GameState(
         player_count = player_count,
@@ -80,7 +80,7 @@ def new_game(player_count, filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S
     # Parse various state instances to dicts and write to file
     save = {
         "Game": asdict(gamestate),
-        "Players": {asdict(player) for player in gamestate.players}
+        "Players": [asdict(player) for player in gamestate.players]
     }
     f.write(json.dumps(save, indent=4))
     f.close()
@@ -109,7 +109,7 @@ def load_game(filename):
         # Convert the string back to a GameState object
         save_dict = json.loads(gamestate_str)
         gamestate = GameState(**save_dict['Game'])
-        gamestate = replace(gamestate, players = {k: factions.Player(**v) for k, v in save_dict['Players'].items()})
+        gamestate.players = [factions.Player(**v) for v in save_dict['Players']]
         f.close()
 
     logger.info(f"Game loaded from saves/{filename}.json")
