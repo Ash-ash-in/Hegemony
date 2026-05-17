@@ -70,13 +70,22 @@ def test_save_and_load():
         logger.warning("Test save file was not deleted.")
         assert False, "Test save file was not deleted."
 
+    # Test setup 3 player game
+    logger.debug("Testing 3 player setup")
+    save.new_game(3, "test_save", overwrite=True)
+    logger.info("3 player game setup successfully.")
+
+    # Test setup 4 player game
+    logger.debug("Testing 4 player setup")
+    save.new_game(4, "test_save", overwrite=True)
+    logger.info("4 player game setup successfully.")
     return
 
 def test_player_functions(gamestate):
     logger.debug("Starting test_player_functions")
     from game.rules import rules
     logger.info("Testing validity of non-mandatory transfers")
-    result = rules.MoneyTransfer.can_transfer(working_class, capitalists, 10, False)[0]
+    result = rules.MoneyTransfer.can_transfer(gamestate.players[0], gamestate.players[1], 10, False)[0]
     return
 
 logger.debug("Finished importing tests module")

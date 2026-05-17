@@ -9,7 +9,13 @@
                 "loans": 0
             },
             {
-                "faction": "Capitalist Class",
+                "faction": "Middle Class",
+                "victory_points": 0,
+                "money": 0,
+                "loans": 0
+            },
+            {
+                "faction": "State",
                 "victory_points": 0,
                 "money": 0,
                 "loans": 0
@@ -27,7 +33,13 @@
             "loans": 0
         },
         {
-            "faction": "Capitalist Class",
+            "faction": "Middle Class",
+            "victory_points": 0,
+            "money": 0,
+            "loans": 0
+        },
+        {
+            "faction": "State",
             "victory_points": 0,
             "money": 0,
             "loans": 0

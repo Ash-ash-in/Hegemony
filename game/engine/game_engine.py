@@ -1,5 +1,13 @@
 from dataclasses import dataclass
 
+def setup(gamestate):
+    global working_class, capitalists
+    working_class = gamestate.players[0]
+    capitalists = gamestate.players[1]
+    if gamestate.player_count > 2:
+        global middle_class
+
+
 class DecisionContext:
     """
     Decides what the engine gives to an agent when they need to make a decsion

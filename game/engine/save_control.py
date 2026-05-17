@@ -59,15 +59,38 @@ def new_game(player_count, filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S
     :param filename: str - Name of the save file to create. Defaults to a timestamp.
     """
     logger.debug(f"new_game called with player_count: {player_count}")
-    from game.data.common import faction_instantiate_order, GameState
+    from game.data import common
+
+    # Setup factions
+    active_factions = common.faction_instantiate_order[:player_count]
+    if player_count > 2: # Arrange factions in play order if middle class exists
+        index_order = [0,2,1,3] 
+        active_factions = list(map(active_factions.__getitem__,index_order[:player_count]))
+    player_list = [factions.Player(common.faction_play_order[i]) for i in range(player_count)]
+    logger.info(f"Active factions: {active_factions}")
+
+    # Append state if not controlled by a player
+    if player_count < 4:
+        player_list.append(factions.Player('State'))
+
+    # Setup easy references
+    global working_class, capitalists, state
+    working_class = player_list[0]
+    state = player_list[-1]
+    if player_count == 2:
+        capitalists = player_list[1]
+    else:
+        capitalists = player_list[2]
+        global middle_class
+        middle_class = player_list[1]
+
 
     # Initialise gamestate
-    active_factions = faction_instantiate_order[:player_count]
-    logger.info(f"Active factions: {active_factions}")
-    gamestate = GameState(
+    gamestate = common.GameState(
         player_count = player_count,
-        players = [factions.Player(faction=faction_name) for faction_name in active_factions]
+        players = player_list
     )
+    logger.debug('Initial gamestate instantiated')
 
     # Write a new file
     filepath = directory / filename
