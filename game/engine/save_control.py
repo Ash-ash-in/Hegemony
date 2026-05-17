@@ -7,7 +7,7 @@ from datetime import datetime
 import json
 from dataclasses import asdict, replace
 
-import game.data.states as states
+import game.data.factions as factions
 
 # Point to the saves folder
 directory = Path('saves')
@@ -53,15 +53,15 @@ def new_game(player_count, filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S
     :param filename: str - Name of the save file to create. Defaults to a timestamp.
     """
     logger.debug(f"new_game called with player_count: {player_count}")
-    from game.data.common import faction_list
+    from game.data.common import faction_list, GameState
 
     active_factions = faction_list[:player_count]
     logger.info(f"Active factions: {active_factions}")
-    gamestate = states.GameState(
+    gamestate = GameState(
         player_count = player_count,
-        players = {faction_name: states.PlayerState(faction=faction_name) for faction_name in active_factions}
+        players = {faction_name: factions.Player(faction=faction_name) for faction_name in active_factions}
     )
-
+    print(gamestate)
     # Write a new file
     filepath = directory / filename
     try:
@@ -91,7 +91,7 @@ def load_game(filename):
     logger.debug(f"load_game called with filename:{filename}")
 
     # Read the file
-    from game.data.states import GameState
+    from game.data.common import GameState
     with open(f"saves/{filename}.json", 'r') as f:
         try:
             gamestate_str = f.read()
@@ -102,7 +102,7 @@ def load_game(filename):
         # Convert the string back to a GameState object
         save_dict = json.loads(gamestate_str)
         gamestate = GameState(**save_dict['Game'])
-        gamestate = replace(gamestate, players = {k: states.PlayerState(**v) for k, v in save_dict['Players'].items()})
+        gamestate = replace(gamestate, players = {k: factions.Player(**v) for k, v in save_dict['Players'].items()})
         f.close()
 
     logger.info(f"Game loaded from saves/{filename}.json")
