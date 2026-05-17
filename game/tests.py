@@ -84,8 +84,21 @@ def test_save_and_load():
 def test_player_functions(gamestate):
     logger.debug("Starting test_player_functions")
     from game.rules import rules
-    logger.info("Testing validity of non-mandatory transfers")
-    result = rules.MoneyTransfer.can_transfer(gamestate.players[0], gamestate.players[1], 10, False)[0]
+
+    ### Money transfer validity process ###
+    # Impossible + non-mandatory = prevented
+    logger.debug("Testing validity of non-mandatory transfers")
+    result = rules.MoneyTransfer.can_transfer(working_class, capitalists, 10, False)[0]
+    if result:
+        raise Exception('Validity check failed to prevent impossible transfer')
+    logger.debug("Impossible + non-mandatory: passed")
+    # Impossible + non-mandatory = allowed
+    result = rules.MoneyTransfer.can_transfer(working_class, capitalists, 10, True)[0]
+    if not result:
+        raise Exception('Validity check prevented a mandatory transfer')
+    logger.debug("Impossible + mandatory: passed")
+    logger.info("Transfer validity check works")
+    
     return
 
 logger.debug("Finished importing tests module")

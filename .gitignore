@@ -2,4 +2,6 @@
 __pycache__/
 *.pyc
 .venv/
-.saves/
+saves/
+game.log
+testing.log

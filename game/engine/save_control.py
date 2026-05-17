@@ -73,18 +73,6 @@ def new_game(player_count, filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S
     if player_count < 4:
         player_list.append(factions.Player('State'))
 
-    # Setup easy references
-    global working_class, capitalists, state
-    working_class = player_list[0]
-    state = player_list[-1]
-    if player_count == 2:
-        capitalists = player_list[1]
-    else:
-        capitalists = player_list[2]
-        global middle_class
-        middle_class = player_list[1]
-
-
     # Initialise gamestate
     gamestate = common.GameState(
         player_count = player_count,
