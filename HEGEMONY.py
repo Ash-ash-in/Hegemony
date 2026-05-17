@@ -1,6 +1,7 @@
 ############# START OF CODE TO MOVE #############
 # This file should be moved to a main file once the game is fully developed. 
-# For now, it serves as a testing ground for the gamestate and other objects. It also allows us to easily set up a new game or load a saved game.
+# For now, it serves as a testing ground for the gamestate and other objects. 
+# It also allows us to easily set up a new game or load a saved game.
 
 import logging
 logging.basicConfig(

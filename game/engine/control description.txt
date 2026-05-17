@@ -1,1 +1,0 @@
-This folder handles all the assembly, routines and interactions within the game.
