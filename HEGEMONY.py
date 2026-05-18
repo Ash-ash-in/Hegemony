@@ -10,7 +10,7 @@ filename = 'HegemonySave'
 # Establish Log
 import logging
 logging.basicConfig(
-    level=logging.INFO, 
+    level=logging.DEBUG, 
     format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
     handlers=[
         logging.FileHandler("game.log", mode = 'w'),
@@ -18,8 +18,13 @@ logging.basicConfig(
         ]
     )
 
+# Check Parameters
+# ----------------
+if player_count < 2 | player_count > 4:
+    raise Exception("Player count must be between 2 and 4")
 
 ########## Initialise GameState ##########
+# ----------------------------------------
 import game.engine.save_control as save
 
 if save_file:
@@ -31,13 +36,12 @@ else:
 
 # Setup easy references
 logging.debug('Setting up player references')
-player_list = live_gamestate.players[:live_gamestate.player_count]
+player_list = live_gamestate.players
+print(player_list)
 working_class = player_list[0]
 state = live_gamestate.players[-1]
-if player_count == 2:
-    capitalists = player_list[1]
-else:
-    capitalists = player_list[2]
-    middle_class = player_list[1]
+capitalists = player_list[-2]
+if player_count > 2:
+    middle_class = player_list[2]
 
 print(capitalists)

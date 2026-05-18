@@ -8,6 +8,7 @@ from dataclasses import dataclass
 class GameState:
     """
     GameState is the master storage location for all game information. 
+    It contains everything that you would need to know to recreate the game at this given position
     """
     player_count: int
     players: dict

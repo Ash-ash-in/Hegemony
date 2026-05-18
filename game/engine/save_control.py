@@ -66,12 +66,14 @@ def new_game(player_count, filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S
     if player_count > 2: # Arrange factions in play order if middle class exists
         index_order = [0,2,1,3] 
         active_factions = list(map(active_factions.__getitem__,index_order[:player_count]))
-    player_list = [factions.Player(common.faction_play_order[i]) for i in range(player_count)]
+        logger.debug("Reordered factions due to player_count > 2")
+    # player_list = [factions.Player(common.faction_play_order[i]) for i in range(player_count)]
     logger.info(f"Active factions: {active_factions}")
 
     # Append state if not controlled by a player
     if player_count < 4:
         player_list.append(factions.Player('State'))
+        logger.debug("State added to game due to player_count < 4")
 
     # Initialise gamestate
     gamestate = common.GameState(
