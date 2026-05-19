@@ -18,7 +18,7 @@ def test_save_and_load():
 
     # Create a test gamestate
     logger.debug("Creating test gamestate")
-    test_gamestate = save.new_game(2, "test_save", overwrite=False)
+    test_gamestate, filename = save.new_game(2, "test_save", overwrite=False)
     logger.info(f"Test gamestate created")
 
     # Confirm new file exists

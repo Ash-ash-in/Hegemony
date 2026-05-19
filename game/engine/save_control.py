@@ -100,7 +100,7 @@ def new_game(player_count, filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S
     f.close()
 
     logger.info(f"New game set up with player_count: {player_count}")
-    return gamestate
+    return gamestate, filename
 
 
 def load_game(filename):
@@ -144,5 +144,6 @@ def delete_save(filename):
     except FileNotFoundError:
         logger.error(f"File {filename}.json not found in saves folder.")
     return
+
 
 logger.debug("save_control module imported")

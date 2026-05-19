@@ -23,6 +23,13 @@ class GameState:
             self.round, 
             self.turn, 
             self.active_player))
+    
+
+@dataclass(frozen=True)
+class PlayerReference:
+    active_factions: list
+    existing_factions: list
+    players: dict[str,object]
 
 @dataclass(frozen = True)
 class Worker:
