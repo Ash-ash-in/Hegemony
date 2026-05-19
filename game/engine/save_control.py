@@ -64,21 +64,22 @@ def new_game(player_count, filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S
     # Setup factions
     active_factions = common.faction_instantiate_order[:player_count]
     if player_count > 2: # Arrange factions in play order if middle class exists
-        index_order = [0,2,1,3] 
+        index_order = [0,2,1,3]
         active_factions = list(map(active_factions.__getitem__,index_order[:player_count]))
         logger.debug("Reordered factions due to player_count > 2")
-    # player_list = [factions.Player(common.faction_play_order[i]) for i in range(player_count)]
-    logger.info(f"Active factions: {active_factions}")
+    existing_factions = active_factions.copy()
+    logger.info(f"active_factions: {active_factions}")
 
     # Append state if not controlled by a player
     if player_count < 4:
-        player_list.append(factions.Player('State'))
+        existing_factions.append('State')
         logger.debug("State added to game due to player_count < 4")
+    logger.info(f"existing_factions: {existing_factions}")
 
     # Initialise gamestate
     gamestate = common.GameState(
         player_count = player_count,
-        players = player_list
+        players = [factions.Player(faction_name) for faction_name in existing_factions]
     )
     logger.debug('Initial gamestate instantiated')
 

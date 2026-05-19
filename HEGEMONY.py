@@ -2,7 +2,7 @@
 ############# HEGEMONY ############
 ###################################
 ###### User Inputs #######
-player_count = 2
+player_count = 3
 save_file = None
 filename = 'HegemonySave'
 ###### User Inputs #######
@@ -44,4 +44,4 @@ capitalists = player_list[-2]
 if player_count > 2:
     middle_class = player_list[2]
 
-print(capitalists)
+print(state)
