@@ -31,11 +31,13 @@ if filename:
 import game.engine.save_control as save
 import game.engine.game_engine as engine
 
-live_gamestate = engine.startup(player_count=2)
+LiveGamestate, PlayerRefs = engine.startup(player_count=2)
 
 # Set up references
 # -----------------
-player_references = engine.gen_refs(live_gamestate)
+# player_references = engine.gen_refs(LiveGamestate) # Keep this or just look at gamestate?
 
+
+print(PlayerRefs.capitalists)
 
 

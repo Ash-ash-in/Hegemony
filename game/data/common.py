@@ -25,11 +25,14 @@ class GameState:
             self.active_player))
     
 
-@dataclass(frozen=True)
+@dataclass
 class PlayerReference:
     active_factions: list
     existing_factions: list
-    players: dict[str,object]
+    working_class: object
+    middle_class: object | None
+    capitalists: object
+    state: object
 
 @dataclass(frozen = True)
 class Worker:
@@ -59,8 +62,8 @@ class Event:
 
 # ---------- References ----------- #
 # Handy variables for building data in setup
-faction_play_order = ["Working Class", "Middle Class", "Capitalist Class", "State"]
-faction_instantiate_order = ["Working Class", "Capitalist Class", "Middle Class", "State"]
+faction_play_order = ["Working Class", "Middle Class", "Capitalists", "State"]
+faction_instantiate_order = ["Working Class", "Capitalists", "Middle Class", "State"]
 
 # ----------- END ---------- #
 logger.debug("Finished importing data.common")

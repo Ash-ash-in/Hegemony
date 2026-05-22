@@ -43,7 +43,7 @@ class MoneyTransfer:
         return True, ""
     
     @staticmethod
-    def resolve(sender: Player, receiver: Player, amount: int, mandatory: bool) -> MoneyActionResult:
+    def resolve(sender: Player | None, receiver: Player | None, amount: int, mandatory: bool) -> MoneyActionResult:
         """
         Apply the transfer. Only call this after can_transfer returns True.
         All mutations happen here — never partially applied.
@@ -61,6 +61,15 @@ class MoneyTransfer:
         # Take loans if neccessary
         changes = []
         loan_needed = False
+        # if sender is None:
+        #     log = (
+        #     f"Bank paid {amount} to {receiver.faction}"
+        # )
+        #     return MoneyActionResult(
+        #     outcome = Outcome.LOAN if loan_needed else Outcome.OK,
+        #     log=log,
+        #     state_changes=changes
+        # )
         if sender.money < amount:
             loan_count = 0
             while sender.money < amount:

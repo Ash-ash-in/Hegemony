@@ -2,7 +2,7 @@ import logging
 logger = logging.getLogger(__name__)
 logger.debug("importing game_engine module")
 
-def startup(player_count=None, filename=None):
+def startup(player_count=None, filename=None, overwrite=False):
     """
     Process for launching a game.
     Handles validity checks and decides whether to load or start new game
@@ -30,49 +30,24 @@ def startup(player_count=None, filename=None):
             raise Exception('Must provide either filename or player_count when calling setup')
         logging.info(f"Loading game from save file: {filename}")
         gamestate = save.load_game(filename)
+        player_count = gamestate.player_count
     else:
-        gamestate, filename = save.new_game(player_count)
+        gamestate, filename = save.new_game(player_count, filename=filename, overwrite=overwrite)
         logging.info(f'Created new save file: {filename}')
 
-    return gamestate
-
-def gen_refs(gamestate):
-    """
-    Creates the references needed for the rest of the program.
-
-    -   new_game and load_game return the same information,
-        but they only store the raw game/player states.
-    -   This function creates the variables that allows the engine to work
-    """
-    logger.debug("Reading save file")
-    pc = gamestate.player_count
-    from game.data.common import faction_play_order, PlayerReference
-    active_factions = faction_play_order[:pc]
-    existing_factions = active_factions + ['State']
-
-    # Setup easy references
-    logging.debug('Setting up player references')
-    player_list = gamestate.players
-    working_class = player_list[0]
-    state = gamestate.players[-1]
-    capitalists = player_list[-2]
-    if pc > 2:
-        middle_class = player_list[2]
-    else:
-        middle_class = None
-
-    player_references = PlayerReference(
-        active_factions,
-        existing_factions,
-        {
-            'Working Class': working_class,
-            'Capitalists': capitalists,
-            'Middle Class': middle_class,
-            'State': state
-        }
+    from game.data import common
+    player_references = common.PlayerReference(
+        common.faction_instantiate_order[:player_count],
+        common.faction_play_order,
+        working_class=gamestate.players['Working Class'],
+        middle_class=gamestate.players['Middle Class'] if player_count > 2 else None,
+        capitalists = gamestate.players['Capitalists'],
+        state=gamestate.players['State']
     )
 
-    return player_references
+    return gamestate, player_references
+
+
 
 class DecisionContext:
     """

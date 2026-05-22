@@ -79,7 +79,7 @@ def new_game(player_count, filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S
     # Initialise gamestate
     gamestate = common.GameState(
         player_count = player_count,
-        players = [factions.Player(faction_name) for faction_name in existing_factions]
+        players = {faction_name: factions.Player(faction_name) for faction_name in existing_factions}
     )
     logger.debug('Initial gamestate instantiated')
 
@@ -94,7 +94,7 @@ def new_game(player_count, filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S
     # Parse various state instances to dicts and write to file
     save = {
         "Game": asdict(gamestate),
-        "Players": [asdict(player) for player in gamestate.players]
+        "Players": {name:asdict(instance) for name, instance in gamestate.players.items()}
     }
     f.write(json.dumps(save, indent=4))
     f.close()
@@ -123,7 +123,7 @@ def load_game(filename):
         # Convert the string back to a GameState object
         save_dict = json.loads(gamestate_str)
         gamestate = GameState(**save_dict['Game'])
-        gamestate.players = [factions.Player(**v) for v in save_dict['Players']]
+        gamestate.players = {k:factions.Player(**v) for k,v in save_dict['Players'].items()}
         f.close()
 
     logger.info(f"Game loaded from saves/{filename}.json")
