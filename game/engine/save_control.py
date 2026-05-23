@@ -64,21 +64,22 @@ def new_game(player_count, filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S
     # Setup factions
     active_factions = common.faction_instantiate_order[:player_count]
     if player_count > 2: # Arrange factions in play order if middle class exists
-        index_order = [0,2,1,3] 
+        index_order = [0,2,1,3]
         active_factions = list(map(active_factions.__getitem__,index_order[:player_count]))
         logger.debug("Reordered factions due to player_count > 2")
-    # player_list = [factions.Player(common.faction_play_order[i]) for i in range(player_count)]
-    logger.info(f"Active factions: {active_factions}")
+    existing_factions = active_factions.copy()
+    logger.info(f"active_factions: {active_factions}")
 
     # Append state if not controlled by a player
     if player_count < 4:
-        player_list.append(factions.Player('State'))
+        existing_factions.append('State')
         logger.debug("State added to game due to player_count < 4")
+    logger.info(f"existing_factions: {existing_factions}")
 
     # Initialise gamestate
     gamestate = common.GameState(
         player_count = player_count,
-        players = player_list
+        players = {faction_name: factions.Player(faction_name) for faction_name in existing_factions}
     )
     logger.debug('Initial gamestate instantiated')
 
@@ -93,13 +94,13 @@ def new_game(player_count, filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S
     # Parse various state instances to dicts and write to file
     save = {
         "Game": asdict(gamestate),
-        "Players": [asdict(player) for player in gamestate.players]
+        "Players": {name:asdict(instance) for name, instance in gamestate.players.items()}
     }
     f.write(json.dumps(save, indent=4))
     f.close()
 
     logger.info(f"New game set up with player_count: {player_count}")
-    return gamestate
+    return gamestate, filename
 
 
 def load_game(filename):
@@ -122,7 +123,7 @@ def load_game(filename):
         # Convert the string back to a GameState object
         save_dict = json.loads(gamestate_str)
         gamestate = GameState(**save_dict['Game'])
-        gamestate.players = [factions.Player(**v) for v in save_dict['Players']]
+        gamestate.players = {k:factions.Player(**v) for k,v in save_dict['Players'].items()}
         f.close()
 
     logger.info(f"Game loaded from saves/{filename}.json")
@@ -143,5 +144,6 @@ def delete_save(filename):
     except FileNotFoundError:
         logger.error(f"File {filename}.json not found in saves folder.")
     return
+
 
 logger.debug("save_control module imported")

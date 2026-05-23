@@ -2,12 +2,12 @@
 ############# HEGEMONY ############
 ###################################
 ###### User Inputs #######
-player_count = 2
-save_file = None
+player_count = 3
 filename = 'HegemonySave'
 ###### User Inputs #######
 
 # Establish Log
+# -------------
 import logging
 logging.basicConfig(
     level=logging.DEBUG, 
@@ -22,26 +22,22 @@ logging.basicConfig(
 # ----------------
 if player_count < 2 | player_count > 4:
     raise Exception("Player count must be between 2 and 4")
-
+if filename:
+    if type(filename) == int | type(filename) == float:
+        raise Exception("save_file must be string or None type")
+    
 ########## Initialise GameState ##########
 # ----------------------------------------
 import game.engine.save_control as save
+import game.engine.game_engine as engine
 
-if save_file:
-    logging.debug(f"Loading game from save file: {save_file}")
-    live_gamestate = save.load_game(save_file)
-else:
-    live_gamestate = save.new_game(player_count)
-    logging.debug(f'Created new save file: ')
+LiveGamestate, PlayerRefs = engine.startup(player_count=2)
 
-# Setup easy references
-logging.debug('Setting up player references')
-player_list = live_gamestate.players
-print(player_list)
-working_class = player_list[0]
-state = live_gamestate.players[-1]
-capitalists = player_list[-2]
-if player_count > 2:
-    middle_class = player_list[2]
+# Set up references
+# -----------------
+# player_references = engine.gen_refs(LiveGamestate) # Keep this or just look at gamestate?
 
-print(capitalists)
+
+print(PlayerRefs.capitalists)
+
+

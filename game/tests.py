@@ -18,7 +18,7 @@ def test_save_and_load():
 
     # Create a test gamestate
     logger.debug("Creating test gamestate")
-    test_gamestate = save.new_game(2, "test_save", overwrite=False)
+    test_gamestate, filename = save.new_game(2, "test_save", overwrite=False)
     logger.info(f"Test gamestate created")
 
     # Confirm new file exists
@@ -81,19 +81,19 @@ def test_save_and_load():
     logger.info("4 player game setup successfully.")
     return
 
-def test_player_functions(gamestate):
+def test_player_functions(gamestate, player_references):
     logger.debug("Starting test_player_functions")
     from game.rules import rules
 
     ### Money transfer validity process ###
     # Impossible + non-mandatory = prevented
     logger.debug("Testing validity of non-mandatory transfers")
-    result = rules.MoneyTransfer.can_transfer(working_class, capitalists, 10, False)[0]
+    result = rules.MoneyTransfer.can_transfer(player_references.working_class, player_references.capitalists, 10, False)[0]
     if result:
         raise Exception('Validity check failed to prevent impossible transfer')
     logger.debug("Impossible + non-mandatory: passed")
-    # Impossible + non-mandatory = allowed
-    result = rules.MoneyTransfer.can_transfer(working_class, capitalists, 10, True)[0]
+    # Impossible + mandatory = allowed
+    result = rules.MoneyTransfer.can_transfer(player_references.working_class, player_references.capitalists, 10, True)[0]
     if not result:
         raise Exception('Validity check prevented a mandatory transfer')
     logger.debug("Impossible + mandatory: passed")
