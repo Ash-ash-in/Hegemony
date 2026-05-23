@@ -28,11 +28,17 @@ class MoneyTransfer:
     from game.data.factions import Player
 
     @staticmethod
-    def can_transfer(sender: Player, receiver: Player, amount: int, mandatory: bool) -> tuple[bool,str]:
+    def can_transfer(sender: Player | None, receiver: Player | None, amount: int, mandatory: bool) -> tuple[bool,str]:
+        
+        # Basic check flow
         if amount <= 0:
             return False, "Amount must be positive"
+        if (sender is None) & (receiver is None):
+            return False, 'Cannot tranfer from None to None'
         if sender is receiver:
             return False, "Cannot transfer to yourself"
+        if sender is None:
+            return True, ""
         if sender.money >= amount:
             return True, ""
         
@@ -51,39 +57,52 @@ class MoneyTransfer:
         # Confirm validity
         valid, reason = MoneyTransfer.can_transfer(sender,receiver,amount,mandatory)
         if not valid:
-            raise Exception("Invalid call to resolve transfer. Ensure validity check is working")
-            return MoneyActionResult(
-                outcome=MoneyOutcome.INVALID,
-                log=reason,
-                state_changes=[]
-            )
+            raise Exception("Invalid call to resolve transfer. Ensure validity check is being called prior as is working.")
         
-        # Take loans if neccessary
+        # Setup generic response
         changes = []
         loan_needed = False
-        # if sender is None:
-        #     log = (
-        #     f"Bank paid {amount} to {receiver.faction}"
-        # )
-        #     return MoneyActionResult(
-        #     outcome = Outcome.LOAN if loan_needed else Outcome.OK,
-        #     log=log,
-        #     state_changes=changes
-        # )
+        loan_count = 0
+
+        # Payment from bank
+        if sender is None:
+            log = (f"Bank paid {amount} to {receiver.faction}")
+            receiver._add_money(amount)
+            changes.append(f"{receiver.faction} received {receiver.money} Vardis")
+            changes.append(f"{receiver.faction} money: {receiver.money}")
+            return MoneyActionResult(
+                outcome = Outcome.OK,
+                log=log,
+                state_changes=changes
+            )
+        
+        # Handle loans if necessary
         if sender.money < amount:
-            loan_count = 0
             while sender.money < amount:
                 sender._take_loan()
                 loan_count += 1
             changes.append(f"{sender.faction} took {loan_count} loan{'s' if loan_count > 1 else ''}")
             loan_needed = True
+        
+        # Payment to bank
+        if receiver is None:
+            sender._add_money(amount * -1)
+            changes.append(f"{sender.faction} sent {sender.money} Vardis")
+            changes.append(f"{sender.faction} money: {sender.money}")
+            log = (f"{sender.faction} paid {amount} to bank")
+            return MoneyActionResult(
+                outcome = Outcome.OK,
+                log=log,
+                state_changes=changes
+            )
 
         # Transfer the money
         sender._add_money(amount * -1)
+        changes.append(f"{sender.faction} sent {amount} Vardis")
         changes.append(f"{sender.faction} money: {sender.money}")
         receiver._add_money(amount)
+        changes.append(f"{receiver.faction} received {receiver.money} Vardis")
         changes.append(f"{receiver.faction} money: {receiver.money}")
-
         log = (
             f"{sender.faction} paid {amount} to {receiver.faction}"
             + f"{sender.faction} took {loan_count} loan{'s' if loan_count > 1 else ''}"

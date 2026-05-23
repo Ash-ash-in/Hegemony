@@ -86,7 +86,7 @@ def test_player_functions(gamestate, player_references):
     from game.rules import rules
 
     ### Money transfer validity process ###
-    # Impossible + non-mandatory = prevented
+    # Impossible + non-mandatory = forbidden
     logger.debug("Testing validity of non-mandatory transfers")
     result = rules.MoneyTransfer.can_transfer(player_references.working_class, player_references.capitalists, 10, False)[0]
     if result:
@@ -97,8 +97,43 @@ def test_player_functions(gamestate, player_references):
     if not result:
         raise Exception('Validity check prevented a mandatory transfer')
     logger.debug("Impossible + mandatory: passed")
-    logger.info("Transfer validity check works")
-    
+    # From bank = allowed
+    result = rules.MoneyTransfer.can_transfer(None, player_references.capitalists, 10, True)[0]
+    if not result:
+        raise Exception('Validity check prevented a transfer from the bank')
+    logger.debug("From bank: passed")
+    # To bank, impossible, mandatory = allowed
+    result = rules.MoneyTransfer.can_transfer(player_references.capitalists, None, 10, True)[0]
+    if not result:
+        raise Exception('Validity check prevented a mandatory transfer to the bank')
+    logger.debug("To bank, impossible, mandatory: passed")
+    # To bank, impossible, not mandatory = forbidden
+    result = rules.MoneyTransfer.can_transfer(player_references.capitalists, None, 10, False)[0]
+    if result:
+        raise Exception('Validity check allowed a non-mandatory impossible transfer to the bank')
+    logger.debug("To bank, impossible, non-mandatory: passed")
+    logger.info("Transfer validity checks work")
+
+    ### Money transfer action process ###
+    # Try impossible action without validity check
+    try:
+        rules.MoneyTransfer.resolve(player_references.capitalists, None, 10, False)
+    except:
+        logger.debug('Impossible money transfer prevented with exception raised')
+    else:
+        raise Exception('Impossible money transfer not prevented')
+    # Shuffle money around
+    rules.MoneyTransfer.resolve(None, player_references.capitalists, 100, False)
+    logger.debug('Successfully added money to capitalists from bank')
+    rules.MoneyTransfer.resolve(player_references.capitalists, player_references.working_class,  200, True)
+    logger.debug('Successfully sent mandatory payment to working class from capitalists')
+    rules.MoneyTransfer.resolve(player_references.capitalists, None,  100, True)
+    rules.MoneyTransfer.resolve(player_references.working_class, None,  100, True)
+    if player_references.capitalists.money == 0 and player_references.working_class.money == 0:
+        logger.debug('Money shuffle successful')
+    else:
+        raise Exception('Unexpected money values during shuffle')
+
     return
 
 logger.debug("Finished importing tests module")

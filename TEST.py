@@ -17,16 +17,8 @@ tests.test_save_and_load()
 # -------------------------------------------
 player_count = 3
 from game.engine.game_engine import startup
-LiveGamestate, PlayerRefs = startup(player_count, "test_save", overwrite=True)
+LiveGamestate, LiveRefs = startup(player_count, "test_save", overwrite=True)
 
-# Setup easy references
-logging.debug('Setting up player references')
-player_list = list(LiveGamestate.players.keys())
-working_class = player_list[0]
-state = list(LiveGamestate.players.keys())[-1]
-capitalists = player_list[-2]
-if player_count > 2:
-    middle_class = player_list[2]
 ### Player Testing ###
 # --------------------
-tests.test_player_functions(LiveGamestate, PlayerRefs)
+tests.test_player_functions(LiveGamestate, LiveRefs)
