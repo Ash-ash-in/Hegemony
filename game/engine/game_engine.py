@@ -8,7 +8,6 @@ class save:
 
     # Imports
     from datetime import datetime
-    import json
     import game.data.factions as factions
     import os
 
@@ -18,42 +17,51 @@ class save:
 
     ### Methods ###
     @staticmethod
-    def save_game(gamestate, filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), overwrite = False):
+    def save_game(gamestate, filename = None, overwrite = False):
         """
         Saves the json of a gamestate to a file
-        
-        :param gamestate: GameState object to be saved
-        :param filename: str - Name of the file to save the gamestate to. 
+        # Args
+        gamestate: GameState object to be saved
+        filename: str - Name of the file to save the gamestate to
+        overwrite: bool, whether to allow overwrite of existing file with same name 
+        # Returns
+        returns bool based on whether save was successful
         """
         logger.debug(f"save.save called with filename:{filename}, overwrite:{overwrite}")
 
         import json
         import os
+        from datetime import datetime
 
         # Write a new file if not exists, write a new file if exists
+        if filename == None:
+            filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         filepath = os.path.join(save.directory, filename)
         try:
             f = open(f"{filepath}.json", "w" if overwrite else "x")
         except FileExistsError:
             logger.error(f"File {filename}.json already exists. Use overwrite=True to overwrite the file.")
-            return
+            return False
         
         # Parse various state instances to dicts and write to file
         players_dict = {}
-        i = 1
-        for player_instance in gamestate.players:
-            players_dict[i] = asdict(player_instance)
-            i += 1
+        for name,player_instance in gamestate.players.items():
+            players_dict[name] = player_instance.to_dict()
         
         savedict = {
-            "Game": asdict(gamestate),
+            "Game": {
+                "player_count": gamestate.player_count,
+                "round": gamestate.round,
+                "turn": gamestate.turn,
+                "active_player": gamestate.active_player
+            },
             "Players": players_dict
         }
         f.write(json.dumps(savedict, indent=4))
         f.close()
 
         logger.info(f"Game saved to {filename}")
-        return
+        return True
 
 
     @staticmethod
@@ -93,23 +101,26 @@ class save:
         )
         logger.debug('Initial gamestate instantiated')
 
-        # Write a new file
-        if filename == None:
-            filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        filepath = os.path.join(save.directory, filename)
-        try:
-            f = open(f"{filepath}.json", "w" if overwrite else "x")
-        except FileExistsError:
-            logger.error(f"File {filename}.json already exists.")
-            raise FileExistsError(f"File {filename}.json already exists. Use overwrite=True to overwrite the file.")
+        success = save.save_game(gamestate, filename=filename, overwrite=overwrite)
+        if not success:
+            logger.warning('File name already exists, no overwrite permission')
+            return False, False
+
+        # # Write a new file
+        # filepath = os.path.join(save.directory, filename)
+        # try:
+        #     f = open(f"{filepath}.json", "w" if overwrite else "x")
+        # except FileExistsError:
+        #     logger.error(f"File {filename}.json already exists.")
+        #     raise FileExistsError(f"File {filename}.json already exists. Use overwrite=True to overwrite the file.")
         
-        # Parse various state instances to dicts and write to file
-        savedict = {
-            "Game": asdict(gamestate),
-            "Players": {name:asdict(instance) for name, instance in gamestate.players.items()}
-        }
-        f.write(json.dumps(savedict, indent=4))
-        f.close()
+        # # Parse various state instances to dicts and write to file
+        # savedict = {
+        #     "Game": asdict(gamestate),
+        #     "Players": {name:instance.to_dict() for name, instance in gamestate.players.items()}
+        # }
+        # f.write(json.dumps(savedict, indent=4))
+        # f.close()
 
         logger.info(f"New game set up with player_count: {player_count}")
         return gamestate, filename
@@ -137,8 +148,9 @@ class save:
             
             # Convert the string back to a GameState object
             save_dict = json.loads(gamestate_str)
-            gamestate = GameState(**save_dict['Game'])
-            gamestate.players = {k:factions.Player(**v) for k,v in save_dict['Players'].items()}
+            gamestate_dict = save_dict['Game']
+            gamestate_dict['players'] = {k:factions.Player(**v) for k,v in save_dict['Players'].items()}
+            gamestate = GameState(**gamestate_dict)
             f.close()
 
         logger.info(f"Game loaded from saves/{filename}.json")
@@ -176,6 +188,7 @@ def startup(player_count=None, filename=None, overwrite=False):
     If both player_count and filename are none, raise exception
     """
     from game.engine.game_engine import save
+    logger.debug(f'startup called with player_count: {player_count}, filename: {filename}, overwrite:{overwrite}')
 
     # Validity Checks
     if filename == 'None':

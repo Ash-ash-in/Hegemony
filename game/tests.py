@@ -30,13 +30,21 @@ def test_save_and_load():
 
     # Attempt to save without overwrite permission, should raise FileExistsError
     logger.debug("TEST save without overwrite permission throws exception")
-    try:
-        save.new_game(2, "test_save", overwrite=False)
-    except FileExistsError:
+    gamestate, filename = save.new_game(2, "test_save", overwrite=False)
+    if gamestate == False:
         logger.info("Overwritng without permission throws exception PASS")
     else:   
         logger.warning("File should have existed but didn't.")
         assert False, "File should have existed but didn't."
+
+    # Test delete save functionality
+    logger.debug("TEST delete save functionality")
+    save.delete_save("test_save")
+    if not os.path.exists(test_save_path):
+        logger.info("Test save file deleted PASS.")
+    else:
+        logger.warning("Test save file was not deleted.")
+        assert False, "Test save file was not deleted."
 
     # Save the gamestate
     logger.debug("TEST saved gamestate matches file loaded")
@@ -47,27 +55,36 @@ def test_save_and_load():
     # Load the gamestate
     logger.debug("Loading test gamestate")
     loaded_gamestate = save.load_game("test_save")
-    logger.debug(f"Original gamestate: {test_gamestate}")
-    logger.debug(f"Type of original gamestate: {type(test_gamestate)}")
-    logger.debug(f"Loaded gamestate: {loaded_gamestate}")
-    logger.debug(f"Type of loaded gamestate: {type(loaded_gamestate)}")
     # Check if the loaded gamestate matches the original gamestate
-    assert loaded_gamestate == test_gamestate, "Loaded gamestate does not match the original gamestate"
+    test_dict = test_gamestate.to_dict()
+    load_dict = loaded_gamestate.to_dict()
+    match=True
+    for k,v in test_dict.items(): # All gamestate vars
+        if k == 'players':
+            for k2, v2 in test_dict['players'].items(): # Dict of players
+                for k3, v3 in v2.to_dict().items(): # All player vars
+                    if v3 != load_dict['players'][k2].to_dict()[k3]:
+                        logger.debug(f'player {k2} mismatch on {k3}')
+                        match=False
+        elif load_dict[k] != v: # Otherwise just compare the vars
+            match=False
+    if not match:
+        logger.debug(f"Original gamestate: {test_gamestate}")
+        logger.debug(f"Type of original gamestate: {type(test_gamestate)}")
+        logger.debug(f"Loaded gamestate: {loaded_gamestate}")
+        logger.debug(f"Type of loaded gamestate: {type(loaded_gamestate)}")
+        logger.error('Loaded gamestate does not match')
+        print('loaded gamestate:')
+        print(loaded_gamestate)
+        print('new gamestate:')
+        print(test_gamestate)
+        raise Exception('Loaded gamestate did not match')
     logger.info("Test gamestate loaded matches saved PASS")
 
     # Test overwrite functionality
     logger.debug("TEST overwrite functionality")
     save.new_game(2, "test_save", overwrite=True)
     logger.info("File overwritten PASS.")
-
-    # Test delete save functionality
-    logger.debug("TEST delete save functionality")
-    save.delete_save("test_save")
-    if not os.path.exists(test_save_path):
-        logger.info("Test save file deleted PASS.")
-    else:
-        logger.warning("Test save file was not deleted.")
-        assert False, "Test save file was not deleted."
 
     # Test setup 3 player game
     logger.debug("TEST 3 player setup")
@@ -84,32 +101,35 @@ def test_player_functions(gamestate, player_references):
     logger.debug("Starting test_player_functions")
     from game.rules import rules
 
+    ### Victory Points ###
+
+
     ### Money transfer validity process ###
     # Impossible + non-mandatory = forbidden
     result = rules.MoneyTransfer.check(player_references.working_class, player_references.capitalists, 10, False)[0]
     if result:
         raise Exception('Validity check failed to prevent impossible transfer')
-    logger.debug("Impossible + non-mandatory: PASS")
+    logger.info("Impossible + non-mandatory: PASS")
     # Impossible + mandatory = allowed
     result = rules.MoneyTransfer.check(player_references.working_class, player_references.capitalists, 10, True)[0]
     if not result:
         raise Exception('Validity check prevented a mandatory transfer')
-    logger.debug("Impossible + mandatory: PASS")
+    logger.info("Impossible + mandatory: PASS")
     # From bank = allowed
     result = rules.MoneyTransfer.check(None, player_references.capitalists, 10, True)[0]
     if not result:
         raise Exception('Validity check prevented a transfer from the bank')
-    logger.debug("From bank: PASS")
+    logger.info("From bank: PASS")
     # To bank, impossible, mandatory = allowed
     result = rules.MoneyTransfer.check(player_references.capitalists, None, 10, True)[0]
     if not result:
         raise Exception('Validity check prevented a mandatory transfer to the bank')
-    logger.debug("To bank, impossible, mandatory: PASS")
+    logger.info("To bank, impossible, mandatory: PASS")
     # To bank, impossible, not mandatory = forbidden
     result = rules.MoneyTransfer.check(player_references.capitalists, None, 10, False)[0]
     if result:
         raise Exception('Validity check allowed a non-mandatory impossible transfer to the bank')
-    logger.debug("To bank, impossible, non-mandatory: PASS")
+    logger.info("To bank, impossible, non-mandatory: PASS")
     logger.info("All transfer validity checks passed")
 
     ### Money transfer action process ###
@@ -117,7 +137,7 @@ def test_player_functions(gamestate, player_references):
     try:
         rules.MoneyTransfer.resolve(player_references.capitalists, None, 10, False)
     except:
-        logger.debug('Impossible money transfer prevented with exception raised')
+        logger.info('Impossible money transfer prevented with exception raised')
     else:
         raise Exception('Impossible money transfer not prevented')
     
@@ -131,7 +151,7 @@ def test_player_functions(gamestate, player_references):
     rules.MoneyTransfer.resolve(player_references.working_class, None,  200, True).print()
     logger.debug('Removed 100 from Working Class and Capitalists')
     if player_references.capitalists.money == 0 and player_references.working_class.money == 0:
-        logger.debug('Money shuffle PASS')
+        logger.info('Money shuffle PASS')
     else:
         raise Exception('Unexpected money values during shuffle')
 

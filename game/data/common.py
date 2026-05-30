@@ -1,7 +1,7 @@
 import logging
 logger = logging.getLogger(__name__)
 logger.debug("Importing data.common")
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 # common variables used across files
 @dataclass
@@ -10,21 +10,18 @@ class GameState:
     GameState is the master storage location for all game information. 
     It contains everything that you would need to know to recreate the game at this given position
     """
+    ### Attributes ###
     player_count: int
-    players: dict
     round: int = 0
     turn: int = 0
     active_player: int = 0
+    players: dict = field(default_factory=dict) # players must be the last arg, since it is appended to the dict in load_save
 
-    def __hash__(self): # Used for converting into a dict when saving
-        return hash((
-            self.player_count, 
-            self.players, 
-            self.round, 
-            self.turn, 
-            self.active_player))
+    ### Methods ###
+    def to_dict(self) -> dict:
+        return {k.lstrip('_'): v for k, v in vars(self).items()}
+
     
-
 @dataclass
 class PlayerReference:
     active_factions: list

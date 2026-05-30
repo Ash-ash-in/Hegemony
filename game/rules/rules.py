@@ -11,7 +11,10 @@ class Outcome(Enum):
     LOAN = auto()
 
 @dataclass
-class MoneyActionResult:
+class ActionResult:
+    """
+    Parent class for the result of action rules
+    """
     outcome: Outcome
     log: str # Simple description of the action
     state_changes: list[str] # Details of all changes for UI
@@ -21,6 +24,56 @@ class MoneyActionResult:
         return
 
 @dataclass
+class PointAssign:
+    """
+    Handles assigning points to players
+    """
+    logger.debug("called PointAssign class")
+    from game.data.factions import Player
+
+    @staticmethod
+    def check(player: Player, amount: int):
+        """
+        Determines whether a transaction is possible. 
+        This should ALWAYS be called before resolving.
+        This is called as part of the resolve process, but will crash the program if it fails at that point.
+
+        ### Args
+        player:         - Player object instance
+        amount:         - integer
+
+        ### Returns
+        bool            - is the transaction valid?
+        str             - failure reason if bool = False
+        """
+        logger.debug("PointAssign check called")
+        import game.data.common as common
+        global player_count
+
+        # Basic check flow
+        if common.faction_instantiate_order.index(player.faction) > player_count - 1:
+            return False, 'Only active players in the game can receive points'
+        return True, ''
+
+    @staticmethod
+    def resolve(player: Player, amount: int):
+        """
+        Apply the points. Only call this after check returns True, or risk an exception.
+        All mutations happen here — never partially applied.
+        """
+        logger.debug("MoneyTransfer resolve called")
+        # Confirm validity
+        valid,_ = MoneyTransfer.check(sender,receiver,amount,mandatory)
+        if not valid:
+            raise Exception("Invalid call to resolve transfer. Ensure validity check is being called prior and is working.")
+        
+
+
+
+
+
+
+@dataclass
 class MoneyTransfer:
     """
     Handles both mandatory and optional transfers.
@@ -28,7 +81,7 @@ class MoneyTransfer:
     mandatory=False (optional):  block the transfer if sender can't afford it.
     mandatory=True:              auto-take a loan to cover the shortfall.
     """
-    logger.debug("Establishing MoneyTransfer rules")
+    logger.debug("called MoneyTransfer class")
     from game.data.factions import Player
 
     @staticmethod
@@ -49,6 +102,8 @@ class MoneyTransfer:
         str             - failure reason if bool = False
         """
         logger.debug("MoneyTransfer check called")
+
+
         # Basic check flow
         if amount <= 0:
             return False, "Amount must be positive"
@@ -68,9 +123,9 @@ class MoneyTransfer:
         return True, ""
     
     @staticmethod
-    def resolve(sender: Player | None, receiver: Player | None, amount: int, mandatory: bool) -> MoneyActionResult:
+    def resolve(sender: Player | None, receiver: Player | None, amount: int, mandatory: bool) -> ActionResult:
         """
-        Apply the transfer. Only call this after can_transfer returns True.
+        Apply the transfer. Only call this after check returns True, or risk an exception.
         All mutations happen here — never partially applied.
         """
         logger.debug("MoneyTransfer resolve called")
@@ -93,7 +148,7 @@ class MoneyTransfer:
             changes.append(f"{receiver.faction} money: {receiver.money}")
             log = (f"Bank paid {amount} to {receiver.faction}")
             logger.debug(f"{receiver.faction} received {amount} from Bank")
-            return MoneyActionResult(
+            return ActionResult(
                 outcome = Outcome.OK,
                 log=log,
                 state_changes=changes
@@ -119,7 +174,7 @@ class MoneyTransfer:
         # Payment to bank
         if receiver is None:
             log = (f"{sender.faction} paid {amount} to bank")
-            return MoneyActionResult(
+            return ActionResult(
                 outcome = Outcome.OK,
                 log=log,
                 state_changes=changes
@@ -135,7 +190,7 @@ class MoneyTransfer:
                 f"{sender.faction} paid {amount} to {receiver.faction}"
                 + f"{sender.faction} took {loan_count} loan{'s' if loan_count > 1 else ''}"
             )
-            return MoneyActionResult(
+            return ActionResult(
                 outcome = Outcome.LOAN if loan_needed else Outcome.OK,
                 log=log,
                 state_changes=changes

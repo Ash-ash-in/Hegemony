@@ -1,10 +1,13 @@
 ###################################
 ############# HEGEMONY ############
 ###################################
-###### User Inputs #######
+####### Global User Inputs ########
+
 player_count = 3
 filename = 'HegemonySave'
-###### User Inputs #######
+
+####### Global User Inputs ########
+###################################
 
 # Establish Log
 # -------------
