@@ -16,7 +16,11 @@ class MoneyActionResult:
     log: str # Simple description of the action
     state_changes: list[str] # Details of all changes for UI
 
+    def print(self):
+        print(self.log)
+        return
 
+@dataclass
 class MoneyTransfer:
     """
     Handles both mandatory and optional transfers.
@@ -28,8 +32,23 @@ class MoneyTransfer:
     from game.data.factions import Player
 
     @staticmethod
-    def can_transfer(sender: Player | None, receiver: Player | None, amount: int, mandatory: bool) -> tuple[bool,str]:
-        
+    def check(sender: Player | None, receiver: Player | None, amount: int, mandatory: bool) -> tuple[bool,str]:
+        """
+        Determines whether a transaction is possible. 
+        This should ALWAYS be called before resolving.
+        This is called as part of the resolve process, but will crash the program if it fails at that point.
+
+        ### Args
+        sender:         - player instance or None for bank
+        receiver:       - player instance or None for bank
+        amount:         - integer
+        mandatory:      - bool. Determines whether it will force loans when insufficient funds.
+
+        ### Returns
+        bool            - is the transaction valid?
+        str             - failure reason if bool = False
+        """
+        logger.debug("MoneyTransfer check called")
         # Basic check flow
         if amount <= 0:
             return False, "Amount must be positive"
@@ -54,22 +73,26 @@ class MoneyTransfer:
         Apply the transfer. Only call this after can_transfer returns True.
         All mutations happen here — never partially applied.
         """
+        logger.debug("MoneyTransfer resolve called")
         # Confirm validity
-        valid, reason = MoneyTransfer.can_transfer(sender,receiver,amount,mandatory)
+        valid,_ = MoneyTransfer.check(sender,receiver,amount,mandatory)
         if not valid:
-            raise Exception("Invalid call to resolve transfer. Ensure validity check is being called prior as is working.")
+            raise Exception("Invalid call to resolve transfer. Ensure validity check is being called prior and is working.")
         
         # Setup generic response
         changes = []
         loan_needed = False
         loan_count = 0
 
-        # Payment from bank
+        ### Sender ###
+
+        # Payment from bank - always successful
         if sender is None:
-            log = (f"Bank paid {amount} to {receiver.faction}")
             receiver._add_money(amount)
             changes.append(f"{receiver.faction} received {receiver.money} Vardis")
             changes.append(f"{receiver.faction} money: {receiver.money}")
+            log = (f"Bank paid {amount} to {receiver.faction}")
+            logger.debug(f"{receiver.faction} received {amount} from Bank")
             return MoneyActionResult(
                 outcome = Outcome.OK,
                 log=log,
@@ -77,18 +100,24 @@ class MoneyTransfer:
             )
         
         # Handle loans if necessary
-        if sender.money < amount:
+        elif sender.money < amount:
             while sender.money < amount:
                 sender._take_loan()
                 loan_count += 1
             changes.append(f"{sender.faction} took {loan_count} loan{'s' if loan_count > 1 else ''}")
             loan_needed = True
+            logger.debug(f"{sender.faction} took {loan_count} loans")
         
+        # Sender has enough money:
+        sender._add_money(amount * -1)
+        changes.append(f"{sender.faction} sent {sender.money} Vardis")
+        changes.append(f"{sender.faction} money: {sender.money}")
+        logger.debug(f"removed {amount} money from {sender.faction}")
+
+        ### Receiver ###
+
         # Payment to bank
         if receiver is None:
-            sender._add_money(amount * -1)
-            changes.append(f"{sender.faction} sent {sender.money} Vardis")
-            changes.append(f"{sender.faction} money: {sender.money}")
             log = (f"{sender.faction} paid {amount} to bank")
             return MoneyActionResult(
                 outcome = Outcome.OK,
@@ -96,22 +125,20 @@ class MoneyTransfer:
                 state_changes=changes
             )
 
-        # Transfer the money
-        sender._add_money(amount * -1)
-        changes.append(f"{sender.faction} sent {amount} Vardis")
-        changes.append(f"{sender.faction} money: {sender.money}")
-        receiver._add_money(amount)
-        changes.append(f"{receiver.faction} received {receiver.money} Vardis")
-        changes.append(f"{receiver.faction} money: {receiver.money}")
-        log = (
-            f"{sender.faction} paid {amount} to {receiver.faction}"
-            + f"{sender.faction} took {loan_count} loan{'s' if loan_count > 1 else ''}"
-        )
-
-        return MoneyActionResult(
-            outcome = Outcome.LOAN if loan_needed else Outcome.OK,
-            log=log,
-            state_changes=changes
-        )
+        # Payment to player
+        else:
+            receiver._add_money(amount)
+            changes.append(f"{receiver.faction} received {receiver.money} Vardis")
+            changes.append(f"{receiver.faction} money: {receiver.money}")
+            logger.debug(f"added {amount} money to {receiver}")
+            log = (
+                f"{sender.faction} paid {amount} to {receiver.faction}"
+                + f"{sender.faction} took {loan_count} loan{'s' if loan_count > 1 else ''}"
+            )
+            return MoneyActionResult(
+                outcome = Outcome.LOAN if loan_needed else Outcome.OK,
+                log=log,
+                state_changes=changes
+            )
 
 logger.debug("Finished importing rules.rules module")

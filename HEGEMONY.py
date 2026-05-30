@@ -28,10 +28,9 @@ if filename:
     
 ########## Initialise GameState ##########
 # ----------------------------------------
-import game.engine.save_control as save
 import game.engine.game_engine as engine
 
-LiveGamestate, PlayerRefs = engine.startup(player_count=2)
+LiveGamestate, PlayerRefs = engine.startup(player_count=2, filename='Hegemony', overwrite=True)
 
 # Set up references
 # -----------------

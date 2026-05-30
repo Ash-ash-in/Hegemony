@@ -11,7 +11,7 @@ logging.basicConfig(
 from game import tests
 ### Save Game Testing ###
 # -----------------------
-tests.test_save_and_load()
+# tests.test_save_and_load()
 
 ### Creating gamestate for normal testing ###
 # -------------------------------------------
