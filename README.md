@@ -56,7 +56,7 @@ They should retain limited history to allow 'undo' of actions
 ## Action Flow
 Actions are called through several layers, which help manage dependencies. As a general rule, validity checks flow upstream, and instructions flow downstream.
 See below:
-![alt text](<Hegemony Architecture-Action Flow.png>)
+![alt text](<images/Hegemony Architecture-Action Flow.png>)
 
 The impact of every decision is not made directly to the game/player state, it is made to a copy, and the final decision is enacted by overwriting the state with the copy.
 
