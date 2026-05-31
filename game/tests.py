@@ -4,12 +4,12 @@ logger.debug("Importing save_testing module")
 
 def test_save_and_load():
     logger.info("Starting test_save_and_load")
-    from game.engine.game_engine import save
+    from game.system import Save
     import os
 
     # Clear existing test save file if it exists
     logger.debug("Checking for existing test save file")
-    test_save_path = os.path.join(save.directory, "test_save.json")
+    test_save_path = os.path.join(Save.directory, "test_save.json")
     if os.path.exists(test_save_path):
         os.remove(test_save_path)
         logger.info("Existing test save file removed.")
@@ -18,7 +18,7 @@ def test_save_and_load():
 
     # Create a test gamestate
     logger.debug("TEST Creating test gamestate")
-    test_gamestate, filename = save.new_game(2, "test_save", overwrite=False)
+    test_gamestate, filename = Save.new_game(2, "test_save", overwrite=False)
     logger.info(f"Test gamestate created")
 
     # Confirm new file exists
@@ -30,7 +30,7 @@ def test_save_and_load():
 
     # Attempt to save without overwrite permission, should raise FileExistsError
     logger.debug("TEST save without overwrite permission throws exception")
-    gamestate, filename = save.new_game(2, "test_save", overwrite=False)
+    gamestate, filename = Save.new_game(2, "test_save", overwrite=False)
     if gamestate == False:
         logger.info("Overwritng without permission throws exception PASS")
     else:   
@@ -39,7 +39,7 @@ def test_save_and_load():
 
     # Test delete save functionality
     logger.debug("TEST delete save functionality")
-    save.delete_save("test_save")
+    Save.delete_save("test_save")
     if not os.path.exists(test_save_path):
         logger.info("Test save file deleted PASS.")
     else:
@@ -49,12 +49,12 @@ def test_save_and_load():
     # Save the gamestate
     logger.debug("TEST saved gamestate matches file loaded")
     logger.debug("Saving test gamestate")
-    save.save_game(test_gamestate, "test_save", overwrite=False)
+    Save.save_game(test_gamestate, "test_save", overwrite=False)
     logger.info("Test gamestate saved")
 
     # Load the gamestate
     logger.debug("Loading test gamestate")
-    loaded_gamestate = save.load_game("test_save")
+    loaded_gamestate = Save.load_game("test_save")
     # Check if the loaded gamestate matches the original gamestate
     test_dict = test_gamestate.to_dict()
     load_dict = loaded_gamestate.to_dict()
@@ -83,23 +83,23 @@ def test_save_and_load():
 
     # Test overwrite functionality
     logger.debug("TEST overwrite functionality")
-    save.new_game(2, "test_save", overwrite=True)
+    Save.new_game(2, "test_save", overwrite=True)
     logger.info("File overwritten PASS.")
 
     # Test setup 3 player game
     logger.debug("TEST 3 player setup")
-    save.new_game(3, "test_save", overwrite=True)
+    Save.new_game(3, "test_save", overwrite=True)
     logger.info("3 player game setup PASS.")
 
     # Test setup 4 player game
     logger.debug("TEST 4 player setup")
-    save.new_game(4, "test_save", overwrite=True)
+    Save.new_game(4, "test_save", overwrite=True)
     logger.info("4 player game setup PASS.")
     return
 
 def test_player_functions(gamestate, player_references):
     logger.debug("Starting test_player_functions")
-    from game.rules import rules
+    from game import rules
 
     ### Victory Points ###
 

@@ -5,6 +5,7 @@ logger.debug("Importing rules.rules module")
 from dataclasses import dataclass
 from enum import Enum, auto
 
+######################### Utilities #######################################
 class Outcome(Enum):
     OK = auto()
     INVALID = auto()
@@ -22,7 +23,10 @@ class ActionResult:
     def print(self):
         print(self.log)
         return
+    
 
+
+############################# Rule Layer ####################################
 @dataclass
 class PointAssign:
     """
@@ -61,17 +65,17 @@ class PointAssign:
         Apply the points. Only call this after check returns True, or risk an exception.
         All mutations happen here — never partially applied.
         """
-        logger.debug("MoneyTransfer resolve called")
+        logger.debug("PointAssign resolve called")
         # Confirm validity
-        valid,_ = MoneyTransfer.check(sender,receiver,amount,mandatory)
+        valid,_ = PointAssign.check(player, amount)
         if not valid:
             raise Exception("Invalid call to resolve transfer. Ensure validity check is being called prior and is working.")
-        
 
-
-
-
-
+        # Execute
+        player._add_victory_points(amount) # Negative values are handled internally
+        log = f'Added {amount} victory points to {player.faction}'
+        changes = [log]
+        return ActionResult(outcome=Outcome.OK, log=log, state_changes=changes)
 
 @dataclass
 class MoneyTransfer:
@@ -129,6 +133,7 @@ class MoneyTransfer:
         All mutations happen here — never partially applied.
         """
         logger.debug("MoneyTransfer resolve called")
+
         # Confirm validity
         valid,_ = MoneyTransfer.check(sender,receiver,amount,mandatory)
         if not valid:
@@ -158,6 +163,7 @@ class MoneyTransfer:
         elif sender.money < amount:
             while sender.money < amount:
                 sender._take_loan()
+                sender._add_money(50)
                 loan_count += 1
             changes.append(f"{sender.faction} took {loan_count} loan{'s' if loan_count > 1 else ''}")
             loan_needed = True
@@ -195,5 +201,58 @@ class MoneyTransfer:
                 log=log,
                 state_changes=changes
             )
+
+
+############################# Action Layer ########################################
+
+@dataclass    
+class FreeAction:
+    """
+    Lists the free actions avaialbe to all players
+    
+    The actions here are the complete process, and can be called directly from the agent interface
+    """
+    logger.debug("called FreeAction class")
+
+    @dataclass
+    class RepayLoan:
+        logger.debug("called RepayLoan subclass")
+        from game.data.factions import Player
+
+        @staticmethod
+        def check(player: Player):
+            logger.debug('RepayLoan check called')
+
+            # Check flow
+            if player.loans <= 0:
+                return False, 'Player has no loans'
+            if player.money < 50:
+                return False, 'Not enough money'
+            return True, ''
+        
+        @staticmethod
+        def resolve(player: Player):
+            logger.debug('ReplayLoan resolve called')
+
+            # Confirm validity
+            valid,_ = FreeAction.RepayLoan.check(player)
+            if not valid:
+                raise Exception("Invalid call to resolve loan repayment. Ensure validity check is being called prior and is working.")
+
+            # Execute
+            changes = []
+            log = f"{player.faction} paid 50 to repay a loan"
+            player._add_money(-50)
+            changes.append(f"{player.faction} paid 50")
+            changes.append(f"{player.faction} money: {player.money}")
+            player._remove_loan()
+            changes.append(f"{player.faction} removed a loan")
+            changes.append(f"{player.faction} loans: {player.loans}")
+            return ActionResult(Outcome.OK, log, changes)
+
+
+
+
+
 
 logger.debug("Finished importing rules.rules module")

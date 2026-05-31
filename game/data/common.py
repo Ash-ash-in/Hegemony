@@ -13,6 +13,7 @@ class GameState:
     ### Attributes ###
     player_count: int
     round: int = 0
+    phase: str = 'Preparation'
     turn: int = 0
     active_player: int = 0
     players: dict = field(default_factory=dict) # players must be the last arg, since it is appended to the dict in load_save
@@ -61,6 +62,7 @@ class Event:
 # Handy variables for building data in setup
 faction_play_order = ["Working Class", "Middle Class", "Capitalists", "State"]
 faction_instantiate_order = ["Working Class", "Capitalists", "Middle Class", "State"]
+phases = ['Preparation','Action','Production','Elections','Scoring']
 
 # ----------- END ---------- #
 logger.debug("Finished importing data.common")

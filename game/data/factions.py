@@ -57,13 +57,11 @@ class Player():
         
     def _take_loan(self):
         logger.debug(f"{self._faction} _take_loan()")
-        self._add_money(50)
         self._loans += 1
         logger.debug(f"{self._faction} total loans: {self._loans}")
 
-    def _pay_loan(self):
-        logger.debug(f"{self._faction} _pay_loan()")
-        self._add_money(-50)
+    def _remove_loan(self):
+        logger.debug(f"{self._faction} _remove_loan()")
         self._loans -= 1
         logger.debug(f"{self._faction} total loans: {self._loans}")
 

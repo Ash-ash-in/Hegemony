@@ -16,9 +16,14 @@ tests.test_save_and_load()
 ### Creating gamestate for normal testing ###
 # -------------------------------------------
 player_count = 3
-from game.engine.game_engine import startup
-LiveGamestate, LiveRefs = startup(player_count, "test_save", overwrite=True)
+from game.system import Engine
+LiveGamestate, LiveRefs = Engine.startup(player_count, "test_save", overwrite=True)
 
 ### Player Testing ###
 # --------------------
 tests.test_player_functions(LiveGamestate, LiveRefs)
+
+
+### Game Flow Testing ###
+# --------------------
+Engine.flow(LiveGamestate)

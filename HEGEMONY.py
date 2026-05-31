@@ -13,7 +13,7 @@ filename = 'HegemonySave'
 # -------------
 import logging
 logging.basicConfig(
-    level=logging.DEBUG, 
+    level=logging.WARNING, 
     format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
     handlers=[
         logging.FileHandler("game.log", mode = 'w'),
@@ -31,9 +31,11 @@ if filename:
     
 ########## Initialise GameState ##########
 # ----------------------------------------
-import game.engine.game_engine as engine
+from game.system import Engine
 
-LiveGamestate, PlayerRefs = engine.startup(player_count=2, filename='Hegemony', overwrite=True)
+LiveGamestate, PlayerRefs = Engine.startup(player_count=2, filename='Hegemony', overwrite=True)
+Engine.flow(LiveGamestate)
+
 
 # Set up references
 # -----------------
