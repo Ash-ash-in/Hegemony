@@ -46,11 +46,23 @@ The project serves primarily as an educational and entertainment tool for myself
 - Controls the setup, save state, and movement of the game
 - Controls the flow between stages of the game, movement between rounds
 
+### Architecture Diagram
+![alt text](<images/Hegemony Architecture-File Structure.png>)
+
 ## Game States
 These store information about the game and players. They are the real-life boards that things sit on. 
 They only contain material things that would be required to recreate the game position.
 They do not contain logic or plans
 They should retain limited history to allow 'undo' of actions
+
+## Action Flow
+Actions are called through several layers, which help manage dependencies. As a general rule, validity checks flow upstream, and instructions flow downstream.
+See below:
+![alt text](<Hegemony Architecture-Action Flow.png>)
+
+The impact of every decision is not made directly to the game/player state, it is made to a copy, and the final decision is enacted by overwriting the state with the copy.
+
+
 
 ## Neural Net 
 The AI will need to simulate lots of different outcomes, compare them, and make its decision
