@@ -247,11 +247,38 @@ class Engine:
         """
         logger.debug('Called Engine.action_phase')
 
-        for turn in range(1,6):
-            logger.debug(f'Starting action phase turn {turn}')
-            for name, instance in gamestate.players.items():
-                logger.debug(f"It's the {name}'s turn")
-                
+        for turn_num in range(1,6):
+            logger.debug(f'Starting action phase turn {turn_num}')
+            for faction_name, player_instance in gamestate.players.items():
+                logger.debug(f"It's the {faction_name}'s turn")
+
+                ### Interaction Layer ###
+                # This section needs to connect to the interfaces of each player.
+                # It needs to check what agent is in control
+                # Call their layer
+                # And pass the relevent information to it
+
+                ## Development
+                ##  - Player
+                #       Start with a text input
+                #       Display the key metrics for that player only
+                #       Display options
+                #       Take the input and enact that choice
+                #
+                ##  - AI
+                #       Pass container with options
+                #       Receive instruction back
+                #
+                ## Live
+                ##  - Player
+                #       Display everything in UI
+                #       There will be an action screen that always passes relevent information
+                #       Elections etc will need their own screen
+                #       Pass options for display, and impossible ones for explanations why
+                #       Return user input and enact
+                #
+                #   - AI
+                #       Who knows
 
     @staticmethod
     def production_phase(gamestate: GameState):
@@ -310,11 +337,52 @@ class Engine:
 @dataclass(frozen=True)
 class DecisionContext:
     """
+    Contains the classes that connect the gamestate to the interfaces, for AI and Human agents
     Decides what the engine gives to an agent when they need to make a decsion
     AI and Humans receive the same information
     """
+    logger.debug('Called DecisionContext')
     available: list
     unavailable: list[tuple]
 
+    @dataclass(frozen=True)
+    class ActionContext:
+        """
+        Checks what is available when making an action.
+        Seperate methods for different types of agent.
+        """
+        logger.debug('Called ActionContext')
+        from game.data.factions import Player
+        from game.agents import AgentAnswer
 
-    
+        @staticmethod
+        def compile_options(player: Player) -> dict:
+            """
+            Takes the list of attributes from the Action classes
+            Looks for a 'check' method (which all actions should have)
+            Runs the check and records the result
+
+            The result is a dict - 
+            """
+            from game.rules import FreeAction
+            options = FreeAction.context()
+            context = {}
+            for o in options:
+                instance = o()
+                if hasattr(instance, 'check'):
+                    context[o] = instance.check(player)
+            logger.debug(f'Compiled ActionContext options for {player.faction}')
+            return context
+        
+        @staticmethod
+        def call_agent(player: Player) -> AgentAnswer:
+            """
+            Builds a context call, sends it to the agent, and receives an answer
+            """
+            from game.agents import ContextCall
+            target = player.agent[1]
+            role = 'Action'
+            options = DecisionContext.ActionContext.compile_options(player)
+            call = ContextCall(player,role,options)
+            logger.debug(f'ContextCall sent to {player.agent[0]}')
+            return target.call(call)

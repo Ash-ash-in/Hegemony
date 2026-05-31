@@ -9,20 +9,26 @@ class Player():
 
     It is stored in the Gamestate
     """
+    from game.agents import Agent
     ### Init ### 
     def __init__(
             self, 
+            agent: tuple[str, Agent],
             faction: str, 
             victory_points: int = 0, 
             money: int = 0, 
             loans: int = 0
         ):
+        self._agent = agent
         self._faction = faction
         self._victory_points = victory_points
         self._money = money
         self._loans = loans
 
     ### Attributes ###
+    @property
+    def agent(self) -> tuple:
+        return self._agent
     @property
     def faction(self) -> str:
         return self._faction

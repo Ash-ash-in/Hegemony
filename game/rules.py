@@ -210,9 +210,24 @@ class FreeAction:
     """
     Lists the free actions avaialbe to all players
     
-    The actions here are the complete process, and can be called directly from the agent interface
+    The actions here contain the complete process with checks, and can be called directly from the agent interface
+    
+    ALL METHODS MUST CONTAIN PLAYER OBJECT AS AN ARGUMENT
     """
     logger.debug("called FreeAction class")
+    from game.data.factions import Player
+
+    @staticmethod
+    def context() -> list:
+        """
+        Used by the DecisionContext to create a list, which it will check for validity
+        """
+        subclasses = [
+            getattr(FreeAction, name)
+            for name in dir(FreeAction)
+            if isinstance(getattr(FreeAction, name), type)
+        ]
+        return subclasses
 
     @dataclass
     class RepayLoan:

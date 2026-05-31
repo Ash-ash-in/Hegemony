@@ -13,13 +13,11 @@ The project serves primarily as an educational and entertainment tool for myself
 
 ---
 
-# What I'm up to
-- Seting up scoring. Im just getting the basic point methods set up in the player class
-- I should test how these appear in setup. I'll need a quick and dirty test to set up some fake factions to do that
-- Then I should get some rules working to get points to change
-- And finally call these rules in an set up function in the engine
-- I should carry on with methods that can be inherited by all classes next.
-
+# To Do
+- Remove loan rule layer needs adding
+- Simple Agent needs making
+- AI ActionContext needs making
+- Player ActionContext needs making (text only for now)
 ---
 
 # How it works
