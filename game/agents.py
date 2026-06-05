@@ -9,7 +9,9 @@ class ContextCall:
     """
     Simple class to contain information sent to the agent
     """
+    from game.data.common import GameState
     from game.data.factions import Player
+    gamestate: GameState
     faction: Player # Player object the agent is controlling
     role: str # The type of decision that needs to be made eg. actions, voting
     options: dict # Contains all the actions, whether they are valid, and if not, why not
@@ -27,6 +29,8 @@ class Agent:
     operator: str # Human, Script, NN
     name: str # Unique name for the agent
     from game.data.factions import Player
+    from game.data.common import GameState
+    faction: Player
 
     def extract_options(self, options_dict: dict):
         """
@@ -44,9 +48,18 @@ class Agent:
         """
         Determines the behaviour when the agent is called by the DecisionContext
         """
+        # Validation
+        if call.faction != self.faction:
+            logger.error(f"call containing {call.faction.faction} sent to {self.faction.faction}")
+            raise Exception("Context call Players do not match")
+        
+        # Decision Orchestration
         possible_options = self.extract_options(call.options)
+        print(f"Call options = {possible_options}")
         if call.role == 'Action':
-            answer = self.action(call.faction, possible_options)
+            answer = self.action(call.gamestate, possible_options)
+        elif call.role == 'Election':
+            answer = self.election(call.gamestate, possible_options)
         #       -more calls to role-specific methods as they are created
         else:
             raise Exception('Role not understood from ContextCall')
@@ -54,8 +67,22 @@ class Agent:
         return answer
 
     
-    def action(self, player: Player, options: list):
+    def action(self, gamestate: GameState, options: list):
         #       - Some logic
-        answer = AgentAnswer('Action', [])
+        answer = AgentAnswer('some answer', [])
+        return answer
+    
+    def election(self, gamestate: GameState, options: list):
+        #       - Some logic
+        answer = AgentAnswer('some answer', [])
         return answer
 
+
+class RandomAgent(Agent):
+    
+    def action(self, gamestate, options):
+        import random
+        answer = AgentAnswer(
+            random.choice(options), []
+            )
+        return answer

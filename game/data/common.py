@@ -63,6 +63,5 @@ class Event:
 faction_play_order = ["Working Class", "Middle Class", "Capitalists", "State"]
 faction_instantiate_order = ["Working Class", "Capitalists", "Middle Class", "State"]
 phases = ['Preparation','Action','Production','Elections','Scoring']
-
 # ----------- END ---------- #
 logger.debug("Finished importing data.common")

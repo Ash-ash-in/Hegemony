@@ -163,6 +163,9 @@ class Save:
 @dataclass(frozen=True)
 class Engine:
     from game.data.common import GameState
+    from game.agents import Agent, AgentAnswer
+    from game.data.factions import Player
+    agent_refs: dict
 
     @staticmethod
     def startup(player_count=None, filename=None, overwrite=False):
@@ -220,6 +223,18 @@ class Engine:
 
         return gamestate, player_references
     
+
+    def call_agent(self, role:str, gamestate: GameState, player: Player) -> AgentAnswer:
+        """
+        Builds a context call, sends it to the agent, and receives an answer
+        """
+        from game.agents import ContextCall
+        target = self.agent_refs[player.faction]
+        options = DecisionContext.ActionContext.compile_options(player)
+        call = ContextCall(gamestate, player, role, options)
+        logger.debug(f'ContextCall sent to {target.name}')
+        return target.call(call)
+
     @staticmethod
     def start_position(gamestate: GameState):
         """
@@ -228,23 +243,25 @@ class Engine:
         Only use this in a band new game.
         """
         logger.debug('Called Engine.start_position')
+        return gamestate
     
-    @staticmethod
-    def preparation_phase(gamestate: GameState):
+    def preparation_phase(self, gamestate: GameState):
         """
         Runs the system - driven preparation actions.
         All actions are mandatory.
         """
         logger.debug('Called Engine.preparation_phase')
+        return gamestate
+    
 
-    @staticmethod
-    def action_phase(gamestate: GameState):
+    def action_phase(self, gamestate: GameState):
         """
         Handles the process for calling the DecisionContext and sending commands downstream
         
         WARNING: This modifies GameState's 'turn' and 'active_player' in place.
         WARNING: This replaces the GameState based on ~decisions taken~
         """
+        from game.agents import ContextCall
         logger.debug('Called Engine.action_phase')
 
         for turn_num in range(1,6):
@@ -252,6 +269,19 @@ class Engine:
             for faction_name, player_instance in gamestate.players.items():
                 logger.debug(f"It's the {faction_name}'s turn")
 
+                all_options = DecisionContext.ActionContext.compile_options(player_instance)
+                call = ContextCall(
+                    gamestate,
+                    player_instance,
+                    'Action',
+                    all_options
+                )
+
+                # Call the agent for a reponse
+                answer = self.agent_refs[player_instance.faction].call(call)
+                print(f"Answer: {answer}")
+        return gamestate
+    
                 ### Interaction Layer ###
                 # This section needs to connect to the interfaces of each player.
                 # It needs to check what agent is in control
@@ -283,21 +313,24 @@ class Engine:
     @staticmethod
     def production_phase(gamestate: GameState):
         logger.debug('Called Engine.production_phase')
+        return gamestate
 
     @staticmethod
     def elections_phase(gamestate: GameState):
         logger.debug('Called Engine.elections_phase')
+        return gamestate
 
     @staticmethod
     def scoring_phase(gamestate: GameState):
         logger.debug('Called Engine.scoring_phase')
+        return gamestate
 
     @staticmethod
     def endgame_scoring(gamestate: GameState):
         logger.debug('Called Engine.endgame_scoring')
+        return gamestate
 
-    @staticmethod
-    def flow(gamestate: GameState):
+    def flow(self, gamestate: GameState):
         """
         Main Execution of game. Runs constantly during play.
 
@@ -310,7 +343,7 @@ class Engine:
             logger.info(f'Starting Round {round}')
 
             if round == 0:
-                Engine.start_position(gamestate)
+                self.start_position(gamestate)
                 continue
 
             for phase in phases:
@@ -321,17 +354,17 @@ class Engine:
                 logger.info(f'Begining phase: {phase}')
 
                 if phase == phases[0]:
-                    Engine.preparation_phase(gamestate)
+                    gamestate = self.preparation_phase(gamestate)
                 elif phase == phases[1]:
-                    Engine.action_phase(gamestate)
+                    gamestate = self.action_phase(gamestate)
                 elif phase == phases[2]:
-                    Engine.production_phase(gamestate)
+                    gamestate = self.production_phase(gamestate)
                 elif phase == phases[3]:
-                    Engine.elections_phase(gamestate)
+                    gamestate = self.elections_phase(gamestate)
                 elif phase == phases[4]:
-                    Engine.scoring_phase(gamestate)
+                    gamestate = self.scoring_phase(gamestate)
 
-        Engine.endgame_scoring(gamestate)
+        gamestate = self.endgame_scoring(gamestate)
 
 
 @dataclass(frozen=True)
@@ -367,22 +400,13 @@ class DecisionContext:
             from game.rules import FreeAction
             options = FreeAction.context()
             context = {}
+            print(options)
             for o in options:
+                print(o)
                 instance = o()
                 if hasattr(instance, 'check'):
                     context[o] = instance.check(player)
             logger.debug(f'Compiled ActionContext options for {player.faction}')
             return context
         
-        @staticmethod
-        def call_agent(player: Player) -> AgentAnswer:
-            """
-            Builds a context call, sends it to the agent, and receives an answer
-            """
-            from game.agents import ContextCall
-            target = player.agent[1]
-            role = 'Action'
-            options = DecisionContext.ActionContext.compile_options(player)
-            call = ContextCall(player,role,options)
-            logger.debug(f'ContextCall sent to {player.agent[0]}')
-            return target.call(call)
+

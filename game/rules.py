@@ -222,11 +222,11 @@ class FreeAction:
         """
         Used by the DecisionContext to create a list, which it will check for validity
         """
-        subclasses = [
-            getattr(FreeAction, name)
-            for name in dir(FreeAction)
-            if isinstance(getattr(FreeAction, name), type)
-        ]
+        subclasses = []
+        for attribute in dir(FreeAction):
+            if isinstance(getattr(FreeAction, attribute), type):
+                if hasattr(attribute, 'check'):
+                    subclasses.append(attribute)
         return subclasses
 
     @dataclass
