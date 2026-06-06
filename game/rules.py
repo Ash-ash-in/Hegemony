@@ -222,12 +222,13 @@ class FreeAction:
         """
         Used by the DecisionContext to create a list, which it will check for validity
         """
-        subclasses = []
-        for attribute in dir(FreeAction):
-            if isinstance(getattr(FreeAction, attribute), type):
-                if hasattr(attribute, 'check'):
-                    subclasses.append(attribute)
-        return subclasses
+        import inspect
+        logger.debug("FreeAction.context() called")
+        return [
+            cls for _, cls in inspect.getmembers(FreeAction, inspect.isclass)
+            if hasattr(cls, "check")
+        ]
+    
 
     @dataclass
     class RepayLoan:

@@ -26,8 +26,6 @@ class AgentAnswer:
 
 @dataclass
 class Agent:
-    operator: str # Human, Script, NN
-    name: str # Unique name for the agent
     from game.data.factions import Player
     from game.data.common import GameState
     faction: Player
@@ -48,6 +46,7 @@ class Agent:
         """
         Determines the behaviour when the agent is called by the DecisionContext
         """
+        logger.debug(f"Call made to {self.name}")
         # Validation
         if call.faction != self.faction:
             logger.error(f"call containing {call.faction.faction} sent to {self.faction.faction}")
@@ -55,6 +54,8 @@ class Agent:
         
         # Decision Orchestration
         possible_options = self.extract_options(call.options)
+        if len(possible_options) == 0:
+            return AgentAnswer('None', [])
         print(f"Call options = {possible_options}")
         if call.role == 'Action':
             answer = self.action(call.gamestate, possible_options)
@@ -68,21 +69,33 @@ class Agent:
 
     
     def action(self, gamestate: GameState, options: list):
+        logger.debug("Agent's action process called")
         #       - Some logic
         answer = AgentAnswer('some answer', [])
         return answer
     
     def election(self, gamestate: GameState, options: list):
+        logger.debug("Agent's election process called")
         #       - Some logic
         answer = AgentAnswer('some answer', [])
         return answer
 
-
+@dataclass
 class RandomAgent(Agent):
-    
+    operator = 'Script'
+    name = 'Randy Random'
+
     def action(self, gamestate, options):
+        logger.debug("Agent's action process called")
         import random
         answer = AgentAnswer(
             random.choice(options), []
             )
         return answer
+    
+
+
+
+agent_refs = {
+    'Random': RandomAgent
+}

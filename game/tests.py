@@ -30,8 +30,9 @@ def test_save_and_load():
 
     # Attempt to save without overwrite permission, should raise FileExistsError
     logger.debug("TEST save without overwrite permission throws exception")
-    gamestate, filename = Save.new_game(2, "test_save", overwrite=False)
-    if gamestate == False:
+    try:
+        gamestate, filename = Save.new_game(2, "test_save", overwrite=False)
+    except(FileExistsError):
         logger.info("Overwritng without permission throws exception PASS")
     else:   
         logger.warning("File should have existed but didn't.")

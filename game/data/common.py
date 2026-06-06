@@ -19,7 +19,7 @@ class GameState:
     players: dict = field(default_factory=dict) # players must be the last arg, since it is appended to the dict in load_save
 
     ### Methods ###
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict: # For saving
         return {k.lstrip('_'): v for k, v in vars(self).items()}
 
     

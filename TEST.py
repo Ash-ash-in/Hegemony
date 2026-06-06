@@ -16,19 +16,19 @@ tests.test_save_and_load()
 ### Creating gamestate for normal testing ###
 # -------------------------------------------
 from game.system import Engine
-from game.agents import RandomAgent
 player_count = 3
 agents = {
-    'Working Class': RandomAgent,
-    'Middle Class': RandomAgent,
-    'Capitalists': RandomAgent
+    'Working Class': 'Random',
+    'Middle Class': 'Random',
+    'Capitalists': 'Random'
 }
-engine = Engine(agents)
-LiveGamestate, LiveRefs = engine.startup(player_count, "test_save", overwrite=True)
+engine = Engine()
+LiveGamestate, LivePlayerRefs = engine.startup(agents, player_count, "test_save", overwrite=True)
+engine.setup_agents(agents, LiveGamestate)
 
 ### Player Testing ###
 # --------------------
-tests.test_player_functions(LiveGamestate, LiveRefs)
+tests.test_player_functions(LiveGamestate, LivePlayerRefs)
 
 
 ### Game Flow Testing ###

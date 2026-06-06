@@ -1,5 +1,6 @@
 from dataclasses import asdict, dataclass
 import logging
+from typing import Any
 logger = logging.getLogger(__name__)
 logger.debug("importing game_engine module")
 
@@ -41,7 +42,7 @@ class Save:
             f = open(f"{filepath}.json", "w" if overwrite else "x")
         except FileExistsError:
             logger.error(f"File {filename}.json already exists. Use overwrite=True to overwrite the file.")
-            return False
+            raise FileExistsError(f"File {filename}.json already exists. Use overwrite=True to overwrite the file.")
         
         # Parse various state instances to dicts and write to file
         players_dict = {}
@@ -104,7 +105,7 @@ class Save:
         success = Save.save_game(gamestate, filename=filename, overwrite=overwrite)
         if not success:
             logger.warning('File name already exists, no overwrite permission')
-            return False, False
+            raise Exception('File name already exists')
 
         logger.info(f"New game set up with player_count: {player_count}")
         return gamestate, filename
@@ -128,7 +129,7 @@ class Save:
                 gamestate_str = f.read()
             except FileNotFoundError:
                 logger.error(f"File {filename}.json not found in saves folder.")
-                return
+                raise FileNotFoundError()
             
             # Convert the string back to a GameState object
             save_dict = json.loads(gamestate_str)
@@ -159,16 +160,30 @@ class Save:
             logger.error(f"File {filename}.json not found in saves folder.")
         return
 
-
-@dataclass(frozen=True)
+@dataclass
 class Engine:
     from game.data.common import GameState
     from game.agents import Agent, AgentAnswer
     from game.data.factions import Player
-    agent_refs: dict
+
+    def setup_agents(self, faction_agents: dict, gamestate: GameState) -> None:
+                # Setup agents
+        logger.debug("Setting up agents")
+        from game.agents import agent_refs
+        from game.data.common import faction_play_order
+        agent_references = {}
+        for faction, agent_name in faction_agents.items():
+            if faction not in faction_play_order:
+                raise Exception(f"{faction} not recognised")
+            if agent_name not in agent_refs.keys():
+                raise Exception(f"{agent_name} not recognised")
+            faction_instance = gamestate.players[faction]
+            agent_references[faction] = agent_refs[agent_name](faction_instance)
+        self.agents = agent_references
+        return
 
     @staticmethod
-    def startup(player_count=None, filename=None, overwrite=False):
+    def startup(faction_agents: dict, player_count=None, filename=None, overwrite=False):
         """
         Process for launching a game.
         Handles validity checks and decides whether to load or start new game
@@ -198,7 +213,9 @@ class Engine:
         if player_count:
             if type(player_count) != int:
                 raise Exception('player_count must be an integer')
-            
+        if len(faction_agents) != player_count:
+            raise Exception('Number of agents passed does not match player_count')    
+
         # Load / Create savefile
         logging.debug(f"engine.startup called with player_count: {player_count if player_count else 'None'} and filename: {filename if filename else 'None'}")
         if player_count is None:
@@ -212,6 +229,7 @@ class Engine:
             logging.info(f'Created new save file: {filename}')
 
         from game.data import common
+        logger.debug("Setting up player references")
         player_references = common.PlayerReference(
             common.faction_instantiate_order[:player_count],
             common.faction_play_order,
@@ -267,10 +285,12 @@ class Engine:
         for turn_num in range(1,6):
             logger.debug(f'Starting action phase turn {turn_num}')
             for faction_name, player_instance in gamestate.players.items():
+                if faction_name == 'State' and gamestate.player_count < 4:
+                    continue
                 logger.debug(f"It's the {faction_name}'s turn")
 
                 all_options = DecisionContext.ActionContext.compile_options(player_instance)
-                call = ContextCall(
+                ccall = ContextCall(
                     gamestate,
                     player_instance,
                     'Action',
@@ -278,7 +298,8 @@ class Engine:
                 )
 
                 # Call the agent for a reponse
-                answer = self.agent_refs[player_instance.faction].call(call)
+                agent = self.agents[player_instance.faction]
+                answer = agent.call(ccall)
                 print(f"Answer: {answer}")
         return gamestate
     
@@ -400,9 +421,9 @@ class DecisionContext:
             from game.rules import FreeAction
             options = FreeAction.context()
             context = {}
-            print(options)
+            print(f"Options from FreeAction.context(): {options}")
             for o in options:
-                print(o)
+                logging.debug(f"Checking option {o}")
                 instance = o()
                 if hasattr(instance, 'check'):
                     context[o] = instance.check(player)
