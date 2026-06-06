@@ -258,9 +258,13 @@ class Engine:
         """
         Sets up the board accoring the the rulebook, for a new game
         WARNING this modifies the GameState and Player objects in place!
-        Only use this in a band new game.
+        Only use this in a brand new game.
         """
         logger.debug('Called Engine.start_position')
+        import game.rules as rules
+        for name, inst in gamestate.players.items():
+            if rules.MoneyTransfer.check(None, inst, 120, True)[0]:
+                rules.MoneyTransfer.resolve(None, inst, 120, True)
         return gamestate
     
     def preparation_phase(self, gamestate: GameState):
@@ -283,12 +287,15 @@ class Engine:
         logger.debug('Called Engine.action_phase')
 
         for turn_num in range(1,6):
-            logger.debug(f'Starting action phase turn {turn_num}')
+            logger.info(f'Starting action phase turn {turn_num}')
+            gamestate.turn = turn_num # Update for save file
             for faction_name, player_instance in gamestate.players.items():
                 if faction_name == 'State' and gamestate.player_count < 4:
                     continue
-                logger.debug(f"It's the {faction_name}'s turn")
+                logger.info(f"It's the {faction_name}'s turn")
+                gamestate.active_player = faction_name # Update for save file
 
+                # Build options and prepare to call agent
                 all_options = DecisionContext.ActionContext.compile_options(player_instance)
                 ccall = ContextCall(
                     gamestate,
@@ -300,7 +307,8 @@ class Engine:
                 # Call the agent for a reponse
                 agent = self.agents[player_instance.faction]
                 answer = agent.call(ccall)
-                print(f"Answer: {answer}")
+                logging.debug(f"Answer: {answer}")
+
         return gamestate
     
                 ### Interaction Layer ###
@@ -360,8 +368,9 @@ class Engine:
         logger.debug('Called Engine.flow')
         from game.data.common import phases
 
-        for round in range(0,5):
+        for round in range(0,6):
             logger.info(f'Starting Round {round}')
+            gamestate.round = round
 
             if round == 0:
                 self.start_position(gamestate)
@@ -421,9 +430,12 @@ class DecisionContext:
             from game.rules import FreeAction
             options = FreeAction.context()
             context = {}
-            print(f"Options from FreeAction.context(): {options}")
+            logging.debug(f"Options from FreeAction.context(): {options}")
             for o in options:
                 logging.debug(f"Checking option {o}")
+                if o == 'None':
+                    context[o] = (True,'')
+                    continue
                 instance = o()
                 if hasattr(instance, 'check'):
                     context[o] = instance.check(player)

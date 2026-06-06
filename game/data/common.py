@@ -15,7 +15,7 @@ class GameState:
     round: int = 0
     phase: str = 'Preparation'
     turn: int = 0
-    active_player: int = 0
+    active_player: str = 'Working Class'
     players: dict = field(default_factory=dict) # players must be the last arg, since it is appended to the dict in load_save
 
     ### Methods ###

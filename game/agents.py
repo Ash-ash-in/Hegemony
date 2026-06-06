@@ -56,7 +56,7 @@ class Agent:
         possible_options = self.extract_options(call.options)
         if len(possible_options) == 0:
             return AgentAnswer('None', [])
-        print(f"Call options = {possible_options}")
+        logging.debug(f"Call options = {possible_options}")
         if call.role == 'Action':
             answer = self.action(call.gamestate, possible_options)
         elif call.role == 'Election':

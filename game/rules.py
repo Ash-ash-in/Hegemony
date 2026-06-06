@@ -227,7 +227,7 @@ class FreeAction:
         return [
             cls for _, cls in inspect.getmembers(FreeAction, inspect.isclass)
             if hasattr(cls, "check")
-        ]
+        ] + ['None']
     
 
     @dataclass
