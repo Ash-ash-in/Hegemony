@@ -165,9 +165,14 @@ class Engine:
     from game.data.common import GameState
     from game.agents import Agent, AgentAnswer
     from game.data.factions import Player
+    logger.debug("Calling engine class")
+    agents = {}
 
     def setup_agents(self, faction_agents: dict, gamestate: GameState) -> None:
-                # Setup agents
+        """
+        Creates the agent instances, according to those defined in the dictionary passed.
+        This modifies the engine in place
+        """
         logger.debug("Setting up agents")
         from game.agents import agent_refs
         from game.data.common import faction_play_order
@@ -240,18 +245,7 @@ class Engine:
         )
 
         return gamestate, player_references
-    
 
-    def call_agent(self, role:str, gamestate: GameState, player: Player) -> AgentAnswer:
-        """
-        Builds a context call, sends it to the agent, and receives an answer
-        """
-        from game.agents import ContextCall
-        target = self.agent_refs[player.faction]
-        options = DecisionContext.ActionContext.compile_options(player)
-        call = ContextCall(gamestate, player, role, options)
-        logger.debug(f'ContextCall sent to {target.name}')
-        return target.call(call)
 
     @staticmethod
     def start_position(gamestate: GameState):
@@ -280,11 +274,33 @@ class Engine:
         """
         Handles the process for calling the DecisionContext and sending commands downstream
         
-        WARNING: This modifies GameState's 'turn' and 'active_player' in place.
+        WARNING: This modifies GameState's 'turn', 'active_player', and 'free_action_taken' in place.
         WARNING: This replaces the GameState based on ~decisions taken~
         """
-        from game.agents import ContextCall
+        from game.agents import ContextCall, Agent
+        from game.rules import CheckResponse
         logger.debug('Called Engine.action_phase')
+
+        def call_agent(agent: Agent, allowed_main: bool, allowed_free: bool, gamestate, player):
+            """
+            Builds a context call for an action, calls the agent, and returns the response
+            """
+            logger.debug("Engine.action_phase(call_agent()) called")
+
+            # Build options and prepare to call agent
+            all_options = DecisionContext.ActionContext.compile_options(player, allowed_free, allowed_main)
+            call = ContextCall(
+                gamestate,
+                player,
+                'Action',
+                all_options
+            )
+
+            # Call the agent for a reponse
+            answer = agent.call(call)
+            logging.debug(f"Answer: {answer}")
+            return answer
+
 
         for turn_num in range(1,6):
             logger.info(f'Starting action phase turn {turn_num}')
@@ -295,19 +311,27 @@ class Engine:
                 logger.info(f"It's the {faction_name}'s turn")
                 gamestate.active_player = faction_name # Update for save file
 
-                # Build options and prepare to call agent
-                all_options = DecisionContext.ActionContext.compile_options(player_instance)
-                ccall = ContextCall(
-                    gamestate,
-                    player_instance,
-                    'Action',
-                    all_options
-                )
-
-                # Call the agent for a reponse
+                # Call the agent
                 agent = self.agents[player_instance.faction]
-                answer = agent.call(ccall)
-                logging.debug(f"Answer: {answer}")
+                answer = call_agent(agent,True, True, gamestate, player_instance)
+                logger.error(f"Agent answer: {answer}")
+
+                # Enact the response
+                from game.rules import MainAction
+                from game.rules import FreeAction
+                if answer.name == 'None':
+                    raise Exception('Order "None" response given before any action taken')
+                answer.order.resolve() # FIND A WAY TO CALL THE METHOD             
+
+                # Check for a free action following a main
+                if answer.primary_response == True:
+                    answer = call_agent(agent, False, True, gamestate, player_instance)
+                    answer.order.resolve() # FIND A WAY TO CALL THE METHOD             
+                
+                # Otherwise demand a main action response
+                elif answer.primary_response == False:
+                    answer = call_agent(agent, True, False, gamestate, player_instance)
+                    answer.order.resolve() # FIND A WAY TO CALL THE METHOD             
 
         return gamestate
     
@@ -417,28 +441,51 @@ class DecisionContext:
         logger.debug('Called ActionContext')
         from game.data.factions import Player
         from game.agents import AgentAnswer
+        from game.data.common import GameState
 
         @staticmethod
-        def compile_options(player: Player) -> dict:
+        def compile_options(player: Player, allowed_free: bool, allowed_main: bool) -> dict:
             """
             Takes the list of attributes from the Action classes
             Looks for a 'check' method (which all actions should have)
             Runs the check and records the result
 
-            The result is a dict - 
+            The result is a dict - string: (class, CheckResponse)
             """
-            from game.rules import FreeAction
-            options = FreeAction.context()
+            logger.debug("called DecisionContext.ActionContext.compile_options()")
+            from game.rules import FreeAction, MainAction, CheckResponse
+
             context = {}
-            logging.debug(f"Options from FreeAction.context(): {options}")
-            for o in options:
-                logging.debug(f"Checking option {o}")
-                if o == 'None':
-                    context[o] = (True,'')
-                    continue
-                instance = o()
-                if hasattr(instance, 'check'):
-                    context[o] = instance.check(player)
+
+            # Compile free actions from rules
+            if allowed_free:
+                free_options = FreeAction.context() 
+                logging.debug(f"Options from FreeAction.context(): {free_options}")
+                for name, cls in free_options:
+                    logging.debug(f"Checking option: {name}")
+                    instance = cls()
+                    if hasattr(instance, 'check'):
+                        context[name] = (cls, instance.check(player))
+                    else:
+                        raise Exception(f"class without 'check' method compiled to ActionContext ({name})")
+                
+                if allowed_main: # Create a default option to pass regardless
+                    context['None'] = (None,CheckResponse(False, "", "Free", []))
+                else: # Create a way to not perform anything if necessary
+                    context['None'] = (None,CheckResponse(True, "", "Free", []))
+
+            # Compile main actions
+            if allowed_main:
+                main_options = MainAction.context()
+                logging.debug(f"Options from MainAction.context(): {main_options}")
+                for name, cls in main_options:
+                    logging.debug(f"Checking option: {name}")
+                    instance = cls()
+                    if hasattr(instance, 'check'):
+                        context[name] = (cls, instance.check(player))
+                    else:
+                        raise Exception(f"class without 'check' method compiled to ActionContext ({name})")
+                
             logger.debug(f'Compiled ActionContext options for {player.faction}')
             return context
         

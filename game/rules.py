@@ -204,6 +204,17 @@ class MoneyTransfer:
 
 
 ############################# Action Layer ########################################
+@dataclass
+class CheckResponse:
+    """
+    Contains all the information that would allow an agent to successfully complete this action
+    
+    Returns a dict with all the key information about the action.
+    """
+    validity: bool
+    tooltip: str
+    actiontype: str
+    params: list
 
 @dataclass    
 class FreeAction:
@@ -218,16 +229,20 @@ class FreeAction:
     from game.data.factions import Player
 
     @staticmethod
-    def context() -> list:
+    def context() -> dict:
         """
         Used by the DecisionContext to create a list, which it will check for validity
+
+        Returns dict of name:class
         """
         import inspect
         logger.debug("FreeAction.context() called")
-        return [
-            cls for _, cls in inspect.getmembers(FreeAction, inspect.isclass)
-            if hasattr(cls, "check")
-        ] + ['None']
+
+        options_dict = {}
+        for name, cls in inspect.getmembers(FreeAction, inspect.isclass):
+            if hasattr(cls, "check"):
+                options_dict[name] = cls
+        return options_dict
     
 
     @dataclass
@@ -241,18 +256,19 @@ class FreeAction:
 
             # Check flow
             if player.loans <= 0:
-                return False, 'Player has no loans'
+                return CheckResponse(False, 'Player has no loans','Free',[])
             if player.money < 50:
-                return False, 'Not enough money'
-            return True, ''
+                return CheckResponse(False, 'Not enough money', 'Free', [])
+            
+            return CheckResponse(True, '', 'Free', [])
         
         @staticmethod
         def resolve(player: Player):
             logger.debug('ReplayLoan resolve called')
 
             # Confirm validity
-            valid,_ = FreeAction.RepayLoan.check(player)
-            if not valid:
+            check = FreeAction.RepayLoan.check(player)
+            if not check.validity:
                 raise Exception("Invalid call to resolve loan repayment. Ensure validity check is being called prior and is working.")
 
             # Execute
@@ -266,8 +282,22 @@ class FreeAction:
             changes.append(f"{player.faction} loans: {player.loans}")
             return ActionResult(Outcome.OK, log, changes)
 
+class MainAction:
+    logger.debug("called MainAction class")
+    from game.data.factions import Player
 
-
+    @staticmethod
+    def context() -> dict:
+        """
+        Used by the DecisionContext to create a list, which it will check for validity
+        """
+        import inspect
+        logger.debug("MainAction.context() called")
+        options_dict = {}
+        for name, cls in inspect.getmembers(FreeAction, inspect.isclass):
+            if hasattr(cls, "check"):
+                options_dict[name] = cls
+        return options_dict
 
 
 

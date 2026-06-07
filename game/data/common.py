@@ -16,6 +16,7 @@ class GameState:
     phase: str = 'Preparation'
     turn: int = 0
     active_player: str = 'Working Class'
+    free_action_taken: bool = False
     players: dict = field(default_factory=dict) # players must be the last arg, since it is appended to the dict in load_save
 
     ### Methods ###
@@ -63,5 +64,6 @@ class Event:
 faction_play_order = ["Working Class", "Middle Class", "Capitalists", "State"]
 faction_instantiate_order = ["Working Class", "Capitalists", "Middle Class", "State"]
 phases = ['Preparation','Action','Production','Elections','Scoring']
+
 # ----------- END ---------- #
 logger.debug("Finished importing data.common")

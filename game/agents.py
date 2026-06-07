@@ -21,7 +21,9 @@ class AgentAnswer:
     """
     Simple class to contain information sent from an agent to the game engine
     """
-    action: str # MAYBE?? or some type of object/instance?
+    name: str # The name of the instruction for human comprehension
+    order: classmethod | None # The direct object to interact with
+    primary_response: bool # Is this response expected to end the turn?
     args: list # list of all arguments to be passed when the game calls the engine
 
 @dataclass
@@ -29,6 +31,7 @@ class Agent:
     from game.data.factions import Player
     from game.data.common import GameState
     faction: Player
+    name = 'Template Agent'
 
     def extract_options(self, options_dict: dict):
         """
@@ -37,9 +40,11 @@ class Agent:
         """
         logger.debug('Extracting options from ContextCall')
         possible = []
-        for action_class, check_result in options_dict.items():
-            if check_result[0] == True:
-                possible.append(action_class)
+        for name, tpl in options_dict.items():
+            cls = tpl[0]
+            CR = tpl[1]
+            if CR.validity == True:
+                possible.append((name, cls, CR))
         return possible
 
     def call(self, call: ContextCall):
@@ -47,6 +52,7 @@ class Agent:
         Determines the behaviour when the agent is called by the DecisionContext
         """
         logger.debug(f"Call made to {self.name}")
+
         # Validation
         if call.faction != self.faction:
             logger.error(f"call containing {call.faction.faction} sent to {self.faction.faction}")
@@ -55,8 +61,9 @@ class Agent:
         # Decision Orchestration
         possible_options = self.extract_options(call.options)
         if len(possible_options) == 0:
-            return AgentAnswer('None', [])
+            raise Exception('No response from agent is possible')
         logging.debug(f"Call options = {possible_options}")
+
         if call.role == 'Action':
             answer = self.action(call.gamestate, possible_options)
         elif call.role == 'Election':
@@ -71,13 +78,13 @@ class Agent:
     def action(self, gamestate: GameState, options: list):
         logger.debug("Agent's action process called")
         #       - Some logic
-        answer = AgentAnswer('some answer', [])
+        answer = AgentAnswer(options[0], options[1], True, [])
         return answer
     
     def election(self, gamestate: GameState, options: list):
         logger.debug("Agent's election process called")
         #       - Some logic
-        answer = AgentAnswer('some answer', [])
+        answer = AgentAnswer(options[0], options[1], True, [])
         return answer
 
 @dataclass
@@ -88,8 +95,17 @@ class RandomAgent(Agent):
     def action(self, gamestate, options):
         logger.debug("Agent's action process called")
         import random
+        action_choice = random.choice(options)
+        logger.error(f"ACTION_CHOICE = {action_choice}")
+        if options[-1].actiontype == 'Free':
+            primary = False
+        else:
+            primary = True
         answer = AgentAnswer(
-            random.choice(options), []
+            action_choice[0],
+            action_choice[1],
+            primary, 
+            []
             )
         return answer
     
