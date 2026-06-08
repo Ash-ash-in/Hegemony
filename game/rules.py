@@ -12,6 +12,18 @@ class Outcome(Enum):
     LOAN = auto()
 
 @dataclass
+class CheckResponse:
+    """
+    Contains all the information that would allow an agent to successfully complete this action
+    
+    Returns a dict with all the key information about the action.
+    """
+    validity: bool
+    tooltip: str
+    actiontype: str
+    params: list
+
+@dataclass
 class ActionResult:
     """
     Parent class for the result of action rules
@@ -24,7 +36,6 @@ class ActionResult:
         print(self.log)
         return
     
-
 
 ############################# Rule Layer ####################################
 @dataclass
@@ -56,8 +67,8 @@ class PointAssign:
 
         # Basic check flow
         if common.faction_instantiate_order.index(player.faction) > player_count - 1:
-            return False, 'Only active players in the game can receive points'
-        return True, ''
+            return CheckResponse(False, 'Only active players in the game can receive points', 'Intermediate', [])
+        return CheckResponse(True, '', 'Intermediate', [])
 
     @staticmethod
     def resolve(player: Player, amount: int):
@@ -67,8 +78,8 @@ class PointAssign:
         """
         logger.debug("PointAssign resolve called")
         # Confirm validity
-        valid,_ = PointAssign.check(player, amount)
-        if not valid:
+        check = PointAssign.check(player, amount)
+        if not check.validity:
             raise Exception("Invalid call to resolve transfer. Ensure validity check is being called prior and is working.")
 
         # Execute
@@ -89,7 +100,7 @@ class MoneyTransfer:
     from game.data.factions import Player
 
     @staticmethod
-    def check(sender: Player | None, receiver: Player | None, amount: int, mandatory: bool) -> tuple[bool,str]:
+    def check(sender: Player | None, receiver: Player | None, amount: int, mandatory: bool) -> CheckResponse:
         """
         Determines whether a transaction is possible. 
         This should ALWAYS be called before resolving.
@@ -110,21 +121,21 @@ class MoneyTransfer:
 
         # Basic check flow
         if amount <= 0:
-            return False, "Amount must be positive"
+            return CheckResponse(False, "Amount must be positive", "Intermediate", [])
         if (sender is None) & (receiver is None):
-            return False, 'Cannot tranfer from None to None'
+            return CheckResponse(False, 'Cannot tranfer from None to None', 'Intermediate', [])
         if sender is receiver:
-            return False, "Cannot transfer to yourself"
+            return CheckResponse(False, "Cannot transfer to yourself", 'Intermediate', [])
         if sender is None:
-            return True, ""
+            return CheckResponse(True, "", 'Intermediate', [])
         if sender.money >= amount:
-            return True, ""
+            return CheckResponse(True, "", "Intermediate", [])
         
         # For senders with insufficient funds:
         shortfall = sender.money - amount
         if not mandatory:
-            return False, f"{sender.faction} cannot afford transaction. Needs {shortfall} more"
-        return True, ""
+            return CheckResponse(False, f"{sender.faction} cannot afford transaction. Needs {shortfall} more", "Intermediate", [])
+        return CheckResponse(True, "", "Intermediate", [])
     
     @staticmethod
     def resolve(sender: Player | None, receiver: Player | None, amount: int, mandatory: bool) -> ActionResult:
@@ -135,8 +146,8 @@ class MoneyTransfer:
         logger.debug("MoneyTransfer resolve called")
 
         # Confirm validity
-        valid,_ = MoneyTransfer.check(sender,receiver,amount,mandatory)
-        if not valid:
+        check = MoneyTransfer.check(sender,receiver,amount,mandatory)
+        if not check.validity:
             raise Exception("Invalid call to resolve transfer. Ensure validity check is being called prior and is working.")
         
         # Setup generic response
@@ -148,6 +159,8 @@ class MoneyTransfer:
 
         # Payment from bank - always successful
         if sender is None:
+            if receiver is None:
+                raise Exception("Sender and receiver both None")
             receiver._add_money(amount)
             changes.append(f"{receiver.faction} received {receiver.money} Vardis")
             changes.append(f"{receiver.faction} money: {receiver.money}")
@@ -193,8 +206,8 @@ class MoneyTransfer:
             changes.append(f"{receiver.faction} money: {receiver.money}")
             logger.debug(f"added {amount} money to {receiver}")
             log = (
-                f"{sender.faction} paid {amount} to {receiver.faction}"
-                + f"{sender.faction} took {loan_count} loan{'s' if loan_count > 1 else ''}"
+                f"{sender.faction} paid {amount} to {receiver.faction}."
+                + f" {sender.faction} took {loan_count} loan{'s' if loan_count > 1 else ''}."
             )
             return ActionResult(
                 outcome = Outcome.LOAN if loan_needed else Outcome.OK,
@@ -204,17 +217,6 @@ class MoneyTransfer:
 
 
 ############################# Action Layer ########################################
-@dataclass
-class CheckResponse:
-    """
-    Contains all the information that would allow an agent to successfully complete this action
-    
-    Returns a dict with all the key information about the action.
-    """
-    validity: bool
-    tooltip: str
-    actiontype: str
-    params: list
 
 @dataclass    
 class FreeAction:
@@ -223,7 +225,7 @@ class FreeAction:
     
     The actions here contain the complete process with checks, and can be called directly from the agent interface
     
-    ALL METHODS MUST CONTAIN PLAYER OBJECT AS AN ARGUMENT
+    ALL METHODS OF CONTAINED CLASSES MUST CONTAIN PLAYER OBJECT AS AN ARGUMENT
     """
     logger.debug("called FreeAction class")
     from game.data.factions import Player
@@ -299,6 +301,59 @@ class MainAction:
                 options_dict[name] = cls
         return options_dict
 
+    @dataclass
+    class TestAction1:
+        """
+        Sends 50 quid to the player. Don't forget to remove before training begins!
+        """
+        from game.data.factions import Player
 
+        @staticmethod
+        def check(player: Player):
+            logger.debug('Called MainAction.TestAction1.check()')
+            check = MoneyTransfer.check(None, player, 30, False)
+            if not check.validity:
+                return CheckResponse(False, f"Money check failed: {check.tooltip}", "Main", [])
+            return CheckResponse(True, '', 'Main', [])
+        
+        @staticmethod
+        def resolve(player: Player):
+            logger.debug('Called MainAction.TestAction1.resolve()')
+
+            # Validity
+            check = MainAction.TestAction1.check(player)
+            if not check.validity:
+                raise Exception('Check failed when calling resolve')
+            
+            # Resolve
+            result = MoneyTransfer.resolve(None, player, 30, False)
+            return ActionResult(Outcome.OK, result.log, result.state_changes)
+
+    @dataclass
+    class TestAction2:
+        """
+        Adds a loan to a player. Don't forget to remove before training begins!
+        """
+        from game.data.factions import Player
+
+        @staticmethod
+        def check(player: Player):
+            logger.debug('Called MainAction.TestAction2.check()')
+            return CheckResponse(True, '', 'Main', [])
+        
+        @staticmethod
+        def resolve(player: Player):
+            logger.debug('Called MainAction.TestAction2.resolve()')
+
+            # Validity
+            check = MainAction.TestAction2.check(player)
+            if not check.validity:
+                raise Exception('Check failed when calling resolve')
+            
+            # Resolve
+            player._take_loan()
+            log = f"{player.faction} took a loan."
+            state_changes = [f"{player.faction} took a loan."]
+            return ActionResult(Outcome.OK, log, state_changes)
 
 logger.debug("Finished importing rules.rules module")

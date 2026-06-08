@@ -104,31 +104,30 @@ def test_player_functions(gamestate, player_references):
 
     ### Victory Points ###
 
-
     ### Money transfer validity process ###
     # Impossible + non-mandatory = forbidden
-    result = rules.MoneyTransfer.check(player_references.working_class, player_references.capitalists, 10, False)[0]
-    if result:
+    check = rules.MoneyTransfer.check(player_references.working_class, player_references.capitalists, 10, False)
+    if check.validity:
         raise Exception('Validity check failed to prevent impossible transfer')
     logger.info("Impossible + non-mandatory: PASS")
     # Impossible + mandatory = allowed
-    result = rules.MoneyTransfer.check(player_references.working_class, player_references.capitalists, 10, True)[0]
-    if not result:
+    check = rules.MoneyTransfer.check(player_references.working_class, player_references.capitalists, 10, True)
+    if not check.validity:
         raise Exception('Validity check prevented a mandatory transfer')
     logger.info("Impossible + mandatory: PASS")
     # From bank = allowed
-    result = rules.MoneyTransfer.check(None, player_references.capitalists, 10, True)[0]
-    if not result:
+    check = rules.MoneyTransfer.check(None, player_references.capitalists, 10, True)
+    if not check.validity:
         raise Exception('Validity check prevented a transfer from the bank')
     logger.info("From bank: PASS")
     # To bank, impossible, mandatory = allowed
-    result = rules.MoneyTransfer.check(player_references.capitalists, None, 10, True)[0]
-    if not result:
+    check = rules.MoneyTransfer.check(player_references.capitalists, None, 10, True)
+    if not check.validity:
         raise Exception('Validity check prevented a mandatory transfer to the bank')
     logger.info("To bank, impossible, mandatory: PASS")
     # To bank, impossible, not mandatory = forbidden
-    result = rules.MoneyTransfer.check(player_references.capitalists, None, 10, False)[0]
-    if result:
+    check = rules.MoneyTransfer.check(player_references.capitalists, None, 10, False)
+    if check.validity:
         raise Exception('Validity check allowed a non-mandatory impossible transfer to the bank')
     logger.info("To bank, impossible, non-mandatory: PASS")
     logger.info("All transfer validity checks passed")

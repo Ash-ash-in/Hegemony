@@ -45,6 +45,7 @@ class Agent:
             CR = tpl[1]
             if CR.validity == True:
                 possible.append((name, cls, CR))
+        logger.debug(f"Extracted options: {possible}")
         return possible
 
     def call(self, call: ContextCall):
@@ -52,6 +53,7 @@ class Agent:
         Determines the behaviour when the agent is called by the DecisionContext
         """
         logger.debug(f"Call made to {self.name}")
+        logger.debug(f"Call options: {call.options}")
 
         # Validation
         if call.faction != self.faction:

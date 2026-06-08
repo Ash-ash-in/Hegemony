@@ -256,8 +256,9 @@ class Engine:
         """
         logger.debug('Called Engine.start_position')
         import game.rules as rules
+        # TEMPORARY give everyone 120
         for name, inst in gamestate.players.items():
-            if rules.MoneyTransfer.check(None, inst, 120, True)[0]:
+            if rules.MoneyTransfer.check(None, inst, 120, True).validity:
                 rules.MoneyTransfer.resolve(None, inst, 120, True)
         return gamestate
     
@@ -277,10 +278,11 @@ class Engine:
         WARNING: This modifies GameState's 'turn', 'active_player', and 'free_action_taken' in place.
         WARNING: This replaces the GameState based on ~decisions taken~
         """
-        from game.agents import ContextCall, Agent
+        from game.agents import ContextCall, AgentAnswer, Agent
         from game.rules import CheckResponse
         logger.debug('Called Engine.action_phase')
 
+        # Setup call process in one function for reusability
         def call_agent(agent: Agent, allowed_main: bool, allowed_free: bool, gamestate, player):
             """
             Builds a context call for an action, calls the agent, and returns the response
@@ -301,6 +303,7 @@ class Engine:
             logging.debug(f"Answer: {answer}")
             return answer
 
+        ### Start the Action Phase ###
 
         for turn_num in range(1,6):
             logger.info(f'Starting action phase turn {turn_num}')
@@ -313,55 +316,30 @@ class Engine:
 
                 # Call the agent
                 agent = self.agents[player_instance.faction]
-                answer = call_agent(agent,True, True, gamestate, player_instance)
+                answer = call_agent(agent, True, True, gamestate, player_instance)
                 logger.error(f"Agent answer: {answer}")
 
                 # Enact the response
-                from game.rules import MainAction
-                from game.rules import FreeAction
-                if answer.name == 'None':
+                if answer.order is None:
                     raise Exception('Order "None" response given before any action taken')
-                answer.order.resolve() # FIND A WAY TO CALL THE METHOD             
+                answer.order(answer.args)      
 
                 # Check for a free action following a main
                 if answer.primary_response == True:
                     answer = call_agent(agent, False, True, gamestate, player_instance)
-                    answer.order.resolve() # FIND A WAY TO CALL THE METHOD             
+                    if answer.order is None:
+                        continue
+                    answer.order(answer.args)          
                 
                 # Otherwise demand a main action response
                 elif answer.primary_response == False:
                     answer = call_agent(agent, True, False, gamestate, player_instance)
-                    answer.order.resolve() # FIND A WAY TO CALL THE METHOD             
+                    if answer.order is None:
+                        raise Exception('Main action required, None cannot be passed')
+                    else:
+                        answer.order(answer.args)
 
         return gamestate
-    
-                ### Interaction Layer ###
-                # This section needs to connect to the interfaces of each player.
-                # It needs to check what agent is in control
-                # Call their layer
-                # And pass the relevent information to it
-
-                ## Development
-                ##  - Player
-                #       Start with a text input
-                #       Display the key metrics for that player only
-                #       Display options
-                #       Take the input and enact that choice
-                #
-                ##  - AI
-                #       Pass container with options
-                #       Receive instruction back
-                #
-                ## Live
-                ##  - Player
-                #       Display everything in UI
-                #       There will be an action screen that always passes relevent information
-                #       Elections etc will need their own screen
-                #       Pass options for display, and impossible ones for explanations why
-                #       Return user input and enact
-                #
-                #   - AI
-                #       Who knows
 
     @staticmethod
     def production_phase(gamestate: GameState):
@@ -461,7 +439,7 @@ class DecisionContext:
             if allowed_free:
                 free_options = FreeAction.context() 
                 logging.debug(f"Options from FreeAction.context(): {free_options}")
-                for name, cls in free_options:
+                for name, cls in free_options.items():
                     logging.debug(f"Checking option: {name}")
                     instance = cls()
                     if hasattr(instance, 'check'):
@@ -478,7 +456,7 @@ class DecisionContext:
             if allowed_main:
                 main_options = MainAction.context()
                 logging.debug(f"Options from MainAction.context(): {main_options}")
-                for name, cls in main_options:
+                for name, cls in main_options.items():
                     logging.debug(f"Checking option: {name}")
                     instance = cls()
                     if hasattr(instance, 'check'):
