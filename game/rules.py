@@ -221,17 +221,19 @@ class MoneyTransfer:
 @dataclass    
 class FreeAction:
     """
-    Lists the free actions avaialbe to all players
-    
-    The actions here contain the complete process with checks, and can be called directly from the agent interface
-    
-    ALL METHODS OF CONTAINED CLASSES MUST CONTAIN PLAYER OBJECT AS AN ARGUMENT
+    Used by the DecisionContext to create a list of possible actions, which it will check for validity
+
+    Args
+        player: Player instance
+
+    Returns
+        dict (name: (classmethod, checkresponse)
     """
     logger.debug("called FreeAction class")
     from game.data.factions import Player
 
     @staticmethod
-    def context() -> dict:
+    def context(player: Player) -> dict:
         """
         Used by the DecisionContext to create a list, which it will check for validity
 
@@ -241,9 +243,9 @@ class FreeAction:
         logger.debug("FreeAction.context() called")
 
         options_dict = {}
-        for name, cls in inspect.getmembers(FreeAction, inspect.isclass):
-            if hasattr(cls, "check"):
-                options_dict[name] = cls
+        for name, clsmthd in inspect.getmembers(FreeAction, inspect.isclass):
+            if hasattr(clsmthd, "check"):
+                options_dict[name] = (clsmthd, clsmthd.check(player))
         return options_dict
     
 
@@ -289,16 +291,23 @@ class MainAction:
     from game.data.factions import Player
 
     @staticmethod
-    def context() -> dict:
+    def context(player: Player) -> dict:
         """
-        Used by the DecisionContext to create a list, which it will check for validity
+        Used by the DecisionContext to create a list of possible actions, which it will check for validity
+
+        Args
+            player: Player instance
+
+        Returns
+            dict (name: (classmethod, checkresponse)
         """
         import inspect
         logger.debug("MainAction.context() called")
+
         options_dict = {}
-        for name, cls in inspect.getmembers(FreeAction, inspect.isclass):
-            if hasattr(cls, "check"):
-                options_dict[name] = cls
+        for name, clsmthd in inspect.getmembers(MainAction, inspect.isclass):
+            if hasattr(clsmthd, "check"):
+                options_dict[name] = (clsmthd, clsmthd.check(player))
         return options_dict
 
     @dataclass

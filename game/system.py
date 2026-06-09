@@ -292,10 +292,10 @@ class Engine:
             # Build options and prepare to call agent
             all_options = DecisionContext.ActionContext.compile_options(player, allowed_free, allowed_main)
             call = ContextCall(
-                gamestate,
-                player,
-                'Action',
-                all_options
+                gamestate,      # Instance
+                player,         # Instance
+                'Action',       # String
+                all_options     # Dictionary - str: class
             )
 
             # Call the agent for a reponse
@@ -317,7 +317,7 @@ class Engine:
                 # Call the agent
                 agent = self.agents[player_instance.faction]
                 answer = call_agent(agent, True, True, gamestate, player_instance)
-                logger.error(f"Agent answer: {answer}")
+                logger.debug(f"Agent answer: {answer}")
 
                 # Enact the response
                 if answer.order is None:
@@ -428,7 +428,7 @@ class DecisionContext:
             Looks for a 'check' method (which all actions should have)
             Runs the check and records the result
 
-            The result is a dict - string: (class, CheckResponse)
+            The result is a dict - string: (classmethod, CheckResponse)
             """
             logger.debug("called DecisionContext.ActionContext.compile_options()")
             from game.rules import FreeAction, MainAction, CheckResponse
@@ -437,16 +437,10 @@ class DecisionContext:
 
             # Compile free actions from rules
             if allowed_free:
-                free_options = FreeAction.context() 
+                free_options = FreeAction.context(player)
+                context = {**context, **free_options}
                 logging.debug(f"Options from FreeAction.context(): {free_options}")
-                for name, cls in free_options.items():
-                    logging.debug(f"Checking option: {name}")
-                    instance = cls()
-                    if hasattr(instance, 'check'):
-                        context[name] = (cls, instance.check(player))
-                    else:
-                        raise Exception(f"class without 'check' method compiled to ActionContext ({name})")
-                
+
                 if allowed_main: # Create a default option to pass regardless
                     context['None'] = (None,CheckResponse(False, "", "Free", []))
                 else: # Create a way to not perform anything if necessary
@@ -454,16 +448,10 @@ class DecisionContext:
 
             # Compile main actions
             if allowed_main:
-                main_options = MainAction.context()
+                main_options = MainAction.context(player)
+                context = {**context, **main_options}
                 logging.debug(f"Options from MainAction.context(): {main_options}")
-                for name, cls in main_options.items():
-                    logging.debug(f"Checking option: {name}")
-                    instance = cls()
-                    if hasattr(instance, 'check'):
-                        context[name] = (cls, instance.check(player))
-                    else:
-                        raise Exception(f"class without 'check' method compiled to ActionContext ({name})")
-                
+
             logger.debug(f'Compiled ActionContext options for {player.faction}')
             return context
         

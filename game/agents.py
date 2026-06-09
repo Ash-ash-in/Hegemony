@@ -8,6 +8,12 @@ from dataclasses import dataclass
 class ContextCall:
     """
     Simple class to contain information sent to the agent
+
+    Attributes
+        gamestate: GameState
+        faction: Player
+        role: str
+        options: dict of all actions, regardless of validity (name: (classmethod, checkresult))
     """
     from game.data.common import GameState
     from game.data.factions import Player
@@ -20,6 +26,12 @@ class ContextCall:
 class AgentAnswer:
     """
     Simple class to contain information sent from an agent to the game engine
+    
+    Attributes
+        name: str
+        order: classmethod
+        primary_response: bool
+        args: list
     """
     name: str # The name of the instruction for human comprehension
     order: classmethod | None # The direct object to interact with
@@ -33,22 +45,22 @@ class Agent:
     faction: Player
     name = 'Template Agent'
 
-    def extract_options(self, options_dict: dict):
+    def extract_options(self, options_dict: dict) -> dict:
         """
         reads the options dictionary passed in the ContextCall
         and splits it into a list of possible actions
         """
         logger.debug('Extracting options from ContextCall')
-        possible = []
+        possible = {}
         for name, tpl in options_dict.items():
-            cls = tpl[0]
-            CR = tpl[1]
-            if CR.validity == True:
-                possible.append((name, cls, CR))
+            method = tpl[0]
+            check = tpl[1]
+            if check.validity:
+                possible[name] = (method, check)
         logger.debug(f"Extracted options: {possible}")
         return possible
 
-    def call(self, call: ContextCall):
+    def call(self, call: ContextCall) -> AgentAnswer:
         """
         Determines the behaviour when the agent is called by the DecisionContext
         """
@@ -57,12 +69,12 @@ class Agent:
 
         # Validation
         if call.faction != self.faction:
-            logger.error(f"call containing {call.faction.faction} sent to {self.faction.faction}")
+            logger.error(f"call meant for {call.faction.faction} sent to {self.faction.faction}")
             raise Exception("Context call Players do not match")
         
         # Decision Orchestration
         possible_options = self.extract_options(call.options)
-        if len(possible_options) == 0:
+        if len(possible_options.keys()) == 0:
             raise Exception('No response from agent is possible')
         logging.debug(f"Call options = {possible_options}")
 
@@ -73,17 +85,21 @@ class Agent:
         #       -more calls to role-specific methods as they are created
         else:
             raise Exception('Role not understood from ContextCall')
-        
         return answer
 
     
-    def action(self, gamestate: GameState, options: list):
+    def action(self, gamestate: GameState, options: dict) -> AgentAnswer:
         logger.debug("Agent's action process called")
         #       - Some logic
-        answer = AgentAnswer(options[0], options[1], True, [])
+        key = list(options.keys())[0]
+        method = options[key][0]
+        primary_bool = True if options[key][1].actiontype == 'Main' else False
+        params = options[key][1].params
+        
+        answer = AgentAnswer(key, method, primary_bool, params)
         return answer
     
-    def election(self, gamestate: GameState, options: list):
+    def election(self, gamestate: GameState, options: dict) -> AgentAnswer:
         logger.debug("Agent's election process called")
         #       - Some logic
         answer = AgentAnswer(options[0], options[1], True, [])
@@ -91,24 +107,21 @@ class Agent:
 
 @dataclass
 class RandomAgent(Agent):
+    from game.data.common import GameState
     operator = 'Script'
     name = 'Randy Random'
 
-    def action(self, gamestate, options):
+    def action(self, gamestate: GameState, options: dict) -> AgentAnswer:
         logger.debug("Agent's action process called")
         import random
-        action_choice = random.choice(options)
-        logger.error(f"ACTION_CHOICE = {action_choice}")
-        if options[-1].actiontype == 'Free':
-            primary = False
-        else:
-            primary = True
-        answer = AgentAnswer(
-            action_choice[0],
-            action_choice[1],
-            primary, 
-            []
-            )
+
+        key = random.choice(list(options.keys()))
+        logger.debug(f"Action choice = {key}")
+        method = options[key][0]
+        primary_bool = True if options[key][1].actiontype == 'Main' else False
+        params = options[key][1].params
+
+        answer = AgentAnswer(key, method, primary_bool, params)
         return answer
     
 
