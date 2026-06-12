@@ -9,7 +9,7 @@ class Save:
 
     # Imports
     from datetime import datetime
-    import game.data.factions as factions
+    from game.data import factions
     import os
 
     # Point to and set up save directory
@@ -322,14 +322,17 @@ class Engine:
                 # Enact the response
                 if answer.order is None:
                     raise Exception('Order "None" response given before any action taken')
-                answer.order(answer.args)      
+                args = [player_instance] + answer.args
+                answer.order.resolve(*args)         
 
                 # Check for a free action following a main
                 if answer.primary_response == True:
                     answer = call_agent(agent, False, True, gamestate, player_instance)
                     if answer.order is None:
                         continue
-                    answer.order(answer.args)          
+                    args = [player_instance] + answer.args
+                    answer.order.resolve(*args)      
+        
                 
                 # Otherwise demand a main action response
                 elif answer.primary_response == False:
@@ -337,7 +340,8 @@ class Engine:
                     if answer.order is None:
                         raise Exception('Main action required, None cannot be passed')
                     else:
-                        answer.order(answer.args)
+                        args = [player_instance] + answer.args
+                        answer.order.resolve(*args)      
 
         return gamestate
 
