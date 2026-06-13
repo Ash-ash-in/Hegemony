@@ -16,7 +16,11 @@ class CheckResponse:
     """
     Contains all the information that would allow an agent to successfully complete this action
     
-    Returns a dict with all the key information about the action.
+    # Attributes:
+    validity: bool
+    tooltip: str
+    actiontype: str
+    params: list    
     """
     validity: bool
     tooltip: str
@@ -27,6 +31,11 @@ class CheckResponse:
 class ActionResult:
     """
     Parent class for the result of action rules
+
+    # Attributes
+    outcome: Outcome instance
+    log: str
+    state_changes[list[str]]
     """
     outcome: Outcome
     log: str # Simple description of the action
@@ -41,7 +50,7 @@ class ActionResult:
 @dataclass
 class PointAssign:
     """
-    Handles assigning points to players
+    Handles assigning points to players. Intermediate layer
     """
     logger.debug("called PointAssign class")
     from game.data.factions import Player
@@ -113,8 +122,12 @@ class MoneyTransfer:
         mandatory:      - bool. Determines whether it will force loans when insufficient funds.
 
         ### Returns
-        bool            - is the transaction valid?
-        str             - failure reason if bool = False
+        CheckResponse(
+            validity: bool,
+            tooltip: str,
+            actiontype: str,
+            params: list
+            )
         """
         logger.debug("MoneyTransfer check called")
 
@@ -215,6 +228,60 @@ class MoneyTransfer:
                 state_changes=changes
             )
 
+@dataclass
+class LoanRemoval:
+    """
+    Handles the intermediate step for paying a loan.
+    """
+    logger.debug("called MoneyTransfer class")
+    from game.data.factions import Player
+
+    @staticmethod
+    def check(player: Player) -> CheckResponse:
+        """
+        Determines whether there are any loans to pay.
+
+        ### Args
+        player          - instance to check for loans
+
+        ### Returns
+        CheckResponse
+        """
+        logger.debug("LoanRemoval check called")
+
+        # Basic check flow
+        if player.loans <= 0:
+            return CheckResponse(False, "Player has no loans", "Intermediate", [])
+        return CheckResponse(True, "", "Intermediate", [])
+    
+    @staticmethod
+    def resolve(player: Player) -> ActionResult:
+        """
+        Apply the transfer. Only call this after check returns True, or risk an exception.
+        All mutations happen here — never partially applied.
+        """
+        logger.debug("MoneyTransfer resolve called")
+
+        # Confirm validity
+        check = LoanRemoval.check(player)
+        if not check.validity:
+            raise Exception("Invalid call to resolve transfer. Ensure validity check is being called prior and is working.")
+        
+        # Setup generic response
+        changes = []
+
+        # Enact
+        player._remove_loan()
+        changes.append(f"{player.faction} had 1 loan removed")
+        logger.debug(f"removed a loan from {player}")
+        log = (
+            f"{player.faction} had a loan removed."
+        )
+        return ActionResult(
+            outcome = Outcome.OK,
+            log=log,
+            state_changes=changes
+        )
 
 ############################# Action Layer ########################################
 
@@ -237,7 +304,10 @@ class FreeAction:
         """
         Used by the DecisionContext to create a list, which it will check for validity
 
-        Returns dict of name:class
+        ### Agrs
+            player
+        ### Returns 
+            CheckResponse
         """
         import inspect
         logger.debug("FreeAction.context() called")
@@ -258,13 +328,8 @@ class FreeAction:
         def check(player: Player):
             logger.debug('RepayLoan check called')
 
-            # Check flow
-            if player.loans <= 0:
-                return CheckResponse(False, 'Player has no loans','Free',[])
-            if player.money < 50:
-                return CheckResponse(False, 'Not enough money', 'Free', [])
-            
-            return CheckResponse(True, '', 'Free', [])
+            # This has a simple intermediate step, so call that 
+            return LoanRemoval.check(player)
         
         @staticmethod
         def resolve(player: Player):
@@ -275,16 +340,8 @@ class FreeAction:
             if not check.validity:
                 raise Exception("Invalid call to resolve loan repayment. Ensure validity check is being called prior and is working.")
 
-            # Execute
-            changes = []
-            log = f"{player.faction} paid 50 to repay a loan"
-            player._add_money(-50)
-            changes.append(f"{player.faction} paid 50")
-            changes.append(f"{player.faction} money: {player.money}")
-            player._remove_loan()
-            changes.append(f"{player.faction} removed a loan")
-            changes.append(f"{player.faction} loans: {player.loans}")
-            return ActionResult(Outcome.OK, log, changes)
+            # This has a simple intermediate step, so call that 
+            return LoanRemoval.resolve(player)
 
 class MainAction:
     logger.debug("called MainAction class")
