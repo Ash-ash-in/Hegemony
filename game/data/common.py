@@ -33,24 +33,39 @@ class PlayerReference:
     capitalists: object
     state: object
 
-@dataclass(frozen = True)
+@dataclass
 class Worker:
     faction: str
     skill: str
     alive: bool
     employed: bool
 
+    def check(self):
+        return {
+            'faction': self.faction,
+            'skill': self.skill,
+            'alive': self.alive,
+            'employed': self.employed
+        }
+
 @dataclass(frozen=True)
 class Card:
     faction: str
     description: str
 
-@dataclass(frozen=True)
+@dataclass
 class Company:
+    name: str
     faction: str
+    industry: str
     cost: int
-    production: tuple[str,int]
-    wages: tuple[tuple[int,bool]]
+    production: int
+    production_bonus: int
+    production_bonus_active: bool
+    wages: dict
+    worker_slots: list
+    workers: list
+    id: int
 
 @dataclass(frozen = True)
 class Event:
@@ -65,5 +80,65 @@ faction_play_order = ["Working Class", "Middle Class", "Capitalists", "State"]
 faction_instantiate_order = ["Working Class", "Capitalists", "Middle Class", "State"]
 phases = ['Preparation','Action','Production','Elections','Scoring']
 
+
+# Reference building functions
+def build_company_pools():
+    """
+    reads in a csv to create Company objects.
+    These are stored as:
+    dict[str: list[object]]
+    company_pool: 'working_class'[object]
+    """
+    import pandas as pd
+    import os
+    logger.debug("Reading in companies")
+    root = os.getcwd()
+    comp_df = pd.read_csv(os.path.join(root, "game", "data", "companies.csv"))
+
+    working_class_company_pool = []
+    middle_class_company_pool = []
+    capitalists_company_pool = []
+    state_company_pool = []
+    for index, row in comp_df.iterrows():
+        slots = []
+        if not pd.isnull(row['Class1']):
+            slots.append(Worker(row['Class1'],row['Skill1'],True,True))
+        if not pd.isnull(row['Class2']):
+            slots.append(Worker(row['Class2'],row['Skill2'],True,True))
+        if not pd.isnull(row['Class3']):
+            slots.append(Worker(row['Class3'],row['Skill3'],True,True))        
+        comp = Company(
+            row['Name'], 
+            row['Owner'], 
+            row['Industry'], 
+            row['Cost'], 
+            row['Base Production'],
+            row['Upgrade Value'],
+            False,
+            {'L1': row['L1'], 'L2': row['L2'], 'L3': row['L3']},
+            slots,
+            [],
+            index
+            )
+        if comp.faction == 'Working Class':
+            working_class_company_pool.append(comp)
+        elif comp.faction == 'Middle Class':
+            middle_class_company_pool.append(comp)
+        elif comp.faction == 'Capitalists':
+            capitalists_company_pool.append(comp)
+        elif comp.faction == 'State':
+            state_company_pool.append(comp)
+        else:
+            raise Exception('Faction not found')
+    return {
+        'working_class': working_class_company_pool,
+        'middle_class': middle_class_company_pool,
+        'capitalists': capitalists_company_pool,
+        'state': state_company_pool
+    } 
+
+
 # ----------- END ---------- #
 logger.debug("Finished importing data.common")
+
+print("common.py fully loaded")

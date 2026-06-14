@@ -201,9 +201,10 @@ class Engine:
         ######################
         #### NOTE TO SELF ####
         ######################
-        # Maybe I just move the PlayerReference into new_game and load_game, and call them directly?
-        # Or better yet, startup takes no arguements and requires it of the player?
-        # Maybe I just pass one "args_dict" into this function, and if it's none, I request it all from the player.
+
+        # New game should load a game for a default template
+        # Setup should read a settings file
+
         ################################
     
         from game.system import Save

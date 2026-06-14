@@ -1,0 +1,60 @@
+Owner,Name,Cost,Industry,Base Production,L1,L2,L3,Class1,Skill1,Class2,Skill2,Class3,Skill3,Upgrade Value
+State,University Hospital,30,Healthcare,6,25,30,35,Any,Healthcarecare,Any,Any,Any,Any,
+State,Technical University,30,Education,6,25,30,35,Any,Education,Any,Any,Any,Any,
+State,National Public Broadcasting,30,Media,4,25,30,35,Any,Media,Any,Any,Any,Any,
+State,Regional TV Station,20,Media,3,15,20,25,Any,Media,Any,Any,,,
+State,Public University,20,Education,3,15,20,25,Any,Education,Any,Any,,,
+State,Public Hospital,20,Healthcare,3,15,20,25,Any,Healthcarecare,Any,Any,,,
+State,Regional TV Station,20,Media,3,15,20,25,Any,Media,Any,Any,,,
+State,Public University,20,Education,3,15,20,25,Any,Education,Any,Any,,,
+State,Public Hospital,20,Healthcare,3,15,20,25,Any,Healthcarecare,Any,Any,,,
+State,Regional TV Station,20,Media,3,15,20,25,Any,Media,Any,Any,,,
+State,Public University,20,Education,3,15,20,25,Any,Education,Any,Any,,,
+State,Public Hospital,20,Healthcare,3,15,20,25,Any,Healthcarecare,Any,Any,,,
+Capitalists,Shopping Mall,16,Luxury,6,15,20,25,Any,Luxury,Any,Any,,,2
+Capitalists,Shopping Mall,16,Luxury,6,15,20,25,Any,Luxury,Any,Any,,,2
+Capitalists,Hotel,15,Luxury,7,20,25,30,Any,Any,Any,Any,Any,Any,
+Capitalists,Electronics Manufacturer,25,Luxury,3,,,,,,,,,,
+Capitalists,Car Manufacturer,45,Luxury,5,,,,,,,,,,
+Capitalists,Fashion Company,8,Luxury,4,10,15,20,Any,Any,Any,Any,,,2
+Capitalists,Stadium,20,Luxury,8,25,30,35,Any,Luxury,Any,Any,Any,Any,3
+Capitalists,Supermarket,16,Agriculture,4,15,20,25,Any,Agriculture,Any,Any,,,1
+Capitalists,Vegetable Farm,15,Agriculture,5,20,25,30,Any,Any,Any,Any,Any,Any,
+Capitalists,Automated Grain Farm,25,Agriculture,2,,,,,,,,,,
+Capitalists,Supermarket,16,Agriculture,4,15,20,25,Any,Agriculture,Any,Any,,,1
+Capitalists,Fast Agriculture Chain,8,Agriculture,3,10,15,20,Any,Any,Any,Any,,,
+Capitalists,Automated Dairy Farm,45,Agriculture,3,,,,,,,,,,
+Capitalists,Fish Farm,20,Agriculture,6,25,30,35,Any,Agriculture,Any,Any,Any,Any,1
+Capitalists,TV Station,24,Media,4,20,30,40,Any,Media,Any,Any,Any,Any,
+Capitalists,Publishing House,12,Media,3,20,25,30,Any,Any,Any,Any,Any,Any,
+Capitalists,Radio Station,8,Media,2,10,15,20,Any,Any,Any,Any,,,
+Capitalists,Lobbying Firm,16,Media,3,10,20,30,Any,Media,Any,Any,,,
+Capitalists,Clinic,16,Healthcare,6,10,20,30,Any,Healthcarecare,Any,Any,,,2
+Capitalists,Clinic,16,Healthcare,6,10,20,30,Any,Healthcarecare,Any,Any,,,2
+Capitalists,Medical Village,24,Healthcare,9,20,30,40,Any,Healthcarecare,Any,Any,Any,Any,2
+Capitalists,Pharmaceutical Company,20,Healthcare,8,20,30,40,Any,Healthcarecare,Any,Any,Any,Any,3
+Capitalists,Hospital,20,Healthcare,7,10,20,30,Any,Healthcarecare,Any,Any,,,
+Capitalists,College,20,Education,6,10,20,30,Any,Education,Any,Any,,,2
+Capitalists,Institute of Technology,20,Education,8,20,30,40,Any,Education,Any,Any,Any,Any,3
+Capitalists,University,24,Education,9,20,30,40,Any,Education,Any,Any,Any,Any,2
+Capitalists,College,20,Education,6,10,20,30,Any,Education,Any,Any,,,2
+Capitalists,Academy,20,Education,7,10,20,30,Any,Education,Any,Any,,,
+Middle Class,Private School,20,Education,2,9,12,15,MC,Education,WC,Education,,,4
+Middle Class,Training Centre,16,Education,4,,,,MC,Education,MC,Any,,,
+Middle Class,Tutoring Company,12,Education,2,6,8,10,MC,Education,WC,Any,,,2
+Middle Class,Doctor's Office,12,Healthcare,2,6,8,10,MC,Healthcarecare,WC,Any,,,2
+Middle Class,Doctor's Office,12,Healthcare,2,6,8,10,MC,Healthcarecare,WC,Any,,,2
+Middle Class,Pharmacy,16,Healthcare,4,,,,MC,Healthcarecare,MC,Any,,,
+Middle Class,Medical Laboratory,20,Healthcare,2,9,12,15,MC,Healthcarecare,WC,Healthcarecare,,,4
+Middle Class,Organic Farm,20,Agriculture,2,9,12,15,MC,Agriculture,WC,Agriculture,,,2
+Middle Class,Fast Agriculture Restaurant,20,Agriculture,3,,,,MC,Agriculture,MC,Any,,,
+Middle Class,Convenience Store,14,Agriculture,2,6,8,10,MC,Agriculture,WC,Any,,,1
+Middle Class,Convenience Store,14,Agriculture,2,6,8,10,MC,Agriculture,WC,Any,,,1
+Middle Class,Electronics Store,20,Luxury,2,9,12,15,MC,Luxury,WC,Luxury,,,4
+Middle Class,Jewelery Store,16,Luxury,4,,,,MC,Luxury,MC,Luxury,,,
+Middle Class,Game Store,12,Luxury,2,6,8,10,MC,Luxury,WC,Any,,,2
+Middle Class,Regional Radio Station,20,Media,2,9,12,15,MC,Media,WC,Media,,,2
+Middle Class,PR Agency,20,Media,3,,,,MC,Media,MC,Any,,,
+Middle Class,Local Newspaper,14,Media,2,6,8,10,MC,Media,WC,Any,,,1
+Working Class,Cooperative Farm,0,Agriculture,2,,,,WC,Any,WC,Any,WC,Any,
+Working Class,Cooperative Farm,0,Agriculture,2,,,,WC,Any,WC,Any,WC,Any,

@@ -14,10 +14,10 @@ The project serves primarily as an educational and entertainment tool for myself
 ---
 
 # To Do
-- Remove loan rule layer needs adding
-- Simple Agent needs making
-- AI ActionContext needs making
+
 - Player ActionContext needs making (text only for now)
+- Save and load reform so that new game just loads a start position template (makes future dev easier, doesn't need to happen until more of the mechanics are built)
+- Company start position
 ---
 
 # How it works
