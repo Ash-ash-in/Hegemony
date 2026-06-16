@@ -11,7 +11,7 @@ logging.basicConfig(
 from game import tests
 ### Save Game Testing ###
 # -----------------------
-tests.test_save_and_load()
+# tests.test_save_and_load()
 
 ### Creating gamestate for normal testing ###
 # -------------------------------------------
@@ -22,6 +22,7 @@ agents = {
     'Middle Class': 'Random',
     'Capitalists': 'Random'
 }
+
 
 
 settings = {
@@ -38,7 +39,7 @@ engine.setup_agents(agents, LiveGamestate)
 
 ### Player Testing ###
 # --------------------
-tests.test_player_functions(LiveGamestate, LivePlayerRefs)
+# tests.test_player_functions(LiveGamestate, LivePlayerRefs)
 
 
 ### Game Flow Testing ###

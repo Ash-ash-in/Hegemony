@@ -75,10 +75,7 @@ class Save:
         """
         logger.debug(f"save.new_game called with player_count: {player_count}")
         from game.data import common
-        import json
         import game.data.factions as factions
-        import os
-        from datetime import datetime
 
         # Setup factions
         active_factions = common.faction_instantiate_order[:player_count]
@@ -100,6 +97,8 @@ class Save:
             player_count = player_count,
             players = {faction_name: factions.Player(faction_name) for faction_name in existing_factions}
         )
+        gamestate.build_company_pools()
+        gamestate.build_worker_pool()
         logger.debug('Initial gamestate instantiated')
 
         success = Save.save_game(gamestate, filename=filename, overwrite=overwrite)
@@ -162,7 +161,7 @@ class Save:
 
 @dataclass
 class Engine:
-    from game.data.common import GameState, company_pool
+    from game.data.common import GameState
     from game.agents import Agent, AgentAnswer
     from game.data.factions import Player
     logger.debug("Calling engine class")
@@ -267,10 +266,17 @@ class Engine:
         """
         logger.debug('Called Engine.start_position')
         import game.rules as rules
-        # TEMPORARY give everyone 120
+
+        ####################################
+        ### TEMPORARY give everyone 120 ####
         for name, inst in gamestate.players.items():
             if rules.MoneyTransfer.check(None, inst, 120, True).validity:
                 rules.MoneyTransfer.resolve(None, inst, 120, True)
+        ### TEMPORARY give everyone 120 ####
+        ####################################
+
+        
+
         return gamestate
     
     def preparation_phase(self, gamestate: GameState):
