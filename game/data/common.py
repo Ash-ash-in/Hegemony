@@ -16,8 +16,12 @@ class GameState:
     phase: str = 'Preparation'
     turn: int = 0
     active_player: str = 'Working Class'
-    free_action_taken: bool = False
+    working_class_companies = []
+    middle_class_companies = []
+    capitalist_companies = []
+    state_companies = []
     players: dict = field(default_factory=dict) # players must be the last arg, since it is appended to the dict in load_save
+
 
     ### Methods ###
     def to_dict(self) -> dict: # For saving
@@ -37,15 +41,11 @@ class PlayerReference:
 class Worker:
     faction: str
     skill: str
-    alive: bool
-    employed: bool
 
     def check(self):
         return {
             'faction': self.faction,
-            'skill': self.skill,
-            'alive': self.alive,
-            'employed': self.employed
+            'skill': self.skill
         }
 
 @dataclass(frozen=True)
@@ -62,7 +62,7 @@ class Company:
     production: int
     production_bonus: int
     production_bonus_active: bool
-    wages: dict
+    wages: dict | None
     worker_slots: list
     workers: list
     id: int
@@ -75,12 +75,6 @@ class Event:
     forfeit: str
 
 # ---------- References ----------- #
-# Handy variables for building data in setup
-faction_play_order = ["Working Class", "Middle Class", "Capitalists", "State"]
-faction_instantiate_order = ["Working Class", "Capitalists", "Middle Class", "State"]
-phases = ['Preparation','Action','Production','Elections','Scoring']
-
-
 # Reference building functions
 def build_company_pools():
     """
@@ -101,6 +95,10 @@ def build_company_pools():
     state_company_pool = []
     for index, row in comp_df.iterrows():
         slots = []
+        if pd.isnull(row['L1']):
+            wages = None
+        else: 
+            wages = {'L1': row['L1'], 'L2': row['L2'], 'L3': row['L3']}
         if not pd.isnull(row['Class1']):
             slots.append(Worker(row['Class1'],row['Skill1'],True,True))
         if not pd.isnull(row['Class2']):
@@ -113,9 +111,9 @@ def build_company_pools():
             row['Industry'], 
             row['Cost'], 
             row['Base Production'],
-            row['Upgrade Value'],
+            0 if pd.isnull(row['Upgrade Value']) else row['Upgrade Value'],
             False,
-            {'L1': row['L1'], 'L2': row['L2'], 'L3': row['L3']},
+            wages,
             slots,
             [],
             index
@@ -136,6 +134,52 @@ def build_company_pools():
         'capitalists': capitalists_company_pool,
         'state': state_company_pool
     } 
+
+def build_worker_pool():
+    from game.data.common import industries
+    from enum import Enum, auto
+    worker_pool = {'working_class_worker_pool':[], 'middle_class_worker_pool':[]}
+
+    # skilled workers
+    for skill in industries:
+        for i in range(5):
+            worker_pool['working_class_worker_pool'].append(Worker(
+                'Working Class',
+                skill
+            ))
+                
+    # unskilled workers            
+    for i in range(23): # double check unskilled worker count
+        worker_pool['working_class_worker_pool'].append(Worker(
+            'Working Class',
+            'Unskilled'
+        )   
+            
+    # middle class workers
+
+    # skilled workers
+    for skill in industries:
+        for i in range(5): 
+            worker_pool['middle_class_worker_pool'].append(Worker(
+                'Middle Class',
+                skill
+            )
+    # unskilled workers            
+    for i in range(17): # double check unskilled worker count
+        worker_pool['MC_workers'][workerID] = worker(
+            workerID, 
+            'Unskilled',
+            'MC'
+        )
+            
+    logging.debug(f"Worker setup complete. Worker count: {len(worker_pool['WC_workers']) + len(worker_pool['MC_workers'])}")
+
+# Handy variables for building data in setup
+faction_play_order = ["Working Class", "Middle Class", "Capitalists", "State"]
+faction_instantiate_order = ["Working Class", "Capitalists", "Middle Class", "State"]
+phases = ['Preparation','Action','Production','Elections','Scoring']
+industries = ['Healthcare','Education','Luxury','Agriculture','Media']
+company_pool = build_company_pools()
 
 
 # ----------- END ---------- #

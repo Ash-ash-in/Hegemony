@@ -162,7 +162,7 @@ class Save:
 
 @dataclass
 class Engine:
-    from game.data.common import GameState
+    from game.data.common import GameState, company_pool
     from game.agents import Agent, AgentAnswer
     from game.data.factions import Player
     logger.debug("Calling engine class")
@@ -188,7 +188,7 @@ class Engine:
         return
 
     @staticmethod
-    def startup(faction_agents: dict, player_count=None, filename=None, overwrite=False):
+    def startup(settings_dict: dict):
         """
         Process for launching a game.
         Handles validity checks and decides whether to load or start new game
@@ -202,25 +202,34 @@ class Engine:
         #### NOTE TO SELF ####
         ######################
 
-        # New game should load a game for a default template
+        # New game should load a game from a default template
         # Setup should read a settings file
 
         ################################
-    
         from game.system import Save
-        logger.debug(f'startup called with player_count: {player_count}, filename: {filename}, overwrite:{overwrite}')
+
+        # Unpack settings
+        player_count = settings_dict['player_count']
+        faction_agents = settings_dict['agents']
+        save_mode = settings_dict['save_mode']
+        filename = settings_dict['save_name']
+        overwrite = settings_dict['overwrite_file']
 
         # Validity Checks
         if filename == 'None':
-            raise Exception('filename cannot be null')
+            raise Exception('filename cannot be "None"')
         if filename:
             if type(filename) != str:
                 raise Exception('filename must be a string')
         if player_count:
             if type(player_count) != int:
                 raise Exception('player_count must be an integer')
+            if player_count > 4 or player_count < 2:
+                raise Exception('player count must be between 2 and 4')
         if len(faction_agents) != player_count:
-            raise Exception('Number of agents passed does not match player_count')    
+            raise Exception('Number of agents passed does not match player_count')  
+        if save_mode.lower() not in ('new','load'):
+            raise Exception("save_mode not recognised. Must be 'new' or 'load'.")  
 
         # Load / Create savefile
         logging.debug(f"engine.startup called with player_count: {player_count if player_count else 'None'} and filename: {filename if filename else 'None'}")
@@ -234,6 +243,7 @@ class Engine:
             gamestate, filename = Save.new_game(player_count, filename=filename, overwrite=overwrite)
             logging.info(f'Created new save file: {filename}')
 
+        # Load in easy player references
         from game.data import common
         logger.debug("Setting up player references")
         player_references = common.PlayerReference(
@@ -324,6 +334,10 @@ class Engine:
                 if answer.order is None:
                     raise Exception('Order "None" response given before any action taken')
                 args = [player_instance] + answer.args
+                mini_log = f"Enacting {answer.name}."
+                if len(answer.args) > 0:
+                    mini_log += f" Args = {answer.args}"
+                logger.info(mini_log)
                 answer.order.resolve(*args)         
 
                 # Check for a free action following a main
@@ -332,8 +346,11 @@ class Engine:
                     if answer.order is None:
                         continue
                     args = [player_instance] + answer.args
+                    mini_log = f"Enacting {answer.name}."
+                    if len(answer.args) > 0:
+                        mini_log += f" Args = {answer.args}"
+                    logger.info(mini_log)
                     answer.order.resolve(*args)      
-        
                 
                 # Otherwise demand a main action response
                 elif answer.primary_response == False:
@@ -342,7 +359,11 @@ class Engine:
                         raise Exception('Main action required, None cannot be passed')
                     else:
                         args = [player_instance] + answer.args
-                        answer.order.resolve(*args)      
+                        mini_log = f"Enacting {answer.name}."
+                        if len(answer.args) > 0:
+                            mini_log += f" Args = {answer.args}"
+                        logger.info(mini_log)
+                        answer.order.resolve(*args) 
 
         return gamestate
 
