@@ -9,18 +9,21 @@ class Player():
 
     It is stored in the Gamestate
     """
+    from game.data.common import Company
     ### Init ### 
     def __init__(
             self,
             faction: str, 
             victory_points: int = 0, 
             money: int = 0, 
-            loans: int = 0
+            loans: int = 0,
+            company_hand: list = []
         ):
         self._faction = faction
         self._victory_points = victory_points
         self._money = money
         self._loans = loans
+        self._company_hand = company_hand
 
     ### Attributes ###
     @property
@@ -35,6 +38,10 @@ class Player():
     @property
     def loans(self) -> int:
         return self._loans
+    
+    @property
+    def company_hand(self) -> list:
+        return self._company_hand
 
     ### Methods ###
     def to_dict(self) -> dict:
@@ -65,9 +72,15 @@ class Player():
         self._loans -= 1
         logger.debug(f"{self._faction} total loans: {self._loans}")
 
+    def _add_company_card_to_hand(self, card: Company):
+        logger.debug(f"{self._faction} drawing company cards")
+        self._company_hand.append(card)
+        logger.debug(f"{self._faction} companies: {len(self._company_hand)}")
 
-
-
+    def _remove_company_card_from_hand(self, card: Company):
+        logger.debug(f"{self.faction} removing a company card")
+        self._company_hand.remove(card)
+        logger.debug(f"{self._faction} companies: {len(self._company_hand)}")
 
 
 

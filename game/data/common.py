@@ -16,10 +16,15 @@ class GameState:
     phase: str = 'Preparation'
     turn: int = 1
     active_player: str = "Working Class"
-    company_pool: dict = field(default_factory=dict)
-    companies: dict = field(default_factory=dict)
+    company_deck: dict = {'Capitalists': [], 'State': [], 'Working Class': [], 'Middle Class': []}
+    companies: dict = { # Company slots on board
+        'Capitalists': {'C'+str(i+1): None for i in range(12)}, 
+        'Working Class': {'C1': None, 'C2':None},
+        'Middle Class': {'C'+str(i+1): None for i in range(8)},
+        'State': {'C'+str(i+1): None for i in range(9)}
+        }
     worker_pool: dict = field(default_factory=dict)
-    unemployed_workers: dict = field(default_factory=dict)
+    unemployed_workers: dict = {'Working Class': [], 'Middle Class': []}
     players: dict = field(default_factory=dict) # players must be the last arg, since it is appended to the dict in load_save
 
     ### Methods ###
@@ -27,12 +32,12 @@ class GameState:
         return {k.lstrip('_'): v for k, v in vars(self).items()}
     
     # Reference building functions
-    def build_company_pools(self):
+    def build_company_decks(self):
         """
         reads in a csv to create Company objects.
         These are stored as:
         dict[str: list[object]]
-        company_pool: 'working_class'[object]
+        company_deck: 'working_class'[object]
         """
         import pandas as pd
         import os
@@ -87,11 +92,11 @@ class GameState:
             else:
                 raise Exception('Faction not found')
             
-        self.company_pool = {
-            'working_class': working_class_company_pool,
-            'middle_class': middle_class_company_pool,
-            'capitalists': capitalists_company_pool,
-            'state': state_company_pool
+        self.company_deck = {
+            'Working Class': working_class_company_pool,
+            'Middle Class': middle_class_company_pool,
+            'Capialists': capitalists_company_pool,
+            'State': state_company_pool
         }
         logger.debug("Company pools set up")
 

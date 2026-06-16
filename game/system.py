@@ -97,7 +97,7 @@ class Save:
             player_count = player_count,
             players = {faction_name: factions.Player(faction_name) for faction_name in existing_factions}
         )
-        gamestate.build_company_pools()
+        gamestate.build_company_decks()
         gamestate.build_worker_pool()
         logger.debug('Initial gamestate instantiated')
 
@@ -275,8 +275,16 @@ class Engine:
         ### TEMPORARY give everyone 120 ####
         ####################################
 
-        
-
+        # Found starting companies
+        checked_companies = []
+        for  company in gamestate.company_deck['Capitalists']:
+            if company.name in ("Supermarket", "Shopping Mall", "College", "Clinic"):
+                if not rules.CompanyFoundation.check(gamestate.players['Capitalists'], gamestate, company).validity:
+                    raise Exception("Starting company foundation invalid")
+                rules.CompanyFoundation.resolve(gamestate.players['Capitalists'], gamestate, company)
+            else:
+                checked_companies.append(company)
+        gamestate.company_deck['Capitalists'] = checked_companies
         return gamestate
     
     def preparation_phase(self, gamestate: GameState):

@@ -283,6 +283,65 @@ class LoanRemoval:
             state_changes=changes
         )
 
+@dataclass
+class CompanyFoundation:
+    """
+    Puts a company from one player's pool into their 
+    
+    This handles the physical aspects of putting the card in place, but does not involve any exchange of money or assignment of workers.
+    """
+    logger.debug("called CompanyFoundation class")
+    from game.data.factions import Player
+    from game.data.common import GameState, Company
+
+    @staticmethod
+    def check(player: Player, gamestate: GameState, comp: Company) -> CheckResponse:
+        """
+        ### Args
+        player - the player to check
+        gamestate
+        comp_name - the name of the company to found
+        """
+        logger.debug("Called CompanyFoundation.check()")
+        # Validation flow
+        if comp not in player.company_hand:
+            return CheckResponse(False, "Company is not in the player's hand", "Intermediate", []) 
+        if None not in gamestate.companies[player.faction].values():
+            return CheckResponse(False, "No slots free", "Intermediate", [])
+        return CheckResponse(True, "", "Intermediate", [])
+
+    @staticmethod
+    def resolve(player: Player, gamestate: GameState, comp: Company) -> ActionResult:
+        """
+        ### Args
+        player - the player to check
+        gamestate
+        comp_name - the name of the company to found
+        """
+        logger.debug("Called CompanyFoundation.resolve()")
+
+        # Validation check
+        if not CompanyFoundation.check(player, gamestate, comp).validity:
+            raise Exception("CompanyFoundation resolve called but failed check")
+
+        # Execute
+        changes = []
+        slot = None
+        for c_num, occupant in gamestate.companies[player.faction].items():
+            if occupant is None:
+                slot = c_num
+                break
+        if slot is None:
+            raise Exception("Company slot could not be found, but check already passed.")
+        player._remove_company_card_from_hand(comp)
+        changes.append(f"{comp.name} removed from {player.faction}'s market")
+        gamestate.companies[player.faction][slot] = comp
+        changes.append(f'{comp.name} founded in slot {slot[-1]}')
+        log = f"{player.faction} founded {comp.name}"
+        return ActionResult(Outcome.OK, log, changes)
+
+
+
 ############################# Action Layer ########################################
 
 @dataclass    
