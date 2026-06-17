@@ -16,15 +16,10 @@ class GameState:
     phase: str = 'Preparation'
     turn: int = 1
     active_player: str = "Working Class"
-    company_deck: dict = {'Capitalists': [], 'State': [], 'Working Class': [], 'Middle Class': []}
-    companies: dict = { # Company slots on board
-        'Capitalists': {'C'+str(i+1): None for i in range(12)}, 
-        'Working Class': {'C1': None, 'C2':None},
-        'Middle Class': {'C'+str(i+1): None for i in range(8)},
-        'State': {'C'+str(i+1): None for i in range(9)}
-        }
+    company_deck: dict = field(default_factory=dict)
+    companies: dict = field(default_factory=dict)
     worker_pool: dict = field(default_factory=dict)
-    unemployed_workers: dict = {'Working Class': [], 'Middle Class': []}
+    unemployed_workers: dict = field(default_factory=dict)
     players: dict = field(default_factory=dict) # players must be the last arg, since it is appended to the dict in load_save
 
     ### Methods ###
@@ -95,7 +90,7 @@ class GameState:
         self.company_deck = {
             'Working Class': working_class_company_pool,
             'Middle Class': middle_class_company_pool,
-            'Capialists': capitalists_company_pool,
+            'Capitalists': capitalists_company_pool,
             'State': state_company_pool
         }
         logger.debug("Company pools set up")
@@ -138,6 +133,14 @@ class GameState:
         self.worker_pool = worker_pool        
         logging.debug(f"Worker setup complete. Worker count: {len(worker_pool['working_class_worker_pool']) + len(worker_pool['middle_class_worker_pool'])}")
         
+    # State Display
+    def check_founded_companies(self, faction: str):
+        count = 0
+        for k, v in self.companies[faction].items():
+            if v is not None:
+                count += 1
+        return count
+
     
 @dataclass
 class PlayerReference:

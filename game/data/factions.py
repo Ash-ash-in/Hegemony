@@ -80,7 +80,7 @@ class Player():
     def _remove_company_card_from_hand(self, card: Company):
         logger.debug(f"{self.faction} removing a company card")
         self._company_hand.remove(card)
-        logger.debug(f"{self._faction} companies: {len(self._company_hand)}")
+        logger.debug(f"{self._faction} companies in market: {len(self._company_hand)}")
 
 
 

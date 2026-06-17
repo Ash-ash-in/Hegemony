@@ -97,8 +97,6 @@ class Save:
             player_count = player_count,
             players = {faction_name: factions.Player(faction_name) for faction_name in existing_factions}
         )
-        gamestate.build_company_decks()
-        gamestate.build_worker_pool()
         logger.debug('Initial gamestate instantiated')
 
         success = Save.save_game(gamestate, filename=filename, overwrite=overwrite)
@@ -232,13 +230,15 @@ class Engine:
 
         # Load / Create savefile
         logging.debug(f"engine.startup called with player_count: {player_count if player_count else 'None'} and filename: {filename if filename else 'None'}")
-        if player_count is None:
+        if save_mode == 'load':
             if filename is None:
-                raise Exception('Must provide either filename or player_count when calling setup')
+                raise Exception('Must pass filename when loading game')
             logging.info(f"Loading game from save file: {filename}")
             gamestate = Save.load_game(filename)
             player_count = gamestate.player_count
         else:
+            if player_count is None:
+                raise Exception('Must pass player_count when starting new game')
             gamestate, filename = Save.new_game(player_count, filename=filename, overwrite=overwrite)
             logging.info(f'Created new save file: {filename}')
 
@@ -272,21 +272,70 @@ class Engine:
         for name, inst in gamestate.players.items():
             if rules.MoneyTransfer.check(None, inst, 120, True).validity:
                 rules.MoneyTransfer.resolve(None, inst, 120, True)
+        logger.debug('Temporary start position money complete')
         ### TEMPORARY give everyone 120 ####
         ####################################
 
-        # Found starting companies
-        checked_companies = []
-        for  company in gamestate.company_deck['Capitalists']:
-            if company.name in ("Supermarket", "Shopping Mall", "College", "Clinic"):
+        ### Prepare gamestate attributes ###
+
+        # Build empty card decks and worker pools
+        gamestate.company_deck = {'Capitalists': [], 'State': [], 'Working Class': [], 'Middle Class': []}
+        gamestate.companies = { # Company slots on board
+            'Capitalists': {'C'+str(i+1): None for i in range(12)}, 
+            'Working Class': {'C1': None, 'C2':None},
+            'Middle Class': {'C'+str(i+1): None for i in range(8)},
+            'State': {'C'+str(i+1): None for i in range(9)}
+            }
+        gamestate.unemployed_workers = {'Working Class': [], 'Middle Class': []}
+        gamestate.build_company_decks()
+        gamestate.build_worker_pool()
+        logger.debug('Gamestate card and worker deck framework complete')
+
+        ### Found starting companies ###
+        # Loops through deck to find starter companies
+        # Adds the company to the players hand
+        # Calls the CompanyFoundation methods to put it in play
+        # Adds non-starter companies to a list
+        # Replaces deck with that list at the end
+
+        # Capitalists
+        founded_companies = []
+        checked_companies = [] # Non-starter companies
+        for company in gamestate.company_deck['Capitalists']:
+            print(company.name)
+            if company.name in ("Supermarket", "Shopping Mall", "College", "Clinic") and company.name not in founded_companies:
+                gamestate.players['Capitalists']._company_hand.append(company)
                 if not rules.CompanyFoundation.check(gamestate.players['Capitalists'], gamestate, company).validity:
                     raise Exception("Starting company foundation invalid")
                 rules.CompanyFoundation.resolve(gamestate.players['Capitalists'], gamestate, company)
+                founded_companies.append(company.name)
             else:
                 checked_companies.append(company)
         gamestate.company_deck['Capitalists'] = checked_companies
+        if gamestate.check_founded_companies('Capitalists') != 4:
+            raise Exception(f'Incorrect number of capitalist companies at startup ({gamestate.check_founded_companies('Capitalists')})')
+
+        # Middle Class
+        if gamestate.player_count > 2:
+            founded_companies = []
+            checked_companies = [] # Non-starter companies
+            for company in gamestate.company_deck['Middle Class']:
+                if company.name in ("Convenience Store", "Doctor's Office") and company.name not in founded_companies:
+                    gamestate.players['Capitalists']._company_hand.append(company)
+                    if not rules.CompanyFoundation.check(gamestate.players['Middle Class'], gamestate, company).validity:
+                        raise Exception("Starting company foundation invalid")
+                    rules.CompanyFoundation.resolve(gamestate.players['Middle Class'], gamestate, company)
+                    founded_companies.append(company.name)
+                else:
+                    checked_companies.append(company)
+            gamestate.company_deck['Middle Class'] = checked_companies
+            if gamestate.check_founded_companies('Middle Class') != 2:
+                raise Exception(f'Incorrect number of middle class companies at startup ({gamestate.check_founded_companies('Middle Class')})')
+
+        logger.debug('All starter companies founded successfully')
+
         return gamestate
-    
+
     def preparation_phase(self, gamestate: GameState):
         """
         Runs the system - driven preparation actions.

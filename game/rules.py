@@ -338,6 +338,7 @@ class CompanyFoundation:
         gamestate.companies[player.faction][slot] = comp
         changes.append(f'{comp.name} founded in slot {slot[-1]}')
         log = f"{player.faction} founded {comp.name}"
+        logger.debug(changes)
         return ActionResult(Outcome.OK, log, changes)
 
 
