@@ -229,61 +229,6 @@ class MoneyTransfer:
             )
 
 @dataclass
-class LoanRemoval:
-    """
-    Handles the intermediate step for paying a loan.
-    """
-    logger.debug("called MoneyTransfer class")
-    from game.data.factions import Player
-
-    @staticmethod
-    def check(player: Player) -> CheckResponse:
-        """
-        Determines whether there are any loans to pay.
-
-        ### Args
-        player          - instance to check for loans
-
-        ### Returns
-        CheckResponse
-        """
-        logger.debug("LoanRemoval check called")
-
-        # Basic check flow
-        if player.loans <= 0:
-            return CheckResponse(False, "Player has no loans", "Intermediate", [])
-        return CheckResponse(True, "", "Intermediate", [])
-    
-    @staticmethod
-    def resolve(player: Player) -> ActionResult:
-        """
-        Apply the transfer. Only call this after check returns True, or risk an exception.
-        All mutations happen here — never partially applied.
-        """
-        logger.debug("MoneyTransfer resolve called")
-
-        # Confirm validity
-        check = LoanRemoval.check(player)
-        if not check.validity:
-            raise Exception("Invalid call to resolve transfer. Ensure validity check is being called prior and is working.")
-        
-        # Setup generic response
-        changes = []
-
-        # Enact
-        player._remove_loan()
-        changes.append(f"{player.faction} had 1 loan removed")
-        logger.debug(f"removed a loan from {player}")
-        log = (
-            f"{player.faction} had a loan removed."
-        )
-        return ActionResult(
-            outcome = Outcome.OK,
-            log=log,
-            state_changes=changes
-        )
-
-@dataclass
 class CompanyFoundation:
     """
     Puts a company from one player's pool into their 
@@ -341,6 +286,137 @@ class CompanyFoundation:
         logger.debug(changes)
         return ActionResult(Outcome.OK, log, changes)
 
+@dataclass
+class WorkerSpawn:
+    """
+    Handles birthing workers from the pool to the unemployment area
+    """
+    logger.debug("called WorkerSpawn class")
+    from game.data.factions import WorkingClass, MiddleClass
+    from game.data.common import GameState
+
+    @staticmethod
+    def check(gamestate: GameState, player: WorkingClass | MiddleClass, skill: str):
+        """
+        Determines whether spawning is possible. 
+        This should ALWAYS be called before resolving.
+        This is called as part of the resolve process, but will crash the program if it fails at that point.
+
+        ### Args
+        player:         - Player object instance
+        skill:          - string, must be one of the industries or 'unskilled'
+
+        ### Returns
+        CheckResponse
+        """
+        logger.debug("WorkerSpawn check called")
+
+        # Basic check flow
+        if player.faction in ('Capitalists', 'State'):
+            return CheckResponse(False, f'{player.faction} does not have workers', 'Intermediate', [])
+        if player.faction == 'Middle Class' and gamestate.player_count < 3:
+            return CheckResponse(False, f'{player.faction} is not in the game', 'Intermediate', [])
+        if len(gamestate.worker_pool[player.faction]) == 0:
+            return CheckResponse(False, 'No workers available for this faction', 'Intermediate', [])
+        found = False
+        for worker in gamestate.worker_pool[player.faction]:
+            if worker.skill == skill:
+                found = True
+                break
+        if not found:
+            return CheckResponse(False, 'No remaining workers of that skill', 'Intermediate', [])
+        return CheckResponse(True, '', 'Intermediate', [])
+
+    @staticmethod
+    def resolve(gamestate: GameState, player: WorkingClass | MiddleClass, skill: str):
+        """
+        Spawn the worker into the unemployment area. 
+        Updates player's population.
+        
+        Only call this after check returns True, or risk an exception.
+        All mutations happen here — never partially applied.
+        """
+        logger.debug("WorkerSpawn resolve called")
+        # Confirm validity
+        check = WorkerSpawn.check(gamestate, player, skill)
+        if not check.validity:
+            raise Exception("Invalid call to resolve. Ensure validity check is being called prior and is working.")
+
+        ### Execute ###
+        changes = []
+
+        # Find the worker and remove from pool
+        for candidate in gamestate.worker_pool[player.faction]:
+            if candidate.skill == skill:
+                worker = candidate
+                gamestate.worker_pool[player.faction].remove(worker)
+                break
+        # Add to unemployment area and update player's population
+        gamestate.unemployed_workers[player.faction].append(worker) # type: ignore
+        changes.append('Worker added to unemployment area')
+        pop = player.population
+        player._add_population()
+        changes.append(f"{player.faction} population track adjusted")
+        if player.population != pop:
+            changes.append(f"{player.faction} population has increased")
+        log = f'{player.faction} {worker.skill} worker spawned in unemployment area' # type: ignore
+        return ActionResult(outcome=Outcome.OK, log=log, state_changes=changes)
+  
+
+@dataclass
+class LoanRemoval:
+    """
+    Handles the intermediate step for paying a loan.
+    """
+    logger.debug("called MoneyTransfer class")
+    from game.data.factions import Player
+
+    @staticmethod
+    def check(player: Player) -> CheckResponse:
+        """
+        Determines whether there are any loans to pay.
+
+        ### Args
+        player          - instance to check for loans
+
+        ### Returns
+        CheckResponse
+        """
+        logger.debug("LoanRemoval check called")
+
+        # Basic check flow
+        if player.loans <= 0:
+            return CheckResponse(False, "Player has no loans", "Intermediate", [])
+        return CheckResponse(True, "", "Intermediate", [])
+    
+    @staticmethod
+    def resolve(player: Player) -> ActionResult:
+        """
+        Apply the transfer. Only call this after check returns True, or risk an exception.
+        All mutations happen here — never partially applied.
+        """
+        logger.debug("MoneyTransfer resolve called")
+
+        # Confirm validity
+        check = LoanRemoval.check(player)
+        if not check.validity:
+            raise Exception("Invalid call to resolve transfer. Ensure validity check is being called prior and is working.")
+        
+        # Setup generic response
+        changes = []
+
+        # Enact
+        player._remove_loan()
+        changes.append(f"{player.faction} had 1 loan removed")
+        logger.debug(f"removed a loan from {player}")
+        log = (
+            f"{player.faction} had a loan removed."
+        )
+        return ActionResult(
+            outcome = Outcome.OK,
+            log=log,
+            state_changes=changes
+        )
 
 
 ############################# Action Layer ########################################

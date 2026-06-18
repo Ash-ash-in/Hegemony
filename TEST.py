@@ -23,8 +23,6 @@ agents = {
     'Capitalists': 'Random'
 }
 
-
-
 settings = {
     'player_count': player_count,
     'agents': agents,

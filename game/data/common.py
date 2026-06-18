@@ -97,19 +97,19 @@ class GameState:
 
     def build_worker_pool(self):
         from game.data.common import industries
-        worker_pool = {'working_class_worker_pool':[], 'middle_class_worker_pool':[]}
+        worker_pool = {'Working Class':[], 'Middle Class':[]}
 
         # skilled workers
         for skill in industries:
             for i in range(5):
-                worker_pool['working_class_worker_pool'].append(Worker(
+                worker_pool['Working Class'].append(Worker(
                     'Working Class',
                     skill
                 ))
                     
         # unskilled workers            
         for i in range(23): # double check unskilled worker count
-            worker_pool['working_class_worker_pool'].append(Worker(
+            worker_pool['Working Class'].append(Worker(
                 'Working Class',
                 'Unskilled'
             ))   
@@ -119,19 +119,19 @@ class GameState:
         # skilled workers
         for skill in industries:
             for i in range(5): 
-                worker_pool['middle_class_worker_pool'].append(Worker(
+                worker_pool['Middle Class'].append(Worker(
                     'Middle Class',
                     skill
                 ))
         # unskilled workers            
         for i in range(17): # double check unskilled worker count
-            worker_pool['middle_class_worker_pool'].append(Worker(
+            worker_pool['Middle Class'].append(Worker(
                 'Middle Class',
                 'Unskilled'
             ))
 
         self.worker_pool = worker_pool        
-        logging.debug(f"Worker setup complete. Worker count: {len(worker_pool['working_class_worker_pool']) + len(worker_pool['middle_class_worker_pool'])}")
+        logging.debug(f"Worker setup complete. Worker count: {len(worker_pool['Working Class']) + len(worker_pool['Middle Class'])}")
         
     # State Display
     def check_founded_companies(self, faction: str):

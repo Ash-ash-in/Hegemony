@@ -95,7 +95,13 @@ class Save:
         # Initialise gamestate
         gamestate = common.GameState(
             player_count = player_count,
-            players = {faction_name: factions.Player(faction_name) for faction_name in existing_factions}
+            players = {
+                'Working Class': factions.WorkingClass('Working Class'),
+                'Capitalists': factions.Player('Capitalists'),
+                'State': factions.Player('State'),
+                'Middle Class': factions.MiddleClass('Middle Class')
+                }
+
         )
         logger.debug('Initial gamestate instantiated')
 
@@ -334,6 +340,7 @@ class Engine:
 
         # State
         founded_companies = []
+        removed_companies = [] # Clear 3 companies for state
         checked_companies = [] # Non-starter companies
         for company in gamestate.company_deck['State']:
             print(company.name)
@@ -343,15 +350,26 @@ class Engine:
                     raise Exception("Starting company foundation invalid")
                 rules.CompanyFoundation.resolve(gamestate.players['State'], gamestate, company)
                 founded_companies.append(company.name)
+            elif (company.name in ("University Hospital", "Technical University", "National Public Broadcasting") if gamestate.player_count == 2 else ("Regional TV Station", "Public University", "Public Hospital")) and company.name not in removed_companies:
+                removed_companies.append(company.name) # Adding it to the list prevents duplicates.
+                # The removal happens when checked_companies replaces the pool in gamestate
             else:
                 checked_companies.append(company)
         gamestate.company_deck['State'] = checked_companies
         if gamestate.check_founded_companies('State') != 3:
             raise Exception(f'Incorrect number of state companies at startup ({gamestate.check_founded_companies('State')})')
-
-
+        if len(removed_companies) != 3:
+            raise Exception(f"Incorrent number of state companies removed ({len(removed_companies)})")
+        
         logger.debug('All starter companies founded successfully')
 
+        ### Worker Assignment ###
+        # Working Class first worker
+        rules.WorkerSpawn.check(gamestate, gamestate.players['Working Class'], 'Unskilled')
+        rules.WorkerSpawn.resolve(gamestate, gamestate.players['Working Class'], 'Unskilled')
+        
+        logger.debug("All workers spawned and placed successfully")
+        
         return gamestate
 
     def preparation_phase(self, gamestate: GameState):
