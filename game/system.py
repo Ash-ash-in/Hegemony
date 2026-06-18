@@ -299,7 +299,7 @@ class Engine:
         # Replaces deck with that list at the end
 
         # Capitalists
-        founded_companies = []
+        founded_companies = [] 
         checked_companies = [] # Non-starter companies
         for company in gamestate.company_deck['Capitalists']:
             print(company.name)
@@ -331,6 +331,24 @@ class Engine:
             gamestate.company_deck['Middle Class'] = checked_companies
             if gamestate.check_founded_companies('Middle Class') != 2:
                 raise Exception(f'Incorrect number of middle class companies at startup ({gamestate.check_founded_companies('Middle Class')})')
+
+        # State
+        founded_companies = []
+        checked_companies = [] # Non-starter companies
+        for company in gamestate.company_deck['State']:
+            print(company.name)
+            if (company.name in ("University Hospital", "Technical University", "National Public Broadcasting") if gamestate.player_count > 2 else ("Regional TV Station", "Public University", "Public Hospital")) and company.name not in founded_companies:
+                gamestate.players['State']._company_hand.append(company)
+                if not rules.CompanyFoundation.check(gamestate.players['State'], gamestate, company).validity:
+                    raise Exception("Starting company foundation invalid")
+                rules.CompanyFoundation.resolve(gamestate.players['State'], gamestate, company)
+                founded_companies.append(company.name)
+            else:
+                checked_companies.append(company)
+        gamestate.company_deck['State'] = checked_companies
+        if gamestate.check_founded_companies('State') != 3:
+            raise Exception(f'Incorrect number of state companies at startup ({gamestate.check_founded_companies('State')})')
+
 
         logger.debug('All starter companies founded successfully')
 
