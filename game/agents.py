@@ -146,7 +146,7 @@ class RandomAgent(Agent):
         answer = AgentAnswer(key, method, primary_bool, params)
         return answer
     
-    def worker(self, gamestate: GameState, options: dict) -> AgentAnswer:
+    def spawn_worker(self, gamestate: GameState, options: dict) -> AgentAnswer:
         logger.debug("Agent's worker process called")
         import random
 
@@ -199,7 +199,7 @@ class Calls:
         return answer
     
     @staticmethod
-    def worker_call(gamestate: GameState, player: Player, agent: Agent):
+    def spawn_worker_call(gamestate: GameState, player: Player, agent: Agent) -> AgentAnswer:
         """
         Checks the worker pool for a players available skills, and sends it to the agent
         """
@@ -224,3 +224,4 @@ class Calls:
 
         call = ContextCall(gamestate, player, "Worker", answerdict)
         answer = agent.call(call)
+        return answer

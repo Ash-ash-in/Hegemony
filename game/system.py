@@ -274,6 +274,7 @@ class Engine:
         """
         logger.debug('Called Engine.start_position')
         import game.rules as rules
+        from game.agents import Calls
 
         ####################################
         ### TEMPORARY give everyone 120 ####
@@ -367,6 +368,7 @@ class Engine:
         logger.debug('All starter companies founded successfully')
 
         ### Worker Assignment ###
+        
         # Working Class first worker
         working_class, middle_class, capitalists, state  = gamestate.players.values()
         rules.WorkerSpawn.resolve(gamestate, working_class, 'Unskilled')
@@ -375,6 +377,18 @@ class Engine:
         rules.ImmigrationCardDraw.resolve(gamestate, working_class)
         if gamestate.player_count > 2:
             rules.ImmigrationCardDraw.resolve(gamestate, working_class)
+
+        # Middle Class first worker
+        answer = Calls.spawn_worker_call( # Call agent for a decision to start
+            gamestate, 
+            middle_class, 
+            middle_class.agent
+            )
+        rules.WorkerSpawn.resolve(gamestate, middle_class, answer.name)
+        
+        # Middle Class immigration cards
+        rules.ImmigrationCardDraw.resolve(gamestate, middle_class)
+        rules.ImmigrationCardDraw.resolve(gamestate, middle_class)
 
         logger.debug("All workers spawned and placed successfully")
         
