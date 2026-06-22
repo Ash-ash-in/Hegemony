@@ -4,12 +4,15 @@ logger.debug("Importing rules.rules module")
 
 from dataclasses import dataclass
 from enum import Enum, auto
+from game.data.factions import Player, WorkingClass, MiddleClass
+from game.data.common import GameState
 
 ######################### Utilities #######################################
 class Outcome(Enum):
     OK = auto()
     INVALID = auto()
     LOAN = auto()
+    INACTION = auto() # When nothing is a passable outcome eg. points cannot go lower
 
 @dataclass
 class CheckResponse:
@@ -229,13 +232,13 @@ class MoneyTransfer:
             )
 
 @dataclass
-class CompanyFoundation:
+class CompanyFound:
     """
     Puts a company from one player's pool into their 
     
     This handles the physical aspects of putting the card in place, but does not involve any exchange of money or assignment of workers.
     """
-    logger.debug("called CompanyFoundation class")
+    logger.debug("called CompanyFound class")
     from game.data.factions import Player
     from game.data.common import GameState, Company
 
@@ -247,7 +250,7 @@ class CompanyFoundation:
         gamestate
         comp_name - the name of the company to found
         """
-        logger.debug("Called CompanyFoundation.check()")
+        logger.debug("Called CompanyFound.check()")
         # Validation flow
         if comp not in player.company_hand:
             return CheckResponse(False, "Company is not in the player's hand", "Intermediate", []) 
@@ -263,11 +266,11 @@ class CompanyFoundation:
         gamestate
         comp_name - the name of the company to found
         """
-        logger.debug("Called CompanyFoundation.resolve()")
+        logger.debug("Called CompanyFound.resolve()")
 
         # Validation check
-        if not CompanyFoundation.check(player, gamestate, comp).validity:
-            raise Exception("CompanyFoundation resolve called but failed check")
+        if not CompanyFound.check(player, gamestate, comp).validity:
+            raise Exception("CompanyFound resolve called but failed check")
 
         # Execute
         changes = []
@@ -361,7 +364,71 @@ class WorkerSpawn:
             changes.append(f"{player.faction} population has increased")
         log = f'{player.faction} {worker.skill} worker spawned in unemployment area' # type: ignore
         return ActionResult(outcome=Outcome.OK, log=log, state_changes=changes)
-  
+
+@dataclass
+class ImmigrationCardDraw:
+    """
+    Handles drawing of the card
+    Spawning the worker
+    Resetting the deck if empty
+    """
+    logger.debug("called ImmigrationCardDrawing")
+
+
+    @staticmethod
+    def check(gamestate: GameState, player: Player):
+        logger.debug("called ImmigrationCardDraw.check")
+        if player.faction in ('State','Capitalists'):
+            return CheckResponse(False, f"{player.faction} cannot draw immigration cards", "Intermediate", [])
+        return CheckResponse(True, "", "Intermediate", [])
+    
+    @staticmethod
+    def resolve(gamestate: GameState, player: Player):
+        logger.debug("Called ImmigrationCardDraw.resolve")
+        check = ImmigrationCardDraw.check(gamestate, player)
+        if not check.validity:
+            raise Exception("Invalid call to resolve transfer. Ensure validity check is being called prior and is working.")
+        changes = []
+
+        # Redraw deck if no cards are left
+        if len(gamestate.immigration_card_deck) == 0:
+            gamestate.build_immigration_cards()
+        
+        # Draw a card
+        card = gamestate.immigration_card_deck[0]
+        gamestate.immigration_card_deck.remove(card)
+        changes.append('Immigration card drawn')
+        log = "Drew an immigration card"
+        logger.debug("Immigration card removed from deck")
+
+        # Spawn the worker
+        if player.faction == 'Working Class':
+            skill = card.WorkingClass.skill
+        else:
+            skill = card.MiddleClass.skill
+        check = WorkerSpawn.check(gamestate, player, skill)
+
+        # Request player decision if worker not available
+        if not check.validity:
+            logger.info(f"No {player.faction} worker available with skill: {skill}")
+            if skill == 'Unskilled':
+                # Request to agent
+                from game.agents import Calls
+                Calls.worker_call(gamestate, player, player.agent)
+                # assign answer to 'skill'
+                pass # temp
+            else:
+                skill = 'Unskilled'
+            # Now handling the alternative skill
+            check = WorkerSpawn.check(gamestate, player, skill)
+            if not check.validity:
+                log += ", but there were no workers available"
+                return ActionResult(Outcome.INACTION, log, changes)
+
+        inner_response = WorkerSpawn.resolve(gamestate, player, skill)
+        changes += inner_response.state_changes
+        return ActionResult(Outcome.OK, log, changes)
+        
 
 @dataclass
 class LoanRemoval:

@@ -96,6 +96,7 @@ class GameState:
         logger.debug("Company pools set up")
 
     def build_worker_pool(self):
+        logger.debug("Building worker pool")
         from game.data.common import industries
         worker_pool = {'Working Class':[], 'Middle Class':[]}
 
@@ -133,6 +134,27 @@ class GameState:
         self.worker_pool = worker_pool        
         logging.debug(f"Worker setup complete. Worker count: {len(worker_pool['Working Class']) + len(worker_pool['Middle Class'])}")
         
+    def build_immigration_cards(self):
+        logger.debug("(Re)building immigration card deck")
+        from game.data.common import industries, ImmigrationCard
+        from random import shuffle
+        immigration_cards = []
+        for industry in industries:
+            for i in range(3):
+                if i < 2:
+                    immigration_cards.append(ImmigrationCard(
+                        Worker('Working Class', industry),
+                        Worker('Middle Class', 'Unskilled')
+                    ))
+                immigration_cards.append(ImmigrationCard(
+                    Worker('Working Class', 'Unskilled'),
+                    Worker('Middle Class', industry)
+                ))
+        shuffle(immigration_cards)
+        self.immigration_card_deck = immigration_cards
+        return immigration_cards
+
+
     # State Display
     def check_founded_companies(self, faction: str):
         count = 0
@@ -161,7 +183,11 @@ class Worker:
             'faction': self.faction,
             'skill': self.skill
         }
-    
+
+@dataclass
+class ImmigrationCard:
+    WorkingClass: Worker
+    MiddleClass: Worker  
 
 class Company:
     from game.data.common import Worker 

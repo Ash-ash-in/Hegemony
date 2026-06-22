@@ -174,7 +174,8 @@ class Engine:
     def setup_agents(self, faction_agents: dict, gamestate: GameState) -> None:
         """
         Creates the agent instances, according to those defined in the dictionary passed.
-        This modifies the engine in place
+        Agents can be found in the engine, or in the player objects
+        This modifies the engine and players in place
         """
         logger.debug("Setting up agents")
         from game.agents import agent_refs
@@ -187,6 +188,7 @@ class Engine:
                 raise Exception(f"{agent_name} not recognised")
             faction_instance = gamestate.players[faction]
             agent_references[faction] = agent_refs[agent_name](faction_instance)
+            faction_instance.agent = agent_references[faction]
         self.agents = agent_references
         return
 
@@ -295,12 +297,13 @@ class Engine:
         gamestate.unemployed_workers = {'Working Class': [], 'Middle Class': []}
         gamestate.build_company_decks()
         gamestate.build_worker_pool()
+        gamestate.build_immigration_cards()
         logger.debug('Gamestate card and worker deck framework complete')
 
         ### Found starting companies ###
         # Loops through deck to find starter companies
         # Adds the company to the players hand
-        # Calls the CompanyFoundation methods to put it in play
+        # Calls the CompanyFound methods to put it in play
         # Adds non-starter companies to a list
         # Replaces deck with that list at the end
 
@@ -311,9 +314,9 @@ class Engine:
             print(company.name)
             if company.name in ("Supermarket", "Shopping Mall", "College", "Clinic") and company.name not in founded_companies:
                 gamestate.players['Capitalists']._company_hand.append(company)
-                if not rules.CompanyFoundation.check(gamestate.players['Capitalists'], gamestate, company).validity:
+                if not rules.CompanyFound.check(gamestate.players['Capitalists'], gamestate, company).validity:
                     raise Exception("Starting company foundation invalid")
-                rules.CompanyFoundation.resolve(gamestate.players['Capitalists'], gamestate, company)
+                rules.CompanyFound.resolve(gamestate.players['Capitalists'], gamestate, company)
                 founded_companies.append(company.name)
             else:
                 checked_companies.append(company)
@@ -328,9 +331,9 @@ class Engine:
             for company in gamestate.company_deck['Middle Class']:
                 if company.name in ("Convenience Store", "Doctor's Office") and company.name not in founded_companies:
                     gamestate.players['Capitalists']._company_hand.append(company)
-                    if not rules.CompanyFoundation.check(gamestate.players['Middle Class'], gamestate, company).validity:
+                    if not rules.CompanyFound.check(gamestate.players['Middle Class'], gamestate, company).validity:
                         raise Exception("Starting company foundation invalid")
-                    rules.CompanyFoundation.resolve(gamestate.players['Middle Class'], gamestate, company)
+                    rules.CompanyFound.resolve(gamestate.players['Middle Class'], gamestate, company)
                     founded_companies.append(company.name)
                 else:
                     checked_companies.append(company)
@@ -346,9 +349,9 @@ class Engine:
             print(company.name)
             if (company.name in ("University Hospital", "Technical University", "National Public Broadcasting") if gamestate.player_count > 2 else ("Regional TV Station", "Public University", "Public Hospital")) and company.name not in founded_companies:
                 gamestate.players['State']._company_hand.append(company)
-                if not rules.CompanyFoundation.check(gamestate.players['State'], gamestate, company).validity:
+                if not rules.CompanyFound.check(gamestate.players['State'], gamestate, company).validity:
                     raise Exception("Starting company foundation invalid")
-                rules.CompanyFoundation.resolve(gamestate.players['State'], gamestate, company)
+                rules.CompanyFound.resolve(gamestate.players['State'], gamestate, company)
                 founded_companies.append(company.name)
             elif (company.name in ("University Hospital", "Technical University", "National Public Broadcasting") if gamestate.player_count == 2 else ("Regional TV Station", "Public University", "Public Hospital")) and company.name not in removed_companies:
                 removed_companies.append(company.name) # Adding it to the list prevents duplicates.
@@ -365,9 +368,14 @@ class Engine:
 
         ### Worker Assignment ###
         # Working Class first worker
-        rules.WorkerSpawn.check(gamestate, gamestate.players['Working Class'], 'Unskilled')
-        rules.WorkerSpawn.resolve(gamestate, gamestate.players['Working Class'], 'Unskilled')
-        
+        working_class, middle_class, capitalists, state  = gamestate.players.values()
+        rules.WorkerSpawn.resolve(gamestate, working_class, 'Unskilled')
+
+        # Working Class immigration cards
+        rules.ImmigrationCardDraw.resolve(gamestate, working_class)
+        if gamestate.player_count > 2:
+            rules.ImmigrationCardDraw.resolve(gamestate, working_class)
+
         logger.debug("All workers spawned and placed successfully")
         
         return gamestate
@@ -388,30 +396,8 @@ class Engine:
         WARNING: This modifies GameState's 'turn', 'active_player', and 'free_action_taken' in place.
         WARNING: This replaces the GameState based on ~decisions taken~
         """
-        from game.agents import ContextCall, AgentAnswer, Agent
-        from game.rules import CheckResponse
+        from game.agents import Calls
         logger.debug('Called Engine.action_phase')
-
-        # Setup call process in one function for reusability
-        def call_agent(agent: Agent, allowed_main: bool, allowed_free: bool, gamestate, player):
-            """
-            Builds a context call for an action, calls the agent, and returns the response
-            """
-            logger.debug("Engine.action_phase(call_agent()) called")
-
-            # Build options and prepare to call agent
-            all_options = DecisionContext.ActionContext.compile_options(player, allowed_free, allowed_main)
-            call = ContextCall(
-                gamestate,      # Instance
-                player,         # Instance
-                'Action',       # String
-                all_options     # Dictionary - str: class
-            )
-
-            # Call the agent for a reponse
-            answer = agent.call(call)
-            logging.debug(f"Answer: {answer}")
-            return answer
 
         ### Start the Action Phase ###
 
@@ -426,7 +412,7 @@ class Engine:
 
                 # Call the agent
                 agent = self.agents[player_instance.faction]
-                answer = call_agent(agent, True, True, gamestate, player_instance)
+                answer = Calls.action_call(agent, True, True, gamestate, player_instance)
                 logger.debug(f"Agent answer: {answer}")
 
                 # Enact the response
@@ -441,7 +427,7 @@ class Engine:
 
                 # Check for a free action following a main
                 if answer.primary_response == True:
-                    answer = call_agent(agent, False, True, gamestate, player_instance)
+                    answer = Calls.action_call(agent, False, True, gamestate, player_instance)
                     if answer.order is None:
                         continue
                     args = [player_instance] + answer.args
@@ -453,7 +439,7 @@ class Engine:
                 
                 # Otherwise demand a main action response
                 elif answer.primary_response == False:
-                    answer = call_agent(agent, True, False, gamestate, player_instance)
+                    answer = Calls.action_call(agent, True, False, gamestate, player_instance)
                     if answer.order is None:
                         raise Exception('Main action required, None cannot be passed')
                     else:
