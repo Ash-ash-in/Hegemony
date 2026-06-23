@@ -93,7 +93,7 @@ class Agent:
         elif call.role == 'Election':
             answer = self.election(call.gamestate, possible_options)
         elif call.role == 'Worker':
-            answer = self.worker(call.gamestate, possible_options)
+            answer = self.spawn_worker(call.gamestate, possible_options)
 
         #       -more calls to role-specific methods as they are created
         else:

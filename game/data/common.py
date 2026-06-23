@@ -57,11 +57,11 @@ class GameState:
             # Worker slots
             slots = {}
             if not pd.isnull(row['Class1']):
-                slots[1] = Worker(row['Class1'],row['Skill1'])
+                slots[1] = Worker(row['Class1'], row['Skill1'], False)
             if not pd.isnull(row['Class2']):
-                slots[2] = Worker(row['Class2'],row['Skill2'])
+                slots[2] = Worker(row['Class2'], row['Skill2'], False)
             if not pd.isnull(row['Class3']):
-                slots[3] = Worker(row['Class3'],row['Skill3'])     
+                slots[3] = Worker(row['Class3'], row['Skill3'], False)     
             comp = Company(
                 row['Name'], 
                 row['Owner'], 
@@ -73,7 +73,7 @@ class GameState:
                 'L2',
                 wages,
                 slots,
-                {i: None for i in range(len(slots.keys()))}, # Empty workers dict
+                {i+1: None for i in range(len(slots.keys()))}, # Empty workers dict
                 index
                 )
             if comp.faction == 'Working Class':
@@ -105,14 +105,16 @@ class GameState:
             for i in range(5):
                 worker_pool['Working Class'].append(Worker(
                     'Working Class',
-                    skill
+                    skill,
+                    False # Committed
                 ))
                     
         # unskilled workers            
         for i in range(23): # double check unskilled worker count
             worker_pool['Working Class'].append(Worker(
                 'Working Class',
-                'Unskilled'
+                'Unskilled',
+                False # Committed
             ))   
                 
         # middle class workers
@@ -122,13 +124,15 @@ class GameState:
             for i in range(5): 
                 worker_pool['Middle Class'].append(Worker(
                     'Middle Class',
-                    skill
+                    skill,
+                    False # Committed
                 ))
         # unskilled workers            
         for i in range(17): # double check unskilled worker count
             worker_pool['Middle Class'].append(Worker(
                 'Middle Class',
-                'Unskilled'
+                'Unskilled',
+                False # Committed
             ))
 
         self.worker_pool = worker_pool        
@@ -143,12 +147,12 @@ class GameState:
             for i in range(3):
                 if i < 2:
                     immigration_cards.append(ImmigrationCard(
-                        Worker('Working Class', industry),
-                        Worker('Middle Class', 'Unskilled')
+                        Worker('Working Class', industry, False),
+                        Worker('Middle Class', 'Unskilled', False)
                     ))
                 immigration_cards.append(ImmigrationCard(
-                    Worker('Working Class', 'Unskilled'),
-                    Worker('Middle Class', industry)
+                    Worker('Working Class', 'Unskilled', False),
+                    Worker('Middle Class', industry, False)
                 ))
         shuffle(immigration_cards)
         self.immigration_card_deck = immigration_cards
@@ -163,7 +167,6 @@ class GameState:
                 count += 1
         return count
 
-    
 @dataclass
 class PlayerReference:
     active_factions: list
@@ -173,15 +176,24 @@ class PlayerReference:
     capitalists: object
     state: object
 
-@dataclass
+
 class Worker:
-    faction: str
-    skill: str
+    
+    import itertools
+    id_generator = itertools.count(100)
+
+    def __init__(self, faction: str, skill: str, committed: bool):
+        self.faction = faction
+        self.skill = skill
+        self.committed = committed
+        # Retrieve next ID from the class generator
+        self.id = next(self.id_generator)
 
     def check(self):
         return {
             'faction': self.faction,
-            'skill': self.skill
+            'skill': self.skill,
+            'committed': self.committed
         }
 
 @dataclass
@@ -292,7 +304,7 @@ class Company:
         self._faction = target_faction
 
 @dataclass(frozen=True)
-class Card:
+class ActionCard:
     faction: str
     description: str
 

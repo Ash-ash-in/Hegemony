@@ -234,7 +234,7 @@ class MoneyTransfer:
 @dataclass
 class CompanyFound:
     """
-    Puts a company from one player's pool into their 
+    Puts a company from one player's pool on to the board
     
     This handles the physical aspects of putting the card in place, but does not involve any exchange of money or assignment of workers.
     """
@@ -286,6 +286,82 @@ class CompanyFound:
         gamestate.companies[player.faction][slot] = comp
         changes.append(f'{comp.name} founded in slot {slot[-1]}')
         log = f"{player.faction} founded {comp.name}"
+        logger.debug(changes)
+        return ActionResult(Outcome.OK, log, changes)
+
+@dataclass
+class WorkerHire:
+    """
+    Moves a worker from the unemployment area to a company
+    
+    This handles the movement of a specific worker to a specific slot. 
+    It does not check if this is wise.
+    It does not check if this would result in a fully staffed company.
+    It does not check if this would cause the source companies to become inactive.
+    Handles checks related to worker skill and class.
+    """
+    logger.debug("called WorkerHire class")
+    from game.data.common import GameState, Company, Worker
+
+    @staticmethod
+    def check(gamestate: GameState, worker: Worker, target_company: Company, target_slot: int) -> CheckResponse:
+        """
+        ### Args
+        source_company: Company | list (for company or unemployment_area)
+        source_slot: int
+        target_company: Company
+        target_slot: int
+
+        ### Returns
+        CheckResponse
+        """
+        logger.debug("Called WorkerHire.check()")
+
+        # Validation flow
+        if target_company.workers[target_slot] is not None:
+            return CheckResponse(False, "Slot already occupied", "Intermediate", [])
+        if worker not in gamestate.unemployed_workers[worker.faction]:
+            return CheckResponse(False, "Worker is not currently enemployed", "Intermediate", [])
+        target_class = target_company.worker_slots[target_slot].faction
+        target_skill = target_company.worker_slots[target_slot].skill
+        if worker.faction != target_class and target_class != 'Any':
+            return CheckResponse(False, "Worker class not suitable for slot", "Intermediate", [])
+        if worker.skill != target_skill and target_skill != 'Any':
+            return CheckResponse(False, "Worker does not have the appropriate skill", "Intermediate", [])
+        if worker.committed:
+            raise Exception("Unemployed workers cannot be committed")
+            return CheckResponse(False, "Worker is committed", "Intermediate", [])
+        return CheckResponse(True, "", "Intermediate", [])
+
+    @staticmethod
+    def resolve(gamestate: GameState, worker: Worker, target_company: Company, target_slot: int) -> ActionResult:
+        """
+        ### Args
+        source_company: Company
+        source_slot: int
+        target_company: Company
+        target_slot: int
+
+        ### Returns
+        ActionResult
+        """
+        logger.debug("Called WorkerHire.resolve()")
+
+        ### Validation check
+        if not WorkerHire.check(gamestate, worker, target_company, target_slot).validity:
+            raise Exception("CompanyFound resolve called but failed check")
+
+        ### Execute
+        changes = []
+
+        # Clear source slot
+        gamestate.unemployed_workers[worker.faction].remove(worker)
+        changes.append("Worker removed from unemployment area")
+
+        # Add to new slot
+        target_company.workers[target_slot] = worker
+        changes.append(f"Worker added to {target_company.name} in slot {target_slot}")
+        log = f"Unemployed worker hired at {target_company.name}"
         logger.debug(changes)
         return ActionResult(Outcome.OK, log, changes)
 
@@ -475,7 +551,7 @@ class LoanRemoval:
         # Enact
         player._remove_loan()
         changes.append(f"{player.faction} had 1 loan removed")
-        logger.debug(f"removed a loan from {player}")
+        logger.debug(f"removed a loan from {player.faction}")
         log = (
             f"{player.faction} had a loan removed."
         )

@@ -97,9 +97,9 @@ class Save:
             player_count = player_count,
             players = {
                 'Working Class': factions.WorkingClass('Working Class'),
+                'Middle Class': factions.MiddleClass('Middle Class'),
                 'Capitalists': factions.Player('Capitalists'),
-                'State': factions.Player('State'),
-                'Middle Class': factions.MiddleClass('Middle Class')
+                'State': factions.Player('State')
                 }
 
         )
@@ -276,6 +276,9 @@ class Engine:
         import game.rules as rules
         from game.agents import Calls
 
+        # Build player refs
+        working_class, middle_class, capitalists, state  = gamestate.players.values()
+
         ####################################
         ### TEMPORARY give everyone 120 ####
         for name, inst in gamestate.players.items():
@@ -312,13 +315,45 @@ class Engine:
         founded_companies = [] 
         checked_companies = [] # Non-starter companies
         for company in gamestate.company_deck['Capitalists']:
-            print(company.name)
             if company.name in ("Supermarket", "Shopping Mall", "College", "Clinic") and company.name not in founded_companies:
+                
+                # Found company
                 gamestate.players['Capitalists']._company_hand.append(company)
                 if not rules.CompanyFound.check(gamestate.players['Capitalists'], gamestate, company).validity:
                     raise Exception("Starting company foundation invalid")
                 rules.CompanyFound.resolve(gamestate.players['Capitalists'], gamestate, company)
                 founded_companies.append(company.name)
+
+                # Staff if necessary
+                if company.name == 'Supermarket':
+                    for slotname, ref in company.worker_slots.items():
+                        if ref.skill == 'Any':
+                            skill = 'Unskilled'
+                        else:
+                            skill = ref.skill
+                        rules.WorkerSpawn.resolve(gamestate, working_class, skill)
+                        worker = gamestate.unemployed_workers['Working Class'][-1]
+                        rules.WorkerHire.resolve(gamestate, worker, company, slotname)
+                elif gamestate.player_count == 2 and company.name == "Shopping Mall":
+                    for slotname, ref in company.worker_slots.items():
+                        if ref.skill == 'Any':
+                            skill = 'Unskilled'
+                        else:
+                            skill = ref.skill
+                        rules.WorkerSpawn.resolve(gamestate, working_class, skill)
+                        worker = gamestate.unemployed_workers['Working Class'][-1]
+                        rules.WorkerHire.resolve(gamestate, worker, company, slotname)
+                elif gamestate.player_count > 2 and company.name == 'College':
+                    for slotname, ref in company.worker_slots.items():
+                        if ref.skill == 'Any':
+                            skill = 'Unskilled'
+                        else:
+                            skill = ref.skill
+                        rules.WorkerSpawn.resolve(gamestate, working_class, skill)
+                        worker = gamestate.unemployed_workers['Working Class'][-1]
+                        rules.WorkerHire.resolve(gamestate, worker, company, slotname)
+
+            # Non-Starter companies
             else:
                 checked_companies.append(company)
         gamestate.company_deck['Capitalists'] = checked_companies
@@ -367,10 +402,9 @@ class Engine:
         
         logger.debug('All starter companies founded successfully')
 
-        ### Worker Assignment ###
-        
+        ### Worker Spawning ###
+
         # Working Class first worker
-        working_class, middle_class, capitalists, state  = gamestate.players.values()
         rules.WorkerSpawn.resolve(gamestate, working_class, 'Unskilled')
 
         # Working Class immigration cards
