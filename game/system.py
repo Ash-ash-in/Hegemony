@@ -276,17 +276,6 @@ class Engine:
         import game.rules as rules
         from game.agents import Calls
 
-        def hire_from_scratch(_company, _faction):
-            """Handy tool to spawn all workers for and staff a company"""
-            for slotname, ref in _company.worker_slots.items():
-                if ref.skill == 'Any':
-                    skill = 'Unskilled'
-                else:
-                    skill = ref.skill
-                rules.WorkerSpawn.resolve(gamestate, _faction, skill)
-                worker = gamestate.unemployed_workers[_faction.faction][-1]
-                rules.WorkerHire.resolve(gamestate, worker, _company, slotname)
-
         # Build player refs
         working_class, middle_class, capitalists, state  = gamestate.players.values()
 
@@ -315,14 +304,18 @@ class Engine:
         gamestate.build_immigration_cards()
         logger.debug('Gamestate card and worker deck framework complete')
 
-        ### Found starting companies ###
-        # Loops through deck to find starter companies
-        # Adds the company to the players hand
-        # Calls the CompanyFound methods to put it in play
-        # Adds non-starter companies to a list
-        # Replaces deck with that list at the end
+        def hire_from_scratch(_company, _faction):
+            """Handy tool to spawn all workers for and staff a company"""
+            for slotname, ref in _company.worker_slots.items():
+                if ref.skill == 'Any':
+                    skill = 'Unskilled'
+                else:
+                    skill = ref.skill
+                rules.WorkerSpawn.resolve(gamestate, _faction, skill)
+                worker = gamestate.unemployed_workers[_faction.faction][-1]
+                rules.WorkerHire.resolve(gamestate, worker, _company, slotname)
 
-         ### Found  Capitalist Companies ###
+        ### Found  Capitalist Companies ###
 
         founded_companies = [] 
         checked_companies = [] # Non-starter companies
@@ -377,9 +370,6 @@ class Engine:
                         skill = company.worker_slots[1].skill
                     rules.WorkerSpawn.resolve(gamestate, middle_class, skill)
                     worker = gamestate.unemployed_workers['Middle Class'][-1]
-                    print(f"slot skill: {skill}")
-                    print(f"worker skill: {worker.skill}")
-                    print(rules.WorkerHire.check(gamestate, worker, company, 1))
                     rules.WorkerHire.resolve(gamestate, worker, company, 1)
 
                 # Ignore
@@ -468,6 +458,7 @@ class Engine:
             rules.ImmigrationCardDraw.resolve(gamestate, middle_class)
             rules.ImmigrationCardDraw.resolve(gamestate, middle_class)
 
+        assert gamestate.corroborate_worker_count()
         logger.debug("All workers spawned and placed successfully")
         
         return gamestate

@@ -166,6 +166,55 @@ class GameState:
             if v is not None:
                 count += 1
         return count
+    
+
+    # Safety Checks
+    def corroborate_worker_count(self):
+        """Checks if the population trackers of WC (and MC) are true to the workers on the board"""
+        WC_track = 0
+        MC_track = 0
+
+        # Record Players' Understanding
+        WC_num = self.players['Working Class'].population_track
+        if self.player_count > 2:
+            MC_num = self.players['Middle Class'].population_track
+            
+        # Count Workers in Companies
+        for factioncomps in self.companies.values():
+            for comp in factioncomps.values():
+                if comp is None: # Ignore unfilled company slots
+                    continue
+                for worker in comp.worker_slots.values():
+                    if worker is None: # If there is no worker in the first slot, there are no workers
+                        break
+                    if worker.faction == 'Working Class':
+                        WC_track += 1
+                    if worker.faction == 'Middle Class':
+                        MC_track += 1
+
+        # Count Unemployed Workers
+        for worker in self.unemployed_workers['Working Class']:
+            WC_track += 1
+        for worker in self.unemployed_workers['Middle Class']:
+            MC_track += 1                
+        
+        # Compare Values
+        acc = True
+        if WC_track != WC_num:
+            acc = False
+        if self.player_count > 2 and MC_track != MC_num:
+            acc = False
+
+        # Display Error Messages
+        logger.error(f"Worker counts cannot be reconciled.")
+        logger.error(f"Working Class Player tracker believes there are {WC_num}. Checker found {WC_track}.")
+        if self.player_count > 2:
+            logger.error(f"Middle Class Player tracker believes there are {MC_num}. Checker found {MC_track}")
+                     
+        return acc
+
+
+
 
 @dataclass
 class PlayerReference:
