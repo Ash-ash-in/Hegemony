@@ -276,6 +276,17 @@ class Engine:
         import game.rules as rules
         from game.agents import Calls
 
+        def hire_from_scratch(_company, _faction):
+            """Handy tool to spawn all workers for and staff a company"""
+            for slotname, ref in _company.worker_slots.items():
+                if ref.skill == 'Any':
+                    skill = 'Unskilled'
+                else:
+                    skill = ref.skill
+                rules.WorkerSpawn.resolve(gamestate, _faction, skill)
+                worker = gamestate.unemployed_workers[_faction.faction][-1]
+                rules.WorkerHire.resolve(gamestate, worker, _company, slotname)
+
         # Build player refs
         working_class, middle_class, capitalists, state  = gamestate.players.values()
 
@@ -311,90 +322,123 @@ class Engine:
         # Adds non-starter companies to a list
         # Replaces deck with that list at the end
 
-        # Capitalists
+         ### Found  Capitalist Companies ###
+
         founded_companies = [] 
         checked_companies = [] # Non-starter companies
         for company in gamestate.company_deck['Capitalists']:
             if company.name in ("Supermarket", "Shopping Mall", "College", "Clinic") and company.name not in founded_companies:
-                
-                # Found company
                 gamestate.players['Capitalists']._company_hand.append(company)
                 if not rules.CompanyFound.check(gamestate.players['Capitalists'], gamestate, company).validity:
                     raise Exception("Starting company foundation invalid")
                 rules.CompanyFound.resolve(gamestate.players['Capitalists'], gamestate, company)
                 founded_companies.append(company.name)
 
-                # Staff if necessary
+                # Supermarket - always working class
                 if company.name == 'Supermarket':
-                    for slotname, ref in company.worker_slots.items():
-                        if ref.skill == 'Any':
-                            skill = 'Unskilled'
-                        else:
-                            skill = ref.skill
-                        rules.WorkerSpawn.resolve(gamestate, working_class, skill)
-                        worker = gamestate.unemployed_workers['Working Class'][-1]
-                        rules.WorkerHire.resolve(gamestate, worker, company, slotname)
-                elif gamestate.player_count == 2 and company.name == "Shopping Mall":
-                    for slotname, ref in company.worker_slots.items():
-                        if ref.skill == 'Any':
-                            skill = 'Unskilled'
-                        else:
-                            skill = ref.skill
-                        rules.WorkerSpawn.resolve(gamestate, working_class, skill)
-                        worker = gamestate.unemployed_workers['Working Class'][-1]
-                        rules.WorkerHire.resolve(gamestate, worker, company, slotname)
+                    hire_from_scratch(company, working_class)
+                
+                # Shopping mall - class depends on player count
+                elif company.name == "Shopping Mall":
+                    if gamestate.player_count == 2:
+                        hire_from_scratch(company, working_class)
+                    elif gamestate.player_count > 2:
+                        hire_from_scratch(company, middle_class)
+
+                # College - only staffed when > 2 players
                 elif gamestate.player_count > 2 and company.name == 'College':
-                    for slotname, ref in company.worker_slots.items():
-                        if ref.skill == 'Any':
-                            skill = 'Unskilled'
-                        else:
-                            skill = ref.skill
-                        rules.WorkerSpawn.resolve(gamestate, working_class, skill)
-                        worker = gamestate.unemployed_workers['Working Class'][-1]
-                        rules.WorkerHire.resolve(gamestate, worker, company, slotname)
+                    hire_from_scratch(company, working_class)
 
             # Non-Starter companies
             else:
                 checked_companies.append(company)
         gamestate.company_deck['Capitalists'] = checked_companies
+        # Final Validity Checks
         if gamestate.check_founded_companies('Capitalists') != 4:
             raise Exception(f'Incorrect number of capitalist companies at startup ({gamestate.check_founded_companies('Capitalists')})')
 
-        # Middle Class
+        ### Found Middle Class Companies ### 
+
         if gamestate.player_count > 2:
             founded_companies = []
             checked_companies = [] # Non-starter companies
             for company in gamestate.company_deck['Middle Class']:
+
+                # Found
                 if company.name in ("Convenience Store", "Doctor's Office") and company.name not in founded_companies:
-                    gamestate.players['Capitalists']._company_hand.append(company)
-                    if not rules.CompanyFound.check(gamestate.players['Middle Class'], gamestate, company).validity:
-                        raise Exception("Starting company foundation invalid")
+                    gamestate.players['Middle Class']._company_hand.append(company)
                     rules.CompanyFound.resolve(gamestate.players['Middle Class'], gamestate, company)
                     founded_companies.append(company.name)
+
+                    # Hire
+                    if company.worker_slots[1].skill == 'Any':
+                        skill = 'Unskilled'
+                    else:
+                        skill = company.worker_slots[1].skill
+                    rules.WorkerSpawn.resolve(gamestate, middle_class, skill)
+                    worker = gamestate.unemployed_workers['Middle Class'][-1]
+                    print(f"slot skill: {skill}")
+                    print(f"worker skill: {worker.skill}")
+                    print(rules.WorkerHire.check(gamestate, worker, company, 1))
+                    rules.WorkerHire.resolve(gamestate, worker, company, 1)
+
+                # Ignore
                 else:
                     checked_companies.append(company)
             gamestate.company_deck['Middle Class'] = checked_companies
+            # Final Validity Checks
             if gamestate.check_founded_companies('Middle Class') != 2:
                 raise Exception(f'Incorrect number of middle class companies at startup ({gamestate.check_founded_companies('Middle Class')})')
 
-        # State
+        ### Found State Companies ### 
+
         founded_companies = []
         removed_companies = [] # Clear 3 companies for state
         checked_companies = [] # Non-starter companies
         for company in gamestate.company_deck['State']:
-            print(company.name)
-            if (company.name in ("University Hospital", "Technical University", "National Public Broadcasting") if gamestate.player_count > 2 else ("Regional TV Station", "Public University", "Public Hospital")) and company.name not in founded_companies:
-                gamestate.players['State']._company_hand.append(company)
-                if not rules.CompanyFound.check(gamestate.players['State'], gamestate, company).validity:
-                    raise Exception("Starting company foundation invalid")
-                rules.CompanyFound.resolve(gamestate.players['State'], gamestate, company)
-                founded_companies.append(company.name)
-            elif (company.name in ("University Hospital", "Technical University", "National Public Broadcasting") if gamestate.player_count == 2 else ("Regional TV Station", "Public University", "Public Hospital")) and company.name not in removed_companies:
-                removed_companies.append(company.name) # Adding it to the list prevents duplicates.
-                # The removal happens when checked_companies replaces the pool in gamestate
+
+            # Companies to found / ignore
+            if gamestate.player_count == 2:
+
+                # Found
+                if company.name in ("Regional TV Station", "Public University", "Public Hospital") and company.name not in founded_companies:
+                    gamestate.players['State']._company_hand.append(company)
+                    rules.CompanyFound.resolve(gamestate.players['State'], gamestate, company)
+                    founded_companies.append(company.name)
+
+                    # Hire
+                    if company.name in ("Public University", "Public Hospital"):
+                        hire_from_scratch(company, working_class)
+
+                # Ignore
+                if company.name in ("University Hospital", "Technical University", "National Public Broadcasting"):
+                    removed_companies.append(company.name) # Adding it to the list prevents duplicates.
+                    # The removal happens when checked_companies replaces the pool in gamestate
+
+            elif gamestate.player_count > 2:
+
+                # Found
+                if company.name in ("University Hospital", "Technical University", "National Public Broadcasting"):
+                    gamestate.players['State']._company_hand.append(company)
+                    rules.CompanyFound.resolve(gamestate.players['State'], gamestate, company)
+                    founded_companies.append(company.name)
+
+                    # Hire 
+                    if company.name == "University Hospital":
+                        hire_from_scratch(company, working_class)
+                    if company.name == "Technical University":
+                        hire_from_scratch(company, middle_class)
+
+                # Ignore
+                if company.name in ("Regional TV Station", "Public University", "Public Hospital") and company.name not in removed_companies:
+                    removed_companies.append(company.name) # Adding it to the list prevents duplicates.
+                    # The removal happens when checked_companies replaces the pool in gamestate
+
+            # Companies for the State's "Market"
             else:
                 checked_companies.append(company)
         gamestate.company_deck['State'] = checked_companies
+        # Final Validity Checks
         if gamestate.check_founded_companies('State') != 3:
             raise Exception(f'Incorrect number of state companies at startup ({gamestate.check_founded_companies('State')})')
         if len(removed_companies) != 3:
@@ -402,7 +446,7 @@ class Engine:
         
         logger.debug('All starter companies founded successfully')
 
-        ### Worker Spawning ###
+        ### Unemployed Worker Spawning ###
 
         # Working Class first worker
         rules.WorkerSpawn.resolve(gamestate, working_class, 'Unskilled')
@@ -412,17 +456,17 @@ class Engine:
         if gamestate.player_count > 2:
             rules.ImmigrationCardDraw.resolve(gamestate, working_class)
 
-        # Middle Class first worker
-        answer = Calls.spawn_worker_call( # Call agent for a decision to start
-            gamestate, 
-            middle_class, 
-            middle_class.agent
-            )
-        rules.WorkerSpawn.resolve(gamestate, middle_class, answer.name)
-        
-        # Middle Class immigration cards
-        rules.ImmigrationCardDraw.resolve(gamestate, middle_class)
-        rules.ImmigrationCardDraw.resolve(gamestate, middle_class)
+            # Middle Class first worker
+            answer = Calls.spawn_worker_call( # Call agent for a decision to start
+                gamestate, 
+                middle_class, 
+                middle_class.agent
+                )
+            rules.WorkerSpawn.resolve(gamestate, middle_class, answer.name)
+            
+            # Middle Class immigration cards
+            rules.ImmigrationCardDraw.resolve(gamestate, middle_class)
+            rules.ImmigrationCardDraw.resolve(gamestate, middle_class)
 
         logger.debug("All workers spawned and placed successfully")
         
@@ -454,6 +498,8 @@ class Engine:
             gamestate.turn = turn_num # Update for save file
             for faction_name, player_instance in gamestate.players.items():
                 if faction_name == 'State' and gamestate.player_count < 4:
+                    continue
+                if faction_name == "Middle Class" and gamestate.player_count < 3:
                     continue
                 logger.info(f"It's the {faction_name}'s turn")
                 gamestate.active_player = faction_name # Update for save file
