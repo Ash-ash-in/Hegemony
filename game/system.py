@@ -322,8 +322,6 @@ class Engine:
         for company in gamestate.company_deck['Capitalists']:
             if company.name in ("Supermarket", "Shopping Mall", "College", "Clinic") and company.name not in founded_companies:
                 gamestate.players['Capitalists']._company_hand.append(company)
-                if not rules.CompanyFound.check(gamestate.players['Capitalists'], gamestate, company).validity:
-                    raise Exception("Starting company foundation invalid")
                 rules.CompanyFound.resolve(gamestate.players['Capitalists'], gamestate, company)
                 founded_companies.append(company.name)
 

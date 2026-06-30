@@ -89,7 +89,7 @@ class WorkingClass(Player):
             money: int = 0, 
             loans: int = 0,
             prosperity: int = 0,
-            population_track: int = 10
+            population_track: int = 0
         ):
         super().__init__(            
                 faction, 
@@ -163,7 +163,7 @@ class MiddleClass(Player):
             money: int = 0, 
             loans: int = 0,
             prosperity_track: int = 0, # The index of the tracker, rather than the actual value
-            population_track: int = 10 # Number of workers
+            population_track: int = 0 # Number of workers
         ):
         super().__init__(            
                 faction,

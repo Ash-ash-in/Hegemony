@@ -65,7 +65,6 @@ class Agent:
             check = tpl[1]
             if check.validity:
                 possible[name] = (method, check)
-        logger.debug(f"Extracted options: {possible}")
         return possible
 
     def call(self, call: ContextCall) -> AgentAnswer:
@@ -75,7 +74,6 @@ class Agent:
         Its basically a triage for incoming calls
         """
         logger.debug(f"Call made to {self.name}")
-        logger.debug(f"Call options: {call.options}")
 
         # Validation
         if call.faction != self.faction:
@@ -86,7 +84,6 @@ class Agent:
         possible_options = self.extract_options(call.options)
         if len(possible_options.keys()) == 0:
             raise Exception('No response from agent is possible')
-        logging.debug(f"Call options = {possible_options}")
 
         if call.role == 'Action':
             answer = self.action(call.gamestate, possible_options)
@@ -212,7 +209,6 @@ class Calls:
         for skill in industries:
             skilldict[skill] = 0
         for worker in gamestate.worker_pool[player.faction]:
-            print(worker.skill)
             skilldict[worker.skill] += 1
         
         answerdict = {}

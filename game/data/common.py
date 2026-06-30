@@ -184,9 +184,9 @@ class GameState:
             for comp in factioncomps.values():
                 if comp is None: # Ignore unfilled company slots
                     continue
-                for worker in comp.worker_slots.values():
+                for worker in comp.workers.values():
                     if worker is None: # If there is no worker in the first slot, there are no workers
-                        break
+                        continue
                     if worker.faction == 'Working Class':
                         WC_track += 1
                     if worker.faction == 'Middle Class':
@@ -206,10 +206,11 @@ class GameState:
             acc = False
 
         # Display Error Messages
-        logger.error(f"Worker counts cannot be reconciled.")
-        logger.error(f"Working Class Player tracker believes there are {WC_num}. Checker found {WC_track}.")
-        if self.player_count > 2:
-            logger.error(f"Middle Class Player tracker believes there are {MC_num}. Checker found {MC_track}")
+        if not acc:
+            logger.error(f"Worker counts cannot be reconciled.")
+            logger.error(f"Working Class Player tracker believes there are {WC_num}. Checker found {WC_track}.")
+            if self.player_count > 2:
+                logger.error(f"Middle Class Player tracker believes there are {MC_num}. Checker found {MC_track}")
                      
         return acc
 
@@ -375,5 +376,4 @@ industries = ['Healthcare','Education','Luxury','Agriculture','Media']
 # ----------- END ---------- #
 logger.debug("Finished importing data.common")
 
-print("common.py fully loaded")
 

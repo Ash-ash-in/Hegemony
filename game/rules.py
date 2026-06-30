@@ -283,10 +283,11 @@ class CompanyFound:
             raise Exception("Company slot could not be found, but check already passed.")
         player._remove_company_card_from_hand(comp)
         changes.append(f"{comp.name} removed from {player.faction}'s market")
+        logger.debug(changes[-1])
         gamestate.companies[player.faction][slot] = comp
-        changes.append(f'{comp.name} founded in slot {slot[-1]}')
+        changes.append(f'{comp.name} founded in {player.faction} company slot {slot[-1]}')
+        logger.debug(changes[-1])
         log = f"{player.faction} founded {comp.name}"
-        logger.debug(changes)
         return ActionResult(Outcome.OK, log, changes)
 
 @dataclass
@@ -360,9 +361,9 @@ class WorkerHire:
 
         # Add to new slot
         target_company.workers[target_slot] = worker
-        changes.append(f"Worker added to {target_company.name} in slot {target_slot}")
+        changes.append(f"Worker added to {target_company.name} in worker slot {target_slot}")
+        logger.debug(changes[-1])
         log = f"Unemployed worker hired at {target_company.name}"
-        logger.debug(changes)
         return ActionResult(Outcome.OK, log, changes)
 
 @dataclass
