@@ -4,7 +4,7 @@ logger.debug("Importing rules.rules module")
 
 from dataclasses import dataclass
 from enum import Enum, auto
-from game.data.factions import Player, WorkingClass, MiddleClass
+from game.factions import Player, WorkingClass, MiddleClass
 from game.data.common import GameState
 
 ######################### Utilities #######################################
@@ -56,7 +56,7 @@ class PointAssign:
     Handles assigning points to players. Intermediate layer
     """
     logger.debug("called PointAssign class")
-    from game.data.factions import Player
+    from game.factions import Player
 
     @staticmethod
     def check(player: Player, amount: int):
@@ -109,7 +109,7 @@ class MoneyTransfer:
     mandatory=True:              auto-take a loan to cover the shortfall.
     """
     logger.debug("called MoneyTransfer class")
-    from game.data.factions import Player
+    from game.factions import Player
 
     @staticmethod
     def check(sender: Player | None, receiver: Player | None, amount: int, mandatory: bool) -> CheckResponse:
@@ -239,7 +239,7 @@ class CompanyFound:
     This handles the physical aspects of putting the card in place, but does not involve any exchange of money or assignment of workers.
     """
     logger.debug("called CompanyFound class")
-    from game.data.factions import Player
+    from game.factions import Player
     from game.data.common import GameState, Company
 
     @staticmethod
@@ -372,7 +372,7 @@ class WorkerSpawn:
     Handles birthing workers from the pool to the unemployment area
     """
     logger.debug("called WorkerSpawn class")
-    from game.data.factions import WorkingClass, MiddleClass
+    from game.factions import WorkingClass, MiddleClass
     from game.data.common import GameState
 
     @staticmethod
@@ -513,7 +513,7 @@ class LoanRemoval:
     Handles the intermediate step for paying a loan.
     """
     logger.debug("called MoneyTransfer class")
-    from game.data.factions import Player
+    from game.factions import Player
 
     @staticmethod
     def check(player: Player) -> CheckResponse:
@@ -577,7 +577,7 @@ class FreeAction:
         dict (name: (classmethod, checkresponse)
     """
     logger.debug("called FreeAction class")
-    from game.data.factions import Player
+    from game.factions import Player
 
     @staticmethod
     def context(player: Player) -> dict:
@@ -602,7 +602,7 @@ class FreeAction:
     @dataclass
     class RepayLoan:
         logger.debug("called RepayLoan subclass")
-        from game.data.factions import Player
+        from game.factions import Player
 
         @staticmethod
         def check(player: Player):
@@ -625,7 +625,7 @@ class FreeAction:
 
 class MainAction:
     logger.debug("called MainAction class")
-    from game.data.factions import Player
+    from game.factions import Player
 
     @staticmethod
     def context(player: Player) -> dict:
@@ -652,7 +652,7 @@ class MainAction:
         """
         Sends 50 quid to the player. Don't forget to remove before training begins!
         """
-        from game.data.factions import Player
+        from game.factions import Player
 
         @staticmethod
         def check(player: Player):
@@ -680,7 +680,7 @@ class MainAction:
         """
         Adds a loan to a player. Don't forget to remove before training begins!
         """
-        from game.data.factions import Player
+        from game.factions import Player
 
         @staticmethod
         def check(player: Player):

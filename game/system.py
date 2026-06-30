@@ -2,14 +2,13 @@ from dataclasses import asdict, dataclass
 import logging
 from typing import Any
 logger = logging.getLogger(__name__)
-logger.debug("importing game_engine module")
 
 @dataclass(frozen=True)
 class Save:
 
     # Imports
     from datetime import datetime
-    from game.data import factions
+    from game import factions
     import os
 
     # Point to and set up save directory
@@ -75,7 +74,7 @@ class Save:
         """
         logger.debug(f"save.new_game called with player_count: {player_count}")
         from game.data import common
-        import game.data.factions as factions
+        import game.factions as factions
 
         # Setup factions
         active_factions = common.faction_instantiate_order[:player_count]
@@ -123,7 +122,7 @@ class Save:
         logger.debug(f"game.load called with filename:{filename}")
 
         import json
-        import game.data.factions as factions
+        import game.factions as factions
 
         # Read the file
         from game.data.common import GameState
@@ -167,7 +166,7 @@ class Save:
 class Engine:
     from game.data.common import GameState
     from game.agents import Agent, AgentAnswer
-    from game.data.factions import Player
+    from game.factions import Player
     logger.debug("Calling engine class")
     agents = {}
 
@@ -274,7 +273,7 @@ class Engine:
         """
         logger.debug('Called Engine.start_position')
         import game.rules as rules
-        from game.agents import Calls
+        from game.context import SimpleContext
 
         # Build player refs
         working_class, middle_class, capitalists, state  = gamestate.players.values()
@@ -445,7 +444,7 @@ class Engine:
             rules.ImmigrationCardDraw.resolve(gamestate, working_class)
 
             # Middle Class first worker
-            answer = Calls.spawn_worker_call( # Call agent for a decision to start
+            answer = SimpleContext.spawn_worker_call( # Call agent for a decision to start
                 gamestate, 
                 middle_class, 
                 middle_class.agent
@@ -477,7 +476,7 @@ class Engine:
         WARNING: This modifies GameState's 'turn', 'active_player', and 'free_action_taken' in place.
         WARNING: This replaces the GameState based on ~decisions taken~
         """
-        from game.agents import Calls
+        from game.context import ActionContext
         logger.debug('Called Engine.action_phase')
 
         ### Start the Action Phase ###
@@ -495,7 +494,7 @@ class Engine:
 
                 # Call the agent
                 agent = self.agents[player_instance.faction]
-                answer = Calls.action_call(agent, True, True, gamestate, player_instance)
+                answer = ActionContext.action_call(agent, True, True, gamestate, player_instance)
                 logger.debug(f"Agent answer: {answer}")
 
                 # Enact the response
@@ -510,7 +509,7 @@ class Engine:
 
                 # Check for a free action following a main
                 if answer.primary_response == True:
-                    answer = Calls.action_call(agent, False, True, gamestate, player_instance)
+                    answer = ActionContext.action_call(agent, False, True, gamestate, player_instance)
                     if answer.order is None:
                         continue
                     args = [player_instance] + answer.args
@@ -522,7 +521,7 @@ class Engine:
                 
                 # Otherwise demand a main action response
                 elif answer.primary_response == False:
-                    answer = Calls.action_call(agent, True, False, gamestate, player_instance)
+                    answer = ActionContext.action_call(agent, True, False, gamestate, player_instance)
                     if answer.order is None:
                         raise Exception('Main action required, None cannot be passed')
                     else:
@@ -591,62 +590,4 @@ class Engine:
                     gamestate = self.scoring_phase(gamestate)
 
         gamestate = self.endgame_scoring(gamestate)
-
-
-@dataclass(frozen=True)
-class DecisionContext:
-    """
-    Contains the classes that connect the gamestate to the interfaces, for AI and Human agents
-    Decides what the engine gives to an agent when they need to make a decsion
-    AI and Humans receive the same information
-    """
-    logger.debug('Called DecisionContext')
-    available: list
-    unavailable: list[tuple]
-
-    @dataclass(frozen=True)
-    class ActionContext:
-        """
-        Checks what is available when making an action.
-        Seperate methods for different types of agent.
-        """
-        logger.debug('Called ActionContext')
-        from game.data.factions import Player
-        from game.agents import AgentAnswer
-        from game.data.common import GameState
-
-        @staticmethod
-        def compile_options(player: Player, allowed_free: bool, allowed_main: bool) -> dict:
-            """
-            Takes the list of attributes from the Action classes
-            Looks for a 'check' method (which all actions should have)
-            Runs the check and records the result
-
-            The result is a dict - string: (classmethod, CheckResponse)
-            """
-            logger.debug("called DecisionContext.ActionContext.compile_options()")
-            from game.rules import FreeAction, MainAction, CheckResponse
-
-            context = {}
-
-            # Compile free actions from rules
-            if allowed_free:
-                free_options = FreeAction.context(player)
-                context = {**context, **free_options}
-                logging.debug(f"Options from FreeAction.context(): {free_options}")
-
-                if allowed_main: # Create a default option to pass regardless
-                    context['None'] = (None,CheckResponse(False, "", "Free", []))
-                else: # Create a way to not perform anything if necessary
-                    context['None'] = (None,CheckResponse(True, "", "Free", []))
-
-            # Compile main actions
-            if allowed_main:
-                main_options = MainAction.context(player)
-                context = {**context, **main_options}
-                logging.debug(f"Options from MainAction.context(): {main_options}")
-
-            logger.debug(f'Compiled ActionContext options for {player.faction}')
-            return context
-        
 
