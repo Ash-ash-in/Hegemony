@@ -4,7 +4,7 @@ logger.debug("Importing save_testing module")
 
 def test_save_and_load():
     logger.info("Starting test_save_and_load")
-    from game.system import Save
+    from game.old_system import Save
     import os
 
     # Clear existing test save file if it exists
@@ -100,33 +100,33 @@ def test_save_and_load():
 
 def test_player_functions(gamestate, player_references):
     logger.debug("Starting test_player_functions")
-    from game import rules
+    from game import old_rules
 
     ### Victory Points ###
 
     ### Money transfer validity process ###
     # Impossible + non-mandatory = forbidden
-    check = rules.MoneyTransfer.check(player_references.working_class, player_references.capitalists, 10, False)
+    check = old_rules.MoneyTransfer.check(player_references.working_class, player_references.capitalists, 10, False)
     if check.validity:
         raise Exception('Validity check failed to prevent impossible transfer')
     logger.info("Impossible + non-mandatory: PASS")
     # Impossible + mandatory = allowed
-    check = rules.MoneyTransfer.check(player_references.working_class, player_references.capitalists, 10, True)
+    check = old_rules.MoneyTransfer.check(player_references.working_class, player_references.capitalists, 10, True)
     if not check.validity:
         raise Exception('Validity check prevented a mandatory transfer')
     logger.info("Impossible + mandatory: PASS")
     # From bank = allowed
-    check = rules.MoneyTransfer.check(None, player_references.capitalists, 10, True)
+    check = old_rules.MoneyTransfer.check(None, player_references.capitalists, 10, True)
     if not check.validity:
         raise Exception('Validity check prevented a transfer from the bank')
     logger.info("From bank: PASS")
     # To bank, impossible, mandatory = allowed
-    check = rules.MoneyTransfer.check(player_references.capitalists, None, 10, True)
+    check = old_rules.MoneyTransfer.check(player_references.capitalists, None, 10, True)
     if not check.validity:
         raise Exception('Validity check prevented a mandatory transfer to the bank')
     logger.info("To bank, impossible, mandatory: PASS")
     # To bank, impossible, not mandatory = forbidden
-    check = rules.MoneyTransfer.check(player_references.capitalists, None, 10, False)
+    check = old_rules.MoneyTransfer.check(player_references.capitalists, None, 10, False)
     if check.validity:
         raise Exception('Validity check allowed a non-mandatory impossible transfer to the bank')
     logger.info("To bank, impossible, non-mandatory: PASS")
@@ -135,7 +135,7 @@ def test_player_functions(gamestate, player_references):
     ### Money transfer action process ###
     # Try impossible action without validity check
     try:
-        rules.MoneyTransfer.resolve(player_references.capitalists, None, 10, False)
+        old_rules.MoneyTransfer.resolve(player_references.capitalists, None, 10, False)
     except:
         logger.info('Impossible money transfer prevented with exception raised')
     else:
@@ -143,12 +143,12 @@ def test_player_functions(gamestate, player_references):
     
     # Shuffle money around
     logger.debug("TEST Shuffling money and checking final values match expectation")
-    rules.MoneyTransfer.resolve(None, player_references.capitalists, 100, False).print()
+    old_rules.MoneyTransfer.resolve(None, player_references.capitalists, 100, False).print()
     logger.debug('Added 100 money to capitalists from bank')
-    rules.MoneyTransfer.resolve(player_references.capitalists, player_references.working_class,  200, True).print()
+    old_rules.MoneyTransfer.resolve(player_references.capitalists, player_references.working_class,  200, True).print()
     logger.debug('Sent mandatory payment of 200 to working class from capitalists')
-    rules.MoneyTransfer.resolve(player_references.capitalists, None,  100, True).print()
-    rules.MoneyTransfer.resolve(player_references.working_class, None,  200, True).print()
+    old_rules.MoneyTransfer.resolve(player_references.capitalists, None,  100, True).print()
+    old_rules.MoneyTransfer.resolve(player_references.working_class, None,  200, True).print()
     logger.debug('Removed 100 from Working Class and Capitalists')
     if player_references.capitalists.money == 0 and player_references.working_class.money == 0:
         logger.info('Money shuffle PASS')

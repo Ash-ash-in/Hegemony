@@ -1,11 +1,10 @@
 import logging
 logger = logging.getLogger(__name__)
-logger.debug("Importing data.common")
 from dataclasses import dataclass, field
 
-
+# ----------- Functions ------------ #
 # Reference building functions
-def build_company_decks(self):
+def build_company_decks():
     """
     reads in a csv to create Company objects.
     These are stored as:
@@ -72,65 +71,86 @@ def build_company_decks(self):
     }
     logger.debug("Company pools set up")
 
-def build_worker_pool(self):
+def build_worker_pool():
     logger.debug("Building worker pool")
-    from game.data.classes import industries
+    from game.data.classes import Worker
     worker_pool = {'Working Class':[], 'Middle Class':[]}
 
-    # skilled workers
+    ## Working Class ##
+
+    # Skilled
     for skill in industries:
         for i in range(5):
             worker_pool['Working Class'].append(Worker(
                 'Working Class',
                 skill,
-                False # Committed
             ))
                 
-    # unskilled workers            
-    for i in range(23): # double check unskilled worker count
+    # Unskilled            
+    for i in range(23):
         worker_pool['Working Class'].append(Worker(
             'Working Class',
-            'Unskilled',
-            False # Committed
+            'Unskilled'
         ))   
             
-    # middle class workers
+    ## Middle Class ##
 
-    # skilled workers
+    # Skilled
     for skill in industries:
         for i in range(5): 
             worker_pool['Middle Class'].append(Worker(
                 'Middle Class',
-                skill,
-                False # Committed
+                skill
             ))
-    # unskilled workers            
-    for i in range(17): # double check unskilled worker count
+    # Unskilled            
+    for i in range(17):
         worker_pool['Middle Class'].append(Worker(
             'Middle Class',
-            'Unskilled',
-            False # Committed
+            'Unskilled'
         ))
-
-    self.worker_pool = worker_pool        
+     
     logging.debug(f"Worker setup complete. Worker count: {len(worker_pool['Working Class']) + len(worker_pool['Middle Class'])}")
-    
-def build_immigration_cards(self):
+    return worker_pool
+
+def build_immigration_cards():
     logger.debug("(Re)building immigration card deck")
-    from game.data.classes import industries, ImmigrationCard
+    from game.data.classes import ImmigrationCard
     from random import shuffle
     immigration_cards = []
     for industry in industries:
         for i in range(3):
             if i < 2:
                 immigration_cards.append(ImmigrationCard(
-                    Worker('Working Class', industry, False),
-                    Worker('Middle Class', 'Unskilled', False)
+                    ('Working Class', industry),
+                    ('Middle Class', 'Unskilled')
                 ))
             immigration_cards.append(ImmigrationCard(
-                Worker('Working Class', 'Unskilled', False),
-                Worker('Middle Class', industry, False)
+                ('Working Class', 'Unskilled'),
+                ('Middle Class', industry)
             ))
-    shuffle(immigration_cards)
-    self.immigration_card_deck = immigration_cards
     return immigration_cards
+
+def build_laws():
+    logger.debug("Building law refs")
+    from game.data.classes import Law
+    laws = [
+        Law(1, "Fiscal Policy", 3),
+        Law(2, "Labour Market", 2),
+        Law(3, "Taxation", 1),
+        Law(4, "Healthcare and Benefits", 2),
+        Law(5, "Education", 3),
+        Law(6, "Foreign Trade", 2),
+        Law(7, "Immigration", 2)
+    ]
+    return laws
+
+# ---------- References ----------- #
+# Handy variables for building data in setup
+faction_play_order = ["Working Class", "Middle Class", "Capitalists", "State"]
+faction_instantiate_order = ["Working Class", "Capitalists", "Middle Class", "State"]
+phases = ['Preparation','Action','Production','Elections','Scoring']
+industries = ['Healthcare','Education','Luxury','Agriculture','Media']
+company_decks = build_company_decks()
+worker_pool = build_worker_pool()
+immigration_cards = build_immigration_cards()
+laws = build_laws()

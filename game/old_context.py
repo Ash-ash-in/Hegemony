@@ -11,8 +11,8 @@ class ActionContext:
     Seperate methods for different types of agent.
     """
     logger.debug('Called ActionContext')
-    from game.factions import Player
-    from game.agents import Agent, AgentAnswer
+    from game.old_factions import Player
+    from game.old_agents import Agent, AgentAnswer
     from game.data.classes import GameState
 
     @staticmethod
@@ -25,7 +25,7 @@ class ActionContext:
         The result is a dict - string: (classmethod, CheckResponse)
         """
         logger.debug("called DecisionContext.ActionContext.compile_options()")
-        from game.rules import FreeAction, MainAction, CheckResponse
+        from game.old_rules import FreeAction, MainAction, CheckResponse
 
         context = {}
 
@@ -56,7 +56,7 @@ class ActionContext:
         Builds a context call for an action, calls the agent, and returns the response
         """
         logger.debug("Engine.Calls.action_call called")
-        from game.agents import ContextCall
+        from game.old_agents import ContextCall
 
         # Build options and prepare to call agent
         all_options = ActionContext.compile_options(player, allowed_free, allowed_main)
@@ -75,8 +75,8 @@ class ActionContext:
 @dataclass
 class SimpleContext:
     from game.data.classes import GameState
-    from game.factions import Player
-    from game.agents import Agent, AgentAnswer
+    from game.old_factions import Player
+    from game.old_agents import Agent, AgentAnswer
 
     
     @staticmethod
@@ -86,8 +86,8 @@ class SimpleContext:
         """
         logger.debug("Engine.Call.worker_call called")
         from game.data.classes import industries
-        from game.rules import CheckResponse
-        from game.agents import ContextCall
+        from game.old_rules import CheckResponse
+        from game.old_agents import ContextCall
 
         skilldict = {'Unskilled':0}
         for skill in industries:
