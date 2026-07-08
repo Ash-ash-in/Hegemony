@@ -13,13 +13,25 @@ class Config:
 class Engine:
 
     def setup_gamestate(self, config: Config):
+        from game.states import GameState
 
         # Validity Checks
+        if config.player_count < 2 or config.player_count > 4:
+            raise Exception('player count must be between 2 and 4')
         if config.player_count != len(config.agents.keys()):
             raise Exception("player_count and agents mismatch")
         
-        # Imitialise Players
-        
+        # Setup Players
+        from game.states import WorkingClass, MiddleClass, Capitalists, State
+        players = {}
+        if config.player_count == 2:
+            players["Working Class"] = 
+
+        # Setup GameState
+        gamestate = GameState(
+
+        )
+
 
 
 

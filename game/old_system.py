@@ -3,11 +3,170 @@ import logging
 from typing import Any
 logger = logging.getLogger(__name__)
 
+@dataclass(frozen=True)
+class Save:
+
+    # Imports
+    from datetime import datetime
+    from game import factions
+    import os
+
+    # Point to and set up save directory
+    directory = os.path.join(os.getcwd(), 'saves')
+    os.makedirs(directory, exist_ok=True)
+
+    ### Methods ###
+    @staticmethod
+    def save_game(gamestate, filename = None, overwrite = False):
+        """
+        Saves the json of a gamestate to a file
+        # Args
+        gamestate: GameState object to be saved
+        filename: str - Name of the file to save the gamestate to
+        overwrite: bool, whether to allow overwrite of existing file with same name 
+        # Returns
+        returns bool based on whether save was successful
+        """
+        logger.debug(f"save.save called with filename:{filename}, overwrite:{overwrite}")
+
+        import json
+        import os
+        from datetime import datetime
+
+        # Write a new file if not exists, write a new file if exists
+        if filename == None:
+            filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        filepath = os.path.join(Save.directory, filename)
+        try:
+            f = open(f"{filepath}.json", "w" if overwrite else "x")
+        except FileExistsError:
+            logger.error(f"File {filename}.json already exists. Use overwrite=True to overwrite the file.")
+            raise FileExistsError(f"File {filename}.json already exists. Use overwrite=True to overwrite the file.")
+        
+        # Parse various state instances to dicts and write to file
+        players_dict = {}
+        for name,player_instance in gamestate.players.items():
+            players_dict[name] = player_instance.to_dict()
+        
+        savedict = {
+            "Game": {
+                "player_count": gamestate.player_count,
+                "round": gamestate.round,
+                "turn": gamestate.turn,
+                "active_player": gamestate.active_player
+            },
+            "Players": players_dict
+        }
+        f.write(json.dumps(savedict, indent=4))
+        f.close()
+
+        logger.info(f"Game saved to {filename}")
+        return True
+
+
+    @staticmethod
+    def new_game(player_count, filename = None, overwrite = False):
+        """
+        Sets up a new game with the specified number of players and saves it to a file. Returns the gamestate object.
+        
+        :param player_count: int - Number of factions to set up
+        :param filename: str - Name of the save file to create. Defaults to a timestamp.
+        """
+        logger.debug(f"save.new_game called with player_count: {player_count}")
+        from game.data import common
+        import game.factions as factions
+
+        # Setup factions
+        active_factions = common.faction_instantiate_order[:player_count]
+        if player_count > 2: # Arrange factions in play order if middle class exists
+            index_order = [0,2,1,3]
+            active_factions = list(map(active_factions.__getitem__,index_order[:player_count]))
+            logger.debug("Reordered factions due to player_count > 2")
+        existing_factions = active_factions.copy()
+        logger.info(f"active_factions: {active_factions}")
+
+        # Append state if not controlled by a player
+        if player_count < 4:
+            existing_factions.append('State')
+            logger.debug("State added to game due to player_count < 4")
+        logger.info(f"existing_factions: {existing_factions}")
+
+        # Initialise gamestate
+        gamestate = common.GameState(
+            player_count = player_count,
+            players = {
+                'Working Class': factions.WorkingClass('Working Class'),
+                'Middle Class': factions.MiddleClass('Middle Class'),
+                'Capitalists': factions.Player('Capitalists'),
+                'State': factions.Player('State')
+                }
+
+        )
+        logger.debug('Initial gamestate instantiated')
+
+        success = Save.save_game(gamestate, filename=filename, overwrite=overwrite)
+        if not success:
+            logger.warning('File name already exists, no overwrite permission')
+            raise Exception('File name already exists')
+
+        logger.info(f"New game set up with player_count: {player_count}")
+        return gamestate, filename
+
+    @staticmethod
+    def load_game(filename):
+        """
+        Loads a gamestate from a file and returns the gamestate object.
+        
+        :param filename: str - Name of the save file to load
+        """
+        logger.debug(f"game.load called with filename:{filename}")
+
+        import json
+        import game.factions as factions
+
+        # Read the file
+        from game.data.common import GameState
+        with open(f"saves/{filename}.json", 'r') as f:
+            try:
+                gamestate_str = f.read()
+            except FileNotFoundError:
+                logger.error(f"File {filename}.json not found in saves folder.")
+                raise FileNotFoundError()
+            
+            # Convert the string back to a GameState object
+            save_dict = json.loads(gamestate_str)
+            gamestate_dict = save_dict['Game']
+            gamestate_dict['players'] = {k:factions.Player(**v) for k,v in save_dict['Players'].items()}
+            gamestate = GameState(**gamestate_dict)
+            f.close()
+
+        logger.info(f"Game loaded from saves/{filename}.json")
+        return gamestate
+
+    @staticmethod
+    def delete_save(filename):
+        """
+        Deletes a save file. Does not throw an exception if the file is not found.
+        
+        :param filename: str - Name of the save file to delete
+        """
+        logger.debug(f"save.delete called with filename:{filename}")
+
+        import os
+
+        filepath = os.path.join(Save.directory, f"{filename}.json")
+        try:
+            os.remove(filepath)
+            logger.info(f"Save file {filename}.json deleted successfully.")
+        except FileNotFoundError:
+            logger.error(f"File {filename}.json not found in saves folder.")
+        return
+
 @dataclass
 class Engine:
-    from game.data.classes import GameState
-    from game.old_agents import Agent, AgentAnswer
-    from game.old_factions import Player
+    from game.data.common import GameState
+    from game.agents import Agent, AgentAnswer
+    from game.factions import Player
     logger.debug("Calling engine class")
     agents = {}
 
@@ -18,8 +177,8 @@ class Engine:
         This modifies the engine and players in place
         """
         logger.debug("Setting up agents")
-        from game.old_agents import agent_refs
-        from game.data.classes import faction_play_order
+        from game.agents import agent_refs
+        from game.data.common import faction_play_order
         agent_references = {}
         for faction, agent_name in faction_agents.items():
             if faction not in faction_play_order:
@@ -51,7 +210,7 @@ class Engine:
         # Setup should read a settings file
 
         ################################
-        from game.old_system import Save
+        from game.system import Save
 
         # Unpack settings
         player_count = settings_dict['player_count']
@@ -91,11 +250,11 @@ class Engine:
             logging.info(f'Created new save file: {filename}')
 
         # Load in easy player references
-        from game.data import classes
+        from game.data import common
         logger.debug("Setting up player references")
-        player_references = classes.PlayerReference(
-            classes.faction_instantiate_order[:player_count],
-            classes.faction_play_order,
+        player_references = common.PlayerReference(
+            common.faction_instantiate_order[:player_count],
+            common.faction_play_order,
             working_class=gamestate.players['Working Class'],
             middle_class=gamestate.players['Middle Class'] if player_count > 2 else None,
             capitalists = gamestate.players['Capitalists'],
@@ -113,8 +272,8 @@ class Engine:
         Only use this in a brand new game.
         """
         logger.debug('Called Engine.start_position')
-        import game.old_rules as old_rules
-        from game.old_context import SimpleContext
+        import game.rules as rules
+        from game.context import SimpleContext
 
         # Build player refs
         working_class, middle_class, capitalists, state  = gamestate.players.values()
@@ -122,8 +281,8 @@ class Engine:
         ####################################
         ### TEMPORARY give everyone 120 ####
         for name, inst in gamestate.players.items():
-            if old_rules.MoneyTransfer.check(None, inst, 120, True).validity:
-                old_rules.MoneyTransfer.resolve(None, inst, 120, True)
+            if rules.MoneyTransfer.check(None, inst, 120, True).validity:
+                rules.MoneyTransfer.resolve(None, inst, 120, True)
         logger.debug('Temporary start position money complete')
         ### TEMPORARY give everyone 120 ####
         ####################################
@@ -151,9 +310,9 @@ class Engine:
                     skill = 'Unskilled'
                 else:
                     skill = ref.skill
-                old_rules.WorkerSpawn.resolve(gamestate, _faction, skill)
+                rules.WorkerSpawn.resolve(gamestate, _faction, skill)
                 worker = gamestate.unemployed_workers[_faction.faction][-1]
-                old_rules.WorkerHire.resolve(gamestate, worker, _company, slotname)
+                rules.WorkerHire.resolve(gamestate, worker, _company, slotname)
 
         ### Found  Capitalist Companies ###
 
@@ -162,7 +321,7 @@ class Engine:
         for company in gamestate.company_deck['Capitalists']:
             if company.name in ("Supermarket", "Shopping Mall", "College", "Clinic") and company.name not in founded_companies:
                 gamestate.players['Capitalists']._company_hand.append(company)
-                old_rules.CompanyFound.resolve(gamestate.players['Capitalists'], gamestate, company)
+                rules.CompanyFound.resolve(gamestate.players['Capitalists'], gamestate, company)
                 founded_companies.append(company.name)
 
                 # Supermarket - always working class
@@ -198,7 +357,7 @@ class Engine:
                 # Found
                 if company.name in ("Convenience Store", "Doctor's Office") and company.name not in founded_companies:
                     gamestate.players['Middle Class']._company_hand.append(company)
-                    old_rules.CompanyFound.resolve(gamestate.players['Middle Class'], gamestate, company)
+                    rules.CompanyFound.resolve(gamestate.players['Middle Class'], gamestate, company)
                     founded_companies.append(company.name)
 
                     # Hire
@@ -206,9 +365,9 @@ class Engine:
                         skill = 'Unskilled'
                     else:
                         skill = company.worker_slots[1].skill
-                    old_rules.WorkerSpawn.resolve(gamestate, middle_class, skill)
+                    rules.WorkerSpawn.resolve(gamestate, middle_class, skill)
                     worker = gamestate.unemployed_workers['Middle Class'][-1]
-                    old_rules.WorkerHire.resolve(gamestate, worker, company, 1)
+                    rules.WorkerHire.resolve(gamestate, worker, company, 1)
 
                 # Ignore
                 else:
@@ -231,7 +390,7 @@ class Engine:
                 # Found
                 if company.name in ("Regional TV Station", "Public University", "Public Hospital") and company.name not in founded_companies:
                     gamestate.players['State']._company_hand.append(company)
-                    old_rules.CompanyFound.resolve(gamestate.players['State'], gamestate, company)
+                    rules.CompanyFound.resolve(gamestate.players['State'], gamestate, company)
                     founded_companies.append(company.name)
 
                     # Hire
@@ -248,7 +407,7 @@ class Engine:
                 # Found
                 if company.name in ("University Hospital", "Technical University", "National Public Broadcasting"):
                     gamestate.players['State']._company_hand.append(company)
-                    old_rules.CompanyFound.resolve(gamestate.players['State'], gamestate, company)
+                    rules.CompanyFound.resolve(gamestate.players['State'], gamestate, company)
                     founded_companies.append(company.name)
 
                     # Hire 
@@ -277,12 +436,12 @@ class Engine:
         ### Unemployed Worker Spawning ###
 
         # Working Class first worker
-        old_rules.WorkerSpawn.resolve(gamestate, working_class, 'Unskilled')
+        rules.WorkerSpawn.resolve(gamestate, working_class, 'Unskilled')
 
         # Working Class immigration cards
-        old_rules.ImmigrationCardDraw.resolve(gamestate, working_class)
+        rules.ImmigrationCardDraw.resolve(gamestate, working_class)
         if gamestate.player_count > 2:
-            old_rules.ImmigrationCardDraw.resolve(gamestate, working_class)
+            rules.ImmigrationCardDraw.resolve(gamestate, working_class)
 
             # Middle Class first worker
             answer = SimpleContext.spawn_worker_call( # Call agent for a decision to start
@@ -290,11 +449,11 @@ class Engine:
                 middle_class, 
                 middle_class.agent
                 )
-            old_rules.WorkerSpawn.resolve(gamestate, middle_class, answer.name)
+            rules.WorkerSpawn.resolve(gamestate, middle_class, answer.name)
             
             # Middle Class immigration cards
-            old_rules.ImmigrationCardDraw.resolve(gamestate, middle_class)
-            old_rules.ImmigrationCardDraw.resolve(gamestate, middle_class)
+            rules.ImmigrationCardDraw.resolve(gamestate, middle_class)
+            rules.ImmigrationCardDraw.resolve(gamestate, middle_class)
 
         assert gamestate.corroborate_worker_count()
         logger.debug("All workers spawned and placed successfully")
@@ -317,7 +476,7 @@ class Engine:
         WARNING: This modifies GameState's 'turn', 'active_player', and 'free_action_taken' in place.
         WARNING: This replaces the GameState based on ~decisions taken~
         """
-        from game.old_context import ActionContext
+        from game.context import ActionContext
         logger.debug('Called Engine.action_phase')
 
         ### Start the Action Phase ###
@@ -402,7 +561,7 @@ class Engine:
         WARNING: This modifies GameState's 'round' and 'phase' in place.
         """
         logger.debug('Called Engine.flow')
-        from game.data.classes import phases
+        from game.data.common import phases
 
         for round in range(0,6):
             logger.info(f'Starting Round {round}')
@@ -431,4 +590,3 @@ class Engine:
                     gamestate = self.scoring_phase(gamestate)
 
         gamestate = self.endgame_scoring(gamestate)
-

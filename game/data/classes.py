@@ -23,6 +23,43 @@ class Worker:
             'skill': self.skill
         }
 
+@dataclass
+class Union:
+    """
+    Unions are basically independent worker slots
+    
+    They have basic internal checks for when workers are assigned, 
+    but cannot see the wider gamestate. 
+
+    Worker assignment/unassignment should always follow a worker count validity check
+    """
+    industry: str
+    occupant: Worker | None
+
+    def assign_worker(self, worker: Worker) -> None:
+
+        # Validity Checks
+        if self.occupant is not None:
+            raise Exception("Cannot assign worker to occupied union")
+        if worker.skill != self.industry:
+            raise Exception(f"{worker.skill} worker assigned to {self.industry} union")
+        if worker.faction != "Working Class":
+            raise Exception("Middle Class worker assigned to union")
+        
+        # Execute
+        self.occupant = worker
+        return
+
+    def unassign_worker(self):
+
+        # Validity Checks
+        # Checks cannot be completed within the class, 
+        # but unassignment should only happen if the worker count condition is not longer met
+
+        # Execute
+        self.occupant = None
+        return
+
 class Company:
     """Immutable information about a company"""
     import itertools

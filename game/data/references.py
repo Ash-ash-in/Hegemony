@@ -3,7 +3,7 @@ logger = logging.getLogger(__name__)
 from dataclasses import dataclass, field
 
 # ----------- Functions ------------ #
-# Reference building functions
+# Core Assets
 def build_company_decks():
     """
     reads in a csv to create Company objects.
@@ -71,6 +71,14 @@ def build_company_decks():
     }
     logger.debug("Company pools set up")
 
+def build_unions():
+    logger.debug("Building unions")
+    from game.data.classes import Union
+    unions = {}
+    for ind in industries:
+        unions[ind] = Union(ind, None)
+    return unions
+
 def build_worker_pool():
     logger.debug("Building worker pool")
     from game.data.classes import Worker
@@ -112,6 +120,21 @@ def build_worker_pool():
     logging.debug(f"Worker setup complete. Worker count: {len(worker_pool['Working Class']) + len(worker_pool['Middle Class'])}")
     return worker_pool
 
+def build_laws():
+    logger.debug("Building law refs")
+    from game.data.classes import Law
+    laws = [
+        Law(1, "Fiscal Policy", 3),
+        Law(2, "Labour Market", 2),
+        Law(3, "Taxation", 1),
+        Law(4, "Healthcare and Benefits", 2),
+        Law(5, "Education", 3),
+        Law(6, "Foreign Trade", 2),
+        Law(7, "Immigration", 2)
+    ]
+    return laws
+
+# Card Decks
 def build_immigration_cards():
     logger.debug("(Re)building immigration card deck")
     from game.data.classes import ImmigrationCard
@@ -130,19 +153,8 @@ def build_immigration_cards():
             ))
     return immigration_cards
 
-def build_laws():
-    logger.debug("Building law refs")
-    from game.data.classes import Law
-    laws = [
-        Law(1, "Fiscal Policy", 3),
-        Law(2, "Labour Market", 2),
-        Law(3, "Taxation", 1),
-        Law(4, "Healthcare and Benefits", 2),
-        Law(5, "Education", 3),
-        Law(6, "Foreign Trade", 2),
-        Law(7, "Immigration", 2)
-    ]
-    return laws
+
+
 
 # ---------- References ----------- #
 # Handy variables for building data in setup
@@ -151,6 +163,7 @@ faction_instantiate_order = ["Working Class", "Capitalists", "Middle Class", "St
 phases = ['Preparation','Action','Production','Elections','Scoring']
 industries = ['Healthcare','Education','Luxury','Agriculture','Media']
 company_decks = build_company_decks()
+unions = build_unions()
 worker_pool = build_worker_pool()
 immigration_cards = build_immigration_cards()
 laws = build_laws()

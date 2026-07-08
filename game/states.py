@@ -235,6 +235,27 @@ class MiddleClass(Player):
         self._update_prosperity()
         return
 
+class Capitalists(Player):
+    def __init__(
+            self,
+            faction: str, 
+            victory_points: int = 0, 
+            money: int = 0, 
+            loans: int = 0,
+            revenue: int = 0,
+            capital: int = 0
+        ):
+        super().__init__(            
+                faction,
+                victory_points, 
+                money, 
+                loans
+            )
+        self._population_track = population_track
+        self._population = self._update_population()
+        self._prosperity_track = prosperity_track
+        self._prosperity = self._update_prosperity()   
+
 @dataclass
 class GameState:
     """
