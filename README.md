@@ -52,7 +52,7 @@ No code is written by AI, but AI is used as a last resort to teach me new concep
 - They return their answer in a uniform package, which the engine can receive and understand
 
 ### Architecture Diagram
-![alt text](<images/Hegemony Architecture-File Structure.png>)
+![Hegemony Architecture-File Structure](<images/Hegemony Architecture-File Structure.png>)
 
 ## Game States
 These store information about the game and players. They are the real-life boards that things sit on.\n
@@ -65,7 +65,7 @@ These act a similar way to the gamestate in that they store board information, b
 ## Action Flow
 Actions are called through several layers, which help manage dependencies. As a general rule, validity checks flow upstream, and instructions flow downstream.
 See below:
-![alt text](<images/Hegemony Architecture-Action Flow.png>)
+![Hegemony Architecture-Action Flow](<images/Hegemony Architecture-Action Flow.png>)
 
 The impact of every decision is not made directly to the game/player state, it is made to a copy, and the final decision is enacted by overwriting the state with the copy. *This still needs to be implimented with the resolve functions*
 
