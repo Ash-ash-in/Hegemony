@@ -5,7 +5,7 @@ logger.debug("Importing rules.rules module")
 from dataclasses import dataclass
 from enum import Enum, auto
 from game.factions import Player, WorkingClass, MiddleClass
-from game.data.common import GameState
+from game.data.classes import GameState
 
 ######################### Utilities #######################################
 class Outcome(Enum):
@@ -74,11 +74,11 @@ class PointAssign:
         str             - failure reason if bool = False
         """
         logger.debug("PointAssign check called")
-        import game.data.common as common
+        import game.data.classes as classes
         global player_count
 
         # Basic check flow
-        if common.faction_instantiate_order.index(player.faction) > player_count - 1:
+        if classes.faction_instantiate_order.index(player.faction) > player_count - 1:
             return CheckResponse(False, 'Only active players in the game can receive points', 'Intermediate', [])
         return CheckResponse(True, '', 'Intermediate', [])
 
@@ -240,7 +240,7 @@ class CompanyFound:
     """
     logger.debug("called CompanyFound class")
     from game.factions import Player
-    from game.data.common import GameState, Company
+    from game.data.classes import GameState, Company
 
     @staticmethod
     def check(player: Player, gamestate: GameState, comp: Company) -> CheckResponse:
@@ -302,7 +302,7 @@ class WorkerHire:
     Handles checks related to worker skill and class.
     """
     logger.debug("called WorkerHire class")
-    from game.data.common import GameState, Company, Worker
+    from game.data.classes import GameState, Company, Worker
 
     @staticmethod
     def check(gamestate: GameState, worker: Worker, target_company: Company, target_slot: int) -> CheckResponse:
@@ -373,7 +373,7 @@ class WorkerSpawn:
     """
     logger.debug("called WorkerSpawn class")
     from game.factions import WorkingClass, MiddleClass
-    from game.data.common import GameState
+    from game.data.classes import GameState
 
     @staticmethod
     def check(gamestate: GameState, player: WorkingClass | MiddleClass, skill: str):

@@ -1,0 +1,14 @@
+The aim is to reorganise the data 
+so that the whole game runs in a way 
+that can fit into the context call easily.
+
+This means all slots needs permanent locators, 
+all workers needs IDs, 
+everything needs to be referable in accessible containers
+
+These containers are immutable, so they exist as references
+Copies of these are then moved around the board, 
+and the rules layer checks their validity
+
+This allows the calling process to find the name 
+of the source objects, and pass them to the agents for selection

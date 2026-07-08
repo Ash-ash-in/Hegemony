@@ -73,11 +73,11 @@ class Save:
         :param filename: str - Name of the save file to create. Defaults to a timestamp.
         """
         logger.debug(f"save.new_game called with player_count: {player_count}")
-        from game.data import common
+        from game.data import classes
         import game.factions as factions
 
         # Setup factions
-        active_factions = common.faction_instantiate_order[:player_count]
+        active_factions = classes.faction_instantiate_order[:player_count]
         if player_count > 2: # Arrange factions in play order if middle class exists
             index_order = [0,2,1,3]
             active_factions = list(map(active_factions.__getitem__,index_order[:player_count]))
@@ -92,7 +92,7 @@ class Save:
         logger.info(f"existing_factions: {existing_factions}")
 
         # Initialise gamestate
-        gamestate = common.GameState(
+        gamestate = classes.GameState(
             player_count = player_count,
             players = {
                 'Working Class': factions.WorkingClass('Working Class'),
@@ -125,7 +125,7 @@ class Save:
         import game.factions as factions
 
         # Read the file
-        from game.data.common import GameState
+        from game.data.classes import GameState
         with open(f"saves/{filename}.json", 'r') as f:
             try:
                 gamestate_str = f.read()
@@ -164,7 +164,7 @@ class Save:
 
 @dataclass
 class Engine:
-    from game.data.common import GameState
+    from game.data.classes import GameState
     from game.agents import Agent, AgentAnswer
     from game.factions import Player
     logger.debug("Calling engine class")
@@ -178,7 +178,7 @@ class Engine:
         """
         logger.debug("Setting up agents")
         from game.agents import agent_refs
-        from game.data.common import faction_play_order
+        from game.data.classes import faction_play_order
         agent_references = {}
         for faction, agent_name in faction_agents.items():
             if faction not in faction_play_order:
@@ -250,11 +250,11 @@ class Engine:
             logging.info(f'Created new save file: {filename}')
 
         # Load in easy player references
-        from game.data import common
+        from game.data import classes
         logger.debug("Setting up player references")
-        player_references = common.PlayerReference(
-            common.faction_instantiate_order[:player_count],
-            common.faction_play_order,
+        player_references = classes.PlayerReference(
+            classes.faction_instantiate_order[:player_count],
+            classes.faction_play_order,
             working_class=gamestate.players['Working Class'],
             middle_class=gamestate.players['Middle Class'] if player_count > 2 else None,
             capitalists = gamestate.players['Capitalists'],
@@ -561,7 +561,7 @@ class Engine:
         WARNING: This modifies GameState's 'round' and 'phase' in place.
         """
         logger.debug('Called Engine.flow')
-        from game.data.common import phases
+        from game.data.classes import phases
 
         for round in range(0,6):
             logger.info(f'Starting Round {round}')

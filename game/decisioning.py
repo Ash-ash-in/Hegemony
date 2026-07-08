@@ -47,7 +47,7 @@ class ContextCall:
                     "committed": True
                 },
                 "company_7": {
-                    "workers": ["w2","w9", "w11"],
+                    "workers": ["w2","w9","w11"],
                     "wages": 3,
                     "automation: True,
                     "committed": False
@@ -163,3 +163,24 @@ class AgentAnswer:
     Example: {Worker: "WC1", Slot: "Company3Slot2"}
     """
     answer: dict[str,dict[str,str]]
+
+@ dataclass
+class DecsionLogEntry:
+    
+    # Context at Observation
+    call: ContextCall
+
+    # Response at Observation
+    response: AgentAnswer
+
+    # Agent Evaluation
+    reward: None = None
+    game_outcome: None = None
+
+@dataclass
+class GameSummary:
+
+    game_id: str
+    winner: str
+    scores: dict[str,int]
+    total_decisions: int

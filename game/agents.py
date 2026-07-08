@@ -15,7 +15,7 @@ class ContextCall:
         role: str
         options: dict of all actions, regardless of validity (name: (classmethod, checkresult))
     """
-    from game.data.common import GameState
+    from game.data.classes import GameState
     from game.factions import Player
     gamestate: GameState
     faction: Player # Player object the agent is controlling
@@ -49,7 +49,7 @@ class Agent:
     If this agent is actually used, it will just pick the first option every time.
     """
     from game.factions import Player
-    from game.data.common import GameState
+    from game.data.classes import GameState
     faction: Player
     name = 'Template Agent'
 
@@ -126,7 +126,7 @@ class Agent:
 
 @dataclass
 class RandomAgent(Agent):
-    from game.data.common import GameState
+    from game.data.classes import GameState
     operator = 'Script'
     name = 'Randy Random'
 
