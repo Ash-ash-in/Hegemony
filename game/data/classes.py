@@ -208,7 +208,6 @@ class ExportCard:
 @dataclass
 class PoliticalAgendaCard:
     policies: dict[int,int]
-    reward: int
 
 @dataclass
 class BusinessDealCard:

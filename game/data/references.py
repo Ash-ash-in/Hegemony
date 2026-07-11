@@ -4,8 +4,8 @@ from dataclasses import dataclass, field
 
 # ----------- Functions ------------ #
 # Core Mechanics (Mutable)
-
-def build_unions():
+from game.data.classes import Union
+def build_unions() -> dict[str,Union]:
     logger.debug("Building unions")
     from game.data.classes import Union
     unions = {}
@@ -13,7 +13,7 @@ def build_unions():
         unions[ind] = Union(ind, None)
     return unions
 
-def build_laws():
+def build_laws() -> list:
     logger.debug("Building law refs")
     from game.data.classes import Law
     laws = [
@@ -28,7 +28,7 @@ def build_laws():
     return laws
 
 # Card Decks and Pools (Immutable)
-def build_company_decks():
+def build_company_decks() -> dict[str,tuple]:
     """
     reads in a csv to create Company objects.
     These are stored as:
@@ -91,7 +91,7 @@ def build_company_decks():
     }
     return company_deck
 
-def build_worker_pool():
+def build_worker_pool() -> dict[str,tuple]:
     logger.debug("Building worker pool")
     from game.data.classes import Worker
     WC = []
@@ -132,7 +132,7 @@ def build_worker_pool():
      
     return {"Working Class":tuple(WC), "Middle Class":tuple(MC)}
 
-def build_immigration_cards():
+def build_immigration_cards() -> tuple:
     logger.debug("Building immigration card deck")
     from game.data.classes import ImmigrationCard
     immigration_cards = []
@@ -149,7 +149,7 @@ def build_immigration_cards():
             ))
     return tuple(immigration_cards)
 
-def build_export_cards():
+def build_export_cards() -> tuple:
     logger.debug("Building export card deck")
     from game.data.classes import ExportCard
     export_cards = []
@@ -169,6 +169,21 @@ def build_export_cards():
 
     return tuple(export_cards)
 
+def build_political_agenda_cards() -> tuple:
+    logger.debug("Building political agenda card deck")
+    from game.data.classes import PoliticalAgendaCard
+    cards = []
+
+    # Temporary Process
+    logger.warning("Temporary political agenda cards used")
+    import random
+    for i in range(10):
+        pols = {}
+        for j in range(5):
+            pols[j+1] = random.randint(1,4) 
+        cards.append(PoliticalAgendaCard(pols))
+    
+    return tuple(cards)
 # ---------- References ----------- #
 # Concepts
 faction_play_order = ["Working Class", "Middle Class", "Capitalists", "State"]
@@ -185,3 +200,4 @@ company_decks = build_company_decks()
 worker_pool = build_worker_pool()
 immigration_cards = build_immigration_cards()
 export_cards = build_export_cards()
+political_agenda_cards = build_political_agenda_cards()
