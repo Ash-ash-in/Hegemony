@@ -1,0 +1,7 @@
+{
+    "player_count": 2,
+    "agents": {
+        "Working Class": "Random",
+        "Capitalists": "Random"
+    }
+}

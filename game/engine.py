@@ -11,8 +11,10 @@ class Config:
 
 @dataclass
 class Engine:
+    from game.states import GameState
 
     def setup_gamestate(self, config: Config):
+        logger.debug("Establishing gamestate in engine")
         from game.states import GameState
 
         # Validity Checks
@@ -22,28 +24,38 @@ class Engine:
             raise Exception("player_count and agents mismatch")
         
         # Setup Players
-        from game.states import WorkingClass, MiddleClass, Capitalists, State
+        logger.debug("Setting up players within gamestate setup")
+        from game.states import WorkingClass, MiddleClass, Capitalists, PlayerState, NPCState
         players = {}
+        players["Working Class"] = WorkingClass()
         if config.player_count == 2:
-            players["Working Class"] = 
+            players["Capitalists"] = Capitalists()
+        else:
+            players["Middle Class"] = MiddleClass()
+            players['Capitalists'] = Capitalists()
+        if config.player_count == 4:
+            players["State"] = PlayerState()
+        else:
+            players["State"] = NPCState()
+        
 
         # Setup GameState
         gamestate = GameState(
+                players,
+                config.player_count
+            )
 
-        )
-
-
-
+        return gamestate
 
     def setup_agents(self, faction_agents: dict, gamestate: GameState) -> None:
         """
-        Creates the agent instances, according to those defined in the dictionary passed.
+        Creates the agent instances according to those defined in the dictionary passed.
         Agents can be found in the engine, or in the player objects
-        This modifies the engine and players in place
+        This modifies the engine and players in-place
         """
         logger.debug("Setting up agents")
-        from game.old_agents import agent_refs
-        from game.data.classes import faction_play_order
+        from game.agents import agent_refs
+        from game.data.references import faction_play_order
         agent_references = {}
         for faction, agent_name in faction_agents.items():
             if faction not in faction_play_order:
@@ -55,3 +67,10 @@ class Engine:
             faction_instance.agent = agent_references[faction]
         self.agents = agent_references
         return
+    
+    def startup(self, config) -> GameState:
+        """Runs all the engine setup functions"""
+        logger.debug("Executing engine startup")
+        gamestate = self.setup_gamestate(config)
+        self.setup_agents(config.agents, gamestate)
+        return gamestate

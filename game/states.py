@@ -16,12 +16,21 @@ class Player():
             victory_points: int = 0, 
             money: int = 0, 
             loans: int = 0,
+            resources: dict = {
+                "Food":0,
+                "Healthcare":0,
+                "Education":0,
+                "Luxuries":0
+                },
+            influence: int = 0,
             company_hand: list = []
         ):
         self._faction = faction
         self._victory_points = victory_points
         self._money = money
         self._loans = loans
+        self._resources = resources
+        self._influence = influence
         self._company_hand = company_hand
 
     ### Attributes ###
@@ -83,13 +92,14 @@ class Player():
 class WorkingClass(Player):
     def __init__(
             self,
-            faction: str, 
+            faction: str = "Working Class", 
             victory_points: int = 0, 
             money: int = 0, 
             loans: int = 0,
             prosperity: int = 0,
             population_track: int = 0
         ):
+        logger.debug("Creating Working Class")
         super().__init__(            
                 faction, 
                 victory_points, 
@@ -156,13 +166,14 @@ class WorkingClass(Player):
 class MiddleClass(Player):
     def __init__(
             self,
-            faction: str, 
+            faction: str = "Middle Class", 
             victory_points: int = 0, 
             money: int = 0, 
             loans: int = 0,
             prosperity_track: int = 0, # The index of the tracker, rather than the actual value
             population_track: int = 0 # Number of workers
         ):
+        logger.debug("Creating Middle Class")
         super().__init__(            
                 faction,
                 victory_points, 
@@ -238,52 +249,89 @@ class MiddleClass(Player):
 class Capitalists(Player):
     def __init__(
             self,
-            faction: str, 
+            faction: str = "Capitalists", 
             victory_points: int = 0, 
             money: int = 0, 
             loans: int = 0,
             revenue: int = 0,
-            capital: int = 0
+            capital: int = 0,
         ):
+        logger.debug("Creating Capitalists")
+        super().__init__(        
+                faction,
+                victory_points, 
+                money, 
+                loans
+            )
+        self._revenue = revenue
+        self._capital = capital
+
+class PlayerState(Player):
+    def __init__(
+            self,
+            faction: str = "State", 
+            victory_points: int = 0, 
+            money: int = 0, 
+            loans: int = 0,
+            legitimacy: dict[str,int] = {"Working Class": 1, "Middle Class": 1, "Capitalists": 1}
+        ):
+        logger.debug("Creating Player State")
         super().__init__(            
                 faction,
                 victory_points, 
                 money, 
                 loans
             )
-        self._population_track = population_track
-        self._population = self._update_population()
-        self._prosperity_track = prosperity_track
-        self._prosperity = self._update_prosperity()   
+        self._legitimacy = legitimacy
 
-@dataclass
+class NPCState(Player):
+    def __init__(
+            self,
+            faction: str = "NPC State", 
+            victory_points: int = 0, 
+            money: int = 0, 
+            loans: int = 0
+        ):
+        logger.debug("Creating NPC State")
+        super().__init__(            
+                faction,
+                victory_points, 
+                money, 
+                loans
+            )
+
 class GameState:
     """
     GameState is the master storage location for all game information. 
     It contains everything that you would need to know to recreate the game at this given position
     Masking needs to take place before this can be passed to an agent
     """
+    def __init__(self, players: dict, player_count: int):
+        logger.debug("Instantiating gamestate")
+        self.player_count = player_count
+        self.players = players
+
     ### Attributes ###
 
     ## Substates ##
-    players: dict
+    # players: dict - from init
 
     ## Game Metadata ##
-    player_count: int
-    round: int
-    phase: str
-    turn: int
-    active_player: str
+    # player_count: int - from init
+    round: int = 0
+    phase: str = "Preparation"
+    turn: int = 1
+    active_player: str = "Working Class"
 
     ## Card Decks / Assets ##
 
-    company_deck: dict
-    worker_pool: dict
-    immigration_cards: list
+    company_deck: dict[str,list] = {}
+    worker_pool: dict[str,list] = {}
+    immigration_cards: list = []
     
     ## Board Areas ##
-    unemployed_workers: dict
-    companies: dict
+    unemployed_workers: dict[str,list] = {}
+    companies: dict[str,list] = {}
 
     ### Methods ###
     # def to_dict(self) -> dict: # For saving

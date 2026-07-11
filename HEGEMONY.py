@@ -1,19 +1,15 @@
 ###################################
 ############# HEGEMONY ############
 ###################################
-####### Global User Inputs ########
-
-player_count = 3
-filename = 'HegemonySave'
-
-####### Global User Inputs ########
-###################################
 
 # Establish Log
 # -------------
 import logging
 import os
-os.remove("game.log")
+try:
+    os.remove("game.log")
+except(FileNotFoundError):
+    pass
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -23,27 +19,23 @@ logging.basicConfig(
     ]
 )
 
-# Check Parameters
-# ----------------
-if player_count < 2 | player_count > 4:
-    raise Exception("Player count must be between 2 and 4")
-if filename:
-    if type(filename) == int | type(filename) == float:
-        raise Exception("save_file must be string or None type")
+# Import Config
+import json
+from game.data.classes import Config
+with open(os.path.join("game","config.json"), 'r', encoding='utf-8') as file:
+    config = Config(json.load(file))
+    
     
 ########## Initialise GameState ##########
 # ----------------------------------------
-from game.old_system import Engine
+from game.engine import Engine
 
-LiveGamestate, PlayerRefs = Engine.startup(player_count=2, filename='Hegemony', overwrite=True)
-Engine.flow(LiveGamestate)
+engine = Engine()
+gamestate = engine.startup(config)
+# Engine.flow(LiveGamestate)
 
-
-# Set up references
-# -----------------
-# player_references = engine.gen_refs(LiveGamestate) # Keep this or just look at gamestate?
+print(gamestate.player_count)
 
 
-print(PlayerRefs.capitalists)
 
 

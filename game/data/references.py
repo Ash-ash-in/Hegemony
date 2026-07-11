@@ -3,7 +3,31 @@ logger = logging.getLogger(__name__)
 from dataclasses import dataclass, field
 
 # ----------- Functions ------------ #
-# Core Assets
+# Core Mechanics (Mutable)
+
+def build_unions():
+    logger.debug("Building unions")
+    from game.data.classes import Union
+    unions = {}
+    for ind in industries:
+        unions[ind] = Union(ind, None)
+    return unions
+
+def build_laws():
+    logger.debug("Building law refs")
+    from game.data.classes import Law
+    laws = [
+        Law(1, "Fiscal Policy", 3),
+        Law(2, "Labour Market", 2),
+        Law(3, "Taxation", 1),
+        Law(4, "Healthcare and Benefits", 2),
+        Law(5, "Education", 3),
+        Law(6, "Foreign Trade", 2),
+        Law(7, "Immigration", 2)
+    ]
+    return laws
+
+# Card Decks and Pools (Immutable)
 def build_company_decks():
     """
     reads in a csv to create Company objects.
@@ -45,12 +69,8 @@ def build_company_decks():
             row['Cost'], 
             row['Base Production'],
             0 if pd.isnull(row['Upgrade Value']) else row['Upgrade Value'],
-            False,
-            'L2',
             wages,
-            slots,
-            {i+1: None for i in range(len(slots.keys()))}, # Empty workers dict
-            False
+            slots
             )
         if comp.faction == 'Working Class':
             working_class_company_pool.append(comp)
@@ -63,40 +83,33 @@ def build_company_decks():
         else:
             raise Exception('Faction not found')
         
-    self.company_deck = {
-        'Working Class': working_class_company_pool,
-        'Middle Class': middle_class_company_pool,
-        'Capitalists': capitalists_company_pool,
-        'State': state_company_pool
+    company_deck = {
+        'Working Class': tuple(working_class_company_pool),
+        'Middle Class': tuple(middle_class_company_pool),
+        'Capitalists': tuple(capitalists_company_pool),
+        'State': tuple(state_company_pool)
     }
-    logger.debug("Company pools set up")
-
-def build_unions():
-    logger.debug("Building unions")
-    from game.data.classes import Union
-    unions = {}
-    for ind in industries:
-        unions[ind] = Union(ind, None)
-    return unions
+    return company_deck
 
 def build_worker_pool():
     logger.debug("Building worker pool")
     from game.data.classes import Worker
-    worker_pool = {'Working Class':[], 'Middle Class':[]}
+    WC = []
+    MC = []
 
     ## Working Class ##
 
     # Skilled
     for skill in industries:
         for i in range(5):
-            worker_pool['Working Class'].append(Worker(
+            WC.append(Worker(
                 'Working Class',
                 skill,
             ))
                 
     # Unskilled            
     for i in range(23):
-        worker_pool['Working Class'].append(Worker(
+        WC.append(Worker(
             'Working Class',
             'Unskilled'
         ))   
@@ -106,39 +119,22 @@ def build_worker_pool():
     # Skilled
     for skill in industries:
         for i in range(5): 
-            worker_pool['Middle Class'].append(Worker(
+            MC.append(Worker(
                 'Middle Class',
                 skill
             ))
     # Unskilled            
     for i in range(17):
-        worker_pool['Middle Class'].append(Worker(
+        MC.append(Worker(
             'Middle Class',
             'Unskilled'
         ))
      
-    logging.debug(f"Worker setup complete. Worker count: {len(worker_pool['Working Class']) + len(worker_pool['Middle Class'])}")
-    return worker_pool
+    return {"Working Class":tuple(WC), "Middle Class":tuple(MC)}
 
-def build_laws():
-    logger.debug("Building law refs")
-    from game.data.classes import Law
-    laws = [
-        Law(1, "Fiscal Policy", 3),
-        Law(2, "Labour Market", 2),
-        Law(3, "Taxation", 1),
-        Law(4, "Healthcare and Benefits", 2),
-        Law(5, "Education", 3),
-        Law(6, "Foreign Trade", 2),
-        Law(7, "Immigration", 2)
-    ]
-    return laws
-
-# Card Decks
 def build_immigration_cards():
-    logger.debug("(Re)building immigration card deck")
+    logger.debug("Building immigration card deck")
     from game.data.classes import ImmigrationCard
-    from random import shuffle
     immigration_cards = []
     for industry in industries:
         for i in range(3):
@@ -151,19 +147,41 @@ def build_immigration_cards():
                 ('Working Class', 'Unskilled'),
                 ('Middle Class', industry)
             ))
-    return immigration_cards
+    return tuple(immigration_cards)
 
+def build_export_cards():
+    logger.debug("Building export card deck")
+    from game.data.classes import ExportCard
+    export_cards = []
+    
+    # Temporary function
+    logger.warning("Temporary export cards in use")
+    import random
+    for i in range(20):
+        export_cards.append(
+            ExportCard(
+                ((random.randint(1,5), random.randrange(10,51,5)),(random.randint(3,10), random.randrange(35,81,5))),
+                ((random.randint(1,5), random.randrange(10,51,5)),(random.randint(3,10), random.randrange(35,81,5))),
+                ((random.randint(1,5), random.randrange(10,51,5)),(random.randint(3,10), random.randrange(35,81,5))),
+                ((random.randint(1,5), random.randrange(10,51,5)),(random.randint(3,10), random.randrange(35,81,5)))
+            )
+        )
 
-
+    return tuple(export_cards)
 
 # ---------- References ----------- #
-# Handy variables for building data in setup
+# Concepts
 faction_play_order = ["Working Class", "Middle Class", "Capitalists", "State"]
 faction_instantiate_order = ["Working Class", "Capitalists", "Middle Class", "State"]
 phases = ['Preparation','Action','Production','Elections','Scoring']
 industries = ['Healthcare','Education','Luxury','Agriculture','Media']
-company_decks = build_company_decks()
+
+# Core Mechanics (Mutable)
 unions = build_unions()
+laws = build_laws()
+
+# Decks and Pools (Immutable)
+company_decks = build_company_decks()
 worker_pool = build_worker_pool()
 immigration_cards = build_immigration_cards()
-laws = build_laws()
+export_cards = build_export_cards()
