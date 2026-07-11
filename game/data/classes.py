@@ -191,6 +191,13 @@ class CompanySlot:
     #         raise Exception("Cannot transfer company to self ({target_faction} selected as target)")
     #     self._faction = target_faction
 
+class Storage:
+    def __init__(self, resource: str):
+        self.resource = resource
+        if resource == 'Food':
+            self.size = 8
+        elif resource in ("Luxuries", "Education", "Healthcare"):
+            self.size = 12
 
 ## Cards / Decks
 @dataclass

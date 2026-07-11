@@ -34,7 +34,6 @@ engine = Engine()
 gamestate = engine.startup(config)
 # Engine.flow(LiveGamestate)
 
-print(gamestate.player_count)
 
 
 

@@ -12,26 +12,20 @@ class Player():
     ### Init ### 
     def __init__(
             self,
-            faction: str, 
-            victory_points: int = 0, 
-            money: int = 0, 
-            loans: int = 0,
-            resources: dict = {
+            faction: str
+        ):
+        self._faction = faction
+        self._victory_points = 0
+        self._money = 0
+        self._loans = 0
+        self._resources = {
                 "Food":0,
                 "Healthcare":0,
                 "Education":0,
                 "Luxuries":0
-                },
-            influence: int = 0,
-            company_hand: list = []
-        ):
-        self._faction = faction
-        self._victory_points = victory_points
-        self._money = money
-        self._loans = loans
-        self._resources = resources
-        self._influence = influence
-        self._company_hand = company_hand
+                }
+        self._influence = 0
+        self._company_hand = []
 
     ### Attributes ###
     @property
@@ -47,8 +41,27 @@ class Player():
     def loans(self) -> int:
         return self._loans 
     @property
+    def food(self) -> int:
+        return self._resources["Food"]
+    @property
+    def luxuries(self) -> int:
+        return self._resources["Luxuries"]
+    @property
+    def healthcare(self) -> int:
+        return self._resources["Healthcare"]
+    @property
+    def education(self) -> int:
+        return self._resources["Education"]
+    @property
+    def resources(self) -> dict:
+        return self._resources
+    @property
+    def influence(self) -> int:
+        return self._influence
+    @property
     def company_hand(self) -> list:
         return self._company_hand
+    
 
     ### Methods ###
     def to_dict(self) -> dict:
@@ -92,22 +105,14 @@ class Player():
 class WorkingClass(Player):
     def __init__(
             self,
-            faction: str = "Working Class", 
-            victory_points: int = 0, 
-            money: int = 0, 
-            loans: int = 0,
-            prosperity: int = 0,
-            population_track: int = 0
+            faction: str = "Working Class"
         ):
         logger.debug("Creating Working Class")
         super().__init__(            
-                faction, 
-                victory_points, 
-                money, 
-                loans
+                faction
             )
-        self._population_track = population_track
-        self._prosperity = prosperity
+        self._population_track = 0
+        self._prosperity = 0
         self._population = self._update_population()
         
     ### Attributes ###
@@ -166,24 +171,23 @@ class WorkingClass(Player):
 class MiddleClass(Player):
     def __init__(
             self,
-            faction: str = "Middle Class", 
-            victory_points: int = 0, 
-            money: int = 0, 
-            loans: int = 0,
-            prosperity_track: int = 0, # The index of the tracker, rather than the actual value
-            population_track: int = 0 # Number of workers
+            faction: str = "Middle Class"
         ):
         logger.debug("Creating Middle Class")
         super().__init__(            
-                faction,
-                victory_points, 
-                money, 
-                loans
+                faction
             )
-        self._population_track = population_track
+        self._population_track = 0
         self._population = self._update_population()
-        self._prosperity_track = prosperity_track
+        self._prosperity_track = 0
         self._prosperity = self._update_prosperity()
+        self._storage = {
+            "Food":0,
+            "Healthcare":0,
+            "Education":0,
+            "Luxuries":0
+            }
+        self._storages = 0 # Extra Storages
 
     ### Attributes ###
 
@@ -196,6 +200,21 @@ class MiddleClass(Player):
     @property
     def prosperity(self) -> int:
         return self._prosperity    
+    @property
+    def food_storage(self) -> int:
+        return self._storage["Food"]
+    @property
+    def luxuries_storage(self) -> int:
+        return self._storage["Luxuries"]
+    @property
+    def education_storage(self) -> int:
+        return self._storage["Education"]
+    @property
+    def healthcare_storage(self) -> int:
+        return self._storage["Healthcare"]
+    @property
+    def storage(self) -> dict:
+        return self._storage
 
     ### Methods ###
 
@@ -245,44 +264,84 @@ class MiddleClass(Player):
         self._prosperity_track -= 1
         self._update_prosperity()
         return
+    
+    def _add_storage(self, type):
+        logger.debug("Called MiddleClass _add_storage")
+        from game.data.classes import Storage
+        storage = Storage(type)
+        self._storage[type] += storage.size
+        self._storages += 1
+        return
+    
+    def _remove_storage(self, type):
+        logger.debug("Called MiddleClass _remove_storage")
+        if self._storages <= 0:
+            raise Exception("Attempted to remove storage, but none were found")
+        from game.data.classes import Storage
+        storage = Storage(type)
+        self._storage[type] -= storage.size
+        self._storages -= 1
+        return
 
 class Capitalists(Player):
     def __init__(
             self,
-            faction: str = "Capitalists", 
-            victory_points: int = 0, 
-            money: int = 0, 
-            loans: int = 0,
-            revenue: int = 0,
-            capital: int = 0,
+            faction: str = "Capitalists"
         ):
         logger.debug("Creating Capitalists")
         super().__init__(        
-                faction,
-                victory_points, 
-                money, 
-                loans
+                faction
             )
-        self._revenue = revenue
-        self._capital = capital
+        self._revenue = 0
+        self._capital = 0
+        self._storage = {
+                "Food":0,
+                "Healthcare":0,
+                "Education":0,
+                "Luxuries":0
+                }
+        self._free_trade_zone = {
+            "Food": 8,
+            "Luxuries": 12
+        }
 
-class PlayerState(Player):
-    def __init__(
-            self,
-            faction: str = "State", 
-            victory_points: int = 0, 
-            money: int = 0, 
-            loans: int = 0,
-            legitimacy: dict[str,int] = {"Working Class": 1, "Middle Class": 1, "Capitalists": 1}
-        ):
-        logger.debug("Creating Player State")
-        super().__init__(            
-                faction,
-                victory_points, 
-                money, 
-                loans
-            )
-        self._legitimacy = legitimacy
+    ### Attributes ###
+
+    @property
+    def food_storage(self) -> int:
+        return self._storage["Food"]
+    @property
+    def luxuries_storage(self) -> int:
+        return self._storage["Luxuries"]
+    @property
+    def education_storage(self) -> int:
+        return self._storage["Education"]
+    @property
+    def healthcare_storage(self) -> int:
+        return self._storage["Healthcare"]
+    @property
+    def storage(self) -> dict:
+        return self._storage
+    
+    ### Methods ###
+
+    def _add_storage(self, type):
+        logger.debug("Called Capitalists _add_storage")
+        from game.data.classes import Storage
+        storage = Storage(type)
+        self._storage[type] += storage.size
+        self._storages += 1
+        return
+    
+    def _remove_storage(self, type):
+        logger.debug("Called Capitalists _remove_storage")
+        if self._storages <= 0:
+            raise Exception("Attempted to remove storage, but none were found")
+        from game.data.classes import Storage
+        storage = Storage(type)
+        self._storage[type] -= storage.size
+        self._storages -= 1
+        return
 
 class NPCState(Player):
     def __init__(
@@ -290,15 +349,104 @@ class NPCState(Player):
             faction: str = "NPC State", 
             victory_points: int = 0, 
             money: int = 0, 
-            loans: int = 0
+            loans: int = 0,
+            resources: dict = {
+                "Food":0,
+                "Healthcare":0,
+                "Education":0,
+                "Luxuries":0
+                },
+            influence: int = 0,
+            company_hand: list = [],
+            storage: dict = {
+                "Food":0,
+                "Healthcare":0,
+                "Education":0,
+                "Luxuries":0
+                }
         ):
         logger.debug("Creating NPC State")
         super().__init__(            
                 faction,
                 victory_points, 
                 money, 
-                loans
+                loans,
+                resources,
+                influence,
+                company_hand
             )
+        self._storage = storage
+
+    ### Attributes ###
+
+    @property
+    def food_storage(self) -> int:
+        logger.error("NPC State cannot have food")
+        return self._storage["Food"]
+    @property
+    def luxuries_storage(self) -> int:
+        logger.error("NPC State cannot have luxuries")
+        return self._storage["Luxuries"]
+    @property
+    def education_storage(self) -> int:
+        return self._storage["Education"]
+    @property
+    def healthcare_storage(self) -> int:
+        return self._storage["Healthcare"]
+    @property
+    def storage(self) -> dict:
+        return self._storage
+    @property
+    def influence(self) -> int:
+        logger.error("NPC State cannot have its own influence")
+        return self._influence
+
+class PlayerState(NPCState):
+    def __init__(
+            self,
+            faction: str = "State", 
+            victory_points: int = 0, 
+            money: int = 0, 
+            loans: int = 0,
+            resources: dict = {
+                "Food":0,
+                "Healthcare":0,
+                "Education":0,
+                "Luxuries":0
+                },
+            influence: int = 0,
+            company_hand: list = [],
+            storage: dict = {
+                "Food":0,
+                "Healthcare":0,
+                "Education":0,
+                "Luxuries":0
+                },
+            legitimacy: dict[str,int] = {"Working Class": 1, "Middle Class": 1, "Capitalists": 1}
+        ):
+        logger.debug("Creating Player State")
+        super().__init__(            
+                faction,
+                victory_points, 
+                money, 
+                loans,
+                resources,
+                influence,
+                company_hand,
+                storage
+            )
+        self._legitimacy = legitimacy
+
+    @property
+    def food_storage(self) -> int:
+        return self._storage["Food"]
+    @property
+    def luxuries_storage(self) -> int:
+        return self._storage["Luxuries"]
+    @property
+    def influence(self) -> int:
+        return self._influence
+
 
 class GameState:
     """
@@ -306,32 +454,36 @@ class GameState:
     It contains everything that you would need to know to recreate the game at this given position
     Masking needs to take place before this can be passed to an agent
     """
+
     def __init__(self, players: dict, player_count: int):
         logger.debug("Instantiating gamestate")
+        import game.data.references as refs
         self.player_count = player_count
         self.players = players
 
-    ### Attributes ###
+        ### Attributes ###
 
-    ## Substates ##
-    # players: dict - from init
+        ## Substates ##
+        # players: dict - from init
 
-    ## Game Metadata ##
-    # player_count: int - from init
-    round: int = 0
-    phase: str = "Preparation"
-    turn: int = 1
-    active_player: str = "Working Class"
+        ## Game Metadata ##
+        # player_count: int - from init
+        self.round: int = 0
+        self.phase: str = "Preparation"
+        self.turn: int = 1
+        self.active_player: str = "Working Class"
 
-    ## Card Decks / Assets ##
-
-    company_deck: dict[str,list] = {}
-    worker_pool: dict[str,list] = {}
-    immigration_cards: list = []
-    
-    ## Board Areas ##
-    unemployed_workers: dict[str,list] = {}
-    companies: dict[str,list] = {}
+        ## Card Decks / Assets ##
+        self.company_deck: dict[str,list] = {}
+        self.worker_pool: dict[str,list] = {}
+        self.immigration_cards: list = []
+        
+        ## Board Areas ##
+        self.unemployed_workers: dict[str,list] = {}
+        self.companies: dict[str,list] = {}
+        self.laws = refs.default_laws
+        from game.data.classes import Election
+        self.voting_area = Election({},{})
 
     ### Methods ###
     # def to_dict(self) -> dict: # For saving

@@ -220,7 +220,7 @@ industries = ['Healthcare','Education','Luxury','Agriculture','Media']
 
 # Core Mechanics (Mutable)
 unions = build_unions()
-laws = build_laws()
+default_laws = build_laws()
 
 # Decks and Pools (Immutable)
 company_decks = build_company_decks()
