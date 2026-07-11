@@ -160,10 +160,10 @@ def build_export_cards() -> tuple:
     for i in range(20):
         export_cards.append(
             ExportCard(
-                ((random.randint(1,5), random.randrange(10,51,5)),(random.randint(3,10), random.randrange(35,81,5))),
-                ((random.randint(1,5), random.randrange(10,51,5)),(random.randint(3,10), random.randrange(35,81,5))),
-                ((random.randint(1,5), random.randrange(10,51,5)),(random.randint(3,10), random.randrange(35,81,5))),
-                ((random.randint(1,5), random.randrange(10,51,5)),(random.randint(3,10), random.randrange(35,81,5)))
+                ((random.randint(1,4), random.randrange(10,51,5)),(random.randint(3,9), random.randrange(35,81,5))),
+                ((random.randint(1,4), random.randrange(10,51,5)),(random.randint(3,9), random.randrange(35,81,5))),
+                ((random.randint(1,4), random.randrange(10,51,5)),(random.randint(3,9), random.randrange(35,81,5))),
+                ((random.randint(1,4), random.randrange(10,51,5)),(random.randint(3,9), random.randrange(35,81,5)))
             )
         )
 
@@ -184,6 +184,33 @@ def build_political_agenda_cards() -> tuple:
         cards.append(PoliticalAgendaCard(pols))
     
     return tuple(cards)
+
+def build_business_deal_cards() -> tuple:
+    logger.debug("Building business card deal cards")
+    from game.data.classes import BusinessDealCard
+    cards = []
+
+    # Temporary function
+    logger.warning("Temporary business deal cards used")
+    import random
+    for c in range(20):
+        price = random.randrange(20,101,5)
+        tariff = random.randrange(4,21,2)
+        prod = random.randint(1,3)
+        if prod == 1:
+            goods = {"Food": random.randint(3,12)}
+        elif prod == 2:
+            goods = {"Luxuries": random.randint(3,12)}
+        else:
+            goods = {"Food": random.randint(3,12), "Luxuries": random.randint(3,12)}
+        cards.append(BusinessDealCard(
+            goods,
+            price,
+            {"A": tariff * 2, "B": tariff, "C": 0}
+        ))
+
+    return tuple(cards)
+
 # ---------- References ----------- #
 # Concepts
 faction_play_order = ["Working Class", "Middle Class", "Capitalists", "State"]
@@ -201,3 +228,4 @@ worker_pool = build_worker_pool()
 immigration_cards = build_immigration_cards()
 export_cards = build_export_cards()
 political_agenda_cards = build_political_agenda_cards()
+business_deal_cards = build_business_deal_cards()
