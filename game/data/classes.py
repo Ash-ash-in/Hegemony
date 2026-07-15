@@ -124,43 +124,49 @@ class CompanySlot:
     References to companies and workers are held as attributes while they are placed here,
     and are simply removed when they are not.
 
+    These are instantiated when the gamestate is first created, and are only modified from then on.
+
     The validation checks only maintain internal consistency and are a last resort, 
     real validity should take place at the rules layer
     """
     def __init__(
-            self,
-            faction: str,
-            company: Company | None,
-            workers: list[Worker | None],
-            wage: int,
-            bonus_active: bool,
-            committed: bool,
-            strike: bool
-        ):
-        # Initialisation Validity
-        if company is not None:
+                self,
+                faction: str
+            ):
+        self.faction = faction # Name of 
+        self.company = None # Company | Noneq
+        self.workers = None # list[Worker | None]
+        self.wage = 0 # int
+        self.bonus_active = False # bool
+        self.committed = False # bool
+        self.strike = False # bool
+
+    def validate(self):
+    # Quicky Validity Checks to check internal rules. 
+    # Cannot prove all rules are met.
+    # Could benefit from extra check.
+        if self.company is not None:
             # Wages
-            if company.wages is None:
-                if wage != 0:
+            if self.company.wages is None:
+                if self.wage != 0:
                     raise Exception("Company does not have wages, value should be set to 0")
             else:
-                if wage < 1 or wage > 3:
+                if self.wage < 1 or self.wage > 3:
                     raise Exception("Companies with wages should be between 1 and 3")
             # Bonus Production
-            if company.production_bonus == 0 and bonus_active:
+            if self.company.production_bonus == 0 and self.bonus_active:
                 raise Exception("Company has no production bonus, yet was passed as true")
             # Workers
-            if len(company.worker_requirements.keys()) != len(workers):
-                raise Exception(f"Number of workers positions passed ({len(workers)}) does not match number of slots in company ({len(company.worker_requirements.keys())})")
+            if self.workers is not None:
+                if len(self.company.worker_requirements.keys()) != len(self.workers):
+                    raise Exception(f"Number of workers positions passed ({len(self.workers)}) does not match number of slots in company ({len(self.company.worker_requirements.keys())})")
+                if self.company.faction == "Middle Class" and self.bonus_active and self.workers[-1] is None:
+                    raise Exception("Middle Class company production bonus is active without worker")                                                              
+            # Strikes
+            if self.strike and not self.committed:
+                raise Exception("Striking workers but be committed")
 
 
-        self.faction = faction
-        self.company = company
-        self.workers = workers
-        self.wage = wage
-        self.bonus_active = bonus_active
-        self.committed = committed
-        self.strike = strike
 
 
     # def _remove_worker(self, index: int):

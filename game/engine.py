@@ -68,9 +68,13 @@ class Engine:
         self.agents = agent_references
         return
     
-    def startup(self, config) -> GameState:
+    def engine_startup(self, config) -> GameState:
         """Runs all the engine setup functions"""
         logger.debug("Executing engine startup")
         gamestate = self.setup_gamestate(config)
         self.setup_agents(config.agents, gamestate)
         return gamestate
+
+
+    @staticmethod
+    def start_position(gamestate: GameState): 

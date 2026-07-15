@@ -182,10 +182,10 @@ class MiddleClass(Player):
         self._prosperity_track = 0
         self._prosperity = self._update_prosperity()
         self._storage = {
-            "Food":0,
-            "Healthcare":0,
-            "Education":0,
-            "Luxuries":0
+            "Food":8,
+            "Healthcare":12,
+            "Education":12,
+            "Luxuries":12
             }
         self._storages = 0 # Extra Storages
 
@@ -295,15 +295,16 @@ class Capitalists(Player):
         self._revenue = 0
         self._capital = 0
         self._storage = {
-                "Food":0,
-                "Healthcare":0,
-                "Education":0,
-                "Luxuries":0
+                "Food":8,
+                "Healthcare":12,
+                "Education":12,
+                "Luxuries":12
                 }
         self._free_trade_zone = {
             "Food": 8,
             "Luxuries": 12
         }
+        self._storages = 0
 
     ### Attributes ###
 
@@ -343,21 +344,10 @@ class Capitalists(Player):
         self._storages -= 1
         return
 
-class NPCState(Player):
+class NPCState(Player): 
     def __init__(
             self,
-            faction: str = "NPC State", 
-            victory_points: int = 0, 
-            money: int = 0, 
-            loans: int = 0,
-            resources: dict = {
-                "Food":0,
-                "Healthcare":0,
-                "Education":0,
-                "Luxuries":0
-                },
-            influence: int = 0,
-            company_hand: list = [],
+            faction: str = "NPC State",
             storage: dict = {
                 "Food":0,
                 "Healthcare":0,
@@ -367,15 +357,9 @@ class NPCState(Player):
         ):
         logger.debug("Creating NPC State")
         super().__init__(            
-                faction,
-                victory_points, 
-                money, 
-                loans,
-                resources,
-                influence,
-                company_hand
+                faction
             )
-        self._storage = storage
+        self._storage = storage # MAKE THIS A METHOD CALL INSTEAD
 
     ### Attributes ###
 
@@ -404,18 +388,7 @@ class NPCState(Player):
 class PlayerState(NPCState):
     def __init__(
             self,
-            faction: str = "State", 
-            victory_points: int = 0, 
-            money: int = 0, 
-            loans: int = 0,
-            resources: dict = {
-                "Food":0,
-                "Healthcare":0,
-                "Education":0,
-                "Luxuries":0
-                },
-            influence: int = 0,
-            company_hand: list = [],
+            faction: str = "State",
             storage: dict = {
                 "Food":0,
                 "Healthcare":0,
@@ -427,12 +400,6 @@ class PlayerState(NPCState):
         logger.debug("Creating Player State")
         super().__init__(            
                 faction,
-                victory_points, 
-                money, 
-                loans,
-                resources,
-                influence,
-                company_hand,
                 storage
             )
         self._legitimacy = legitimacy
@@ -456,8 +423,14 @@ class GameState:
     """
 
     def __init__(self, players: dict, player_count: int):
+        """
+        Gamestate initiailisation creates the frameworks for all concepts in the game
+        These frameworks may be empty and should be set up later, to aid implementation of expansion packs
+        """
         logger.debug("Instantiating gamestate")
         import game.data.references as refs
+        import random as rand
+        from copy import copy, deepcopy
         self.player_count = player_count
         self.players = players
 
@@ -473,31 +446,58 @@ class GameState:
         self.turn: int = 1
         self.active_player: str = "Working Class"
 
-        ## Card Decks / Assets ##
-        self.company_deck: dict[str,list] = {}
-        self.worker_pool: dict[str,list] = {}
-        self.immigration_cards: list = []
-        
+        ## Card Decks ##
+        # Company Decks
+        self.company_deck: dict[str,list] = {faction: list(companies) for faction, companies in refs.company_decks.items()}
+        for comps in self.company_deck.values():
+            rand.shuffle(comps)
+        # Immigration Cards
+        self.immigration_cards: list = list(refs.immigration_cards)
+        rand.shuffle(self.immigration_cards)
+        # Export Cards
+        self.export_cards: list = list(refs.export_cards)
+        rand.shuffle(self.export_cards)
+        # Political Agenda Cards
+        self.political_agenda_cards: list = list(refs.political_agenda_cards)
+        rand.shuffle(self.political_agenda_cards)
+        # Political Agenda Cards
+        self.business_deal_cards: list = list(refs.business_deal_cards)
+        rand.shuffle(self.business_deal_cards)
+
+        ## Assets ##
+        # Worker Pool
+        self.worker_pool: dict[str,list] = {faction:list(workers) for faction, workers in refs.worker_pool.items()}
+        self.storages: int = copy(refs.default_storages)
+        self.election_cubes: dict[str,int] = copy(refs.default_election_cubes)
+        self.default_machinery_tokens = copy(refs.default_machinery_tokens)
+        self.default_strike_tokens = copy(refs.default_strike_tokens)
+        self.default_legitimacy_tokens = copy(refs.default_legitimacy_tokens)
+
         ## Board Areas ##
-        self.unemployed_workers: dict[str,list] = {}
-        self.companies: dict[str,list] = {}
-        self.laws = refs.default_laws
-        from game.data.classes import Election
-        self.voting_area = Election({},{})
+        # Unemployment Area
+        self.unemployed_workers: dict[str,list] = {"Working Class": [], "Middle Class": []}
+        # Company Slots
+        def setup_companies():
+            from game.data.classes import CompanySlot
+            company_slots = {"Working Class": [], "Middle Class": [], "Capitalists": [], "State": []}
+            for _ in range(2):
+                company_slots["Working Class"].append(CompanySlot("Working Class"))
+            for _ in range(8):
+                company_slots["Middle Class"].append(CompanySlot("Middle Class"))
+            for _ in range(12):
+                company_slots["Capitalists"].append(CompanySlot("Capitalists"))
+            for _ in range(9):
+                company_slots["State"].append(CompanySlot("State"))
+            return {key: tuple(value) for key, value in company_slots.items()}
+        self.companies: dict[str,tuple] = setup_companies()
+        self.unions = deepcopy(refs.unions)
+        # Laws / Elections
+        self.laws: dict = deepcopy(refs.default_laws)
+        self.tariff_level: int = self.laws[6 - 1].position
+        self.voting_area = deepcopy(refs.voting_area)
+        self.voting_bag: dict = {player.faction: 0 for player in self.players.values()}
 
-    ### Methods ###
-    # def to_dict(self) -> dict: # For saving
-    #     return {k.lstrip('_'): v for k, v in vars(self).items()}
-    
 
-    # State Display
-    def check_founded_companies(self, faction: str):
-        count = 0
-        for k, v in self.companies[faction].items():
-            if v is not None:
-                count += 1
-        return count
-    
 
     # Safety Checks
     def corroborate_worker_count(self):

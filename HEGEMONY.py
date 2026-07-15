@@ -31,7 +31,7 @@ with open(os.path.join("game","config.json"), 'r', encoding='utf-8') as file:
 from game.engine import Engine
 
 engine = Engine()
-gamestate = engine.startup(config)
+gamestate = engine.engine_startup(config)
 # Engine.flow(LiveGamestate)
 
 

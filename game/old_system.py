@@ -273,7 +273,7 @@ class Engine:
         """
         logger.debug('Called Engine.start_position')
         import game.rules as rules
-        from game.context import SimpleContext
+        from game.context import SimpleContex       t
 
         # Build player refs
         working_class, middle_class, capitalists, state  = gamestate.players.values()
