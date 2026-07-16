@@ -31,6 +31,8 @@ def mask_gamestate_normal(gamestate: GameState, player) -> dict:
         "tariff_level": gamestate.tariff_level,
         "voting_area:": gamestate.voting_area,
         "demonstration": gamestate.demonstration,
+        "business_deals": gamestate.active_business_deals,
+        "export_card": gamestate.active_export_card
     }
 
     def compile_player_data(gamestate, player) -> dict:

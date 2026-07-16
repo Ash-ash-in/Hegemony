@@ -454,25 +454,6 @@ class GameState:
         self.turn: int = 1
         self.active_player: str = "Working Class"
 
-        ## Card Decks ##
-        # Company Decks
-        self.company_deck: dict[str,list] = {faction: list(companies) for faction, companies in refs.company_decks.items()}
-        for comps in self.company_deck.values():
-            rand.shuffle(comps)
-        # Immigration Cards
-        self.immigration_cards: list = list(refs.immigration_cards)
-        rand.shuffle(self.immigration_cards)
-        # Export Cards
-        self.export_cards: list = list(refs.export_cards)
-        rand.shuffle(self.export_cards)
-        self.update_export_card()
-        # Political Agenda Cards
-        self.political_agenda_cards: list = list(refs.political_agenda_cards)
-        rand.shuffle(self.political_agenda_cards)
-        # Political Agenda Cards
-        self.business_deal_cards: list = list(refs.business_deal_cards)
-        rand.shuffle(self.business_deal_cards)
-
         ## Assets ##
         # Worker Pool
         self.worker_pool: dict[str,list] = {faction:list(workers) for faction, workers in refs.worker_pool.items()}
@@ -510,14 +491,53 @@ class GameState:
         self.voting_area = deepcopy(refs.voting_area)
         self.voting_bag: dict = {player.faction: 0 for player in self.players.values()}
 
+        ## Card Decks ##
+        # Company Decks
+        self.company_deck: dict[str,list] = {faction: list(companies) for faction, companies in refs.company_decks.items()}
+        for comps in self.company_deck.values():
+            rand.shuffle(comps)
+        # Immigration Cards
+        self.immigration_cards: list = list(refs.immigration_cards)
+        rand.shuffle(self.immigration_cards)
+        # Export Cards
+        self.export_cards: list = list(refs.export_cards)
+        rand.shuffle(self.export_cards)
+        self.update_export_card()
+        # Political Agenda Cards
+        self.political_agenda_cards: list = list(refs.political_agenda_cards)
+        rand.shuffle(self.political_agenda_cards)
+        # Political Agenda Cards
+        self.business_deal_cards: list = list(refs.business_deal_cards)
+        rand.shuffle(self.business_deal_cards)
+        self.update_business_deals()
 
-    # Methods - Game Flow
+    ### Methods ###
+
+    # Game Flow
     def update_export_card(self):
+        logger.debug("updating active export card")
         card = self.export_cards[0]
-        self.active_export_card = card
         self.export_cards.remove(card)
         self.export_cards.append(card)
+        logger.debug("card moved to back of deck")
+        self.active_export_card = card
+        logger.debug("active export card updated")
 
+    def update_business_deals(self):
+        logger.debug("updating active business deals")
+        self.active_business_deals = []
+        position = self.laws[6].position
+        if position == 0:
+            logger.debug("no business deal cards required")
+        else:
+            for i in range(position - 1):          
+                card = self.business_deal_cards[0]
+                self.business_deal_cards.remove(card)
+                self.business_deal_cards.append(card)
+                logger.debug("card moved to back of deck")
+                self.active_business_deals.append(card)
+                logger.debug("active export card updated")
+        logger.debug("business deal cards updated")
 
     # Safety Checks
     def corroborate_worker_count(self):
