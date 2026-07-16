@@ -13,7 +13,7 @@ class Agent:
     If this agent is actually used, it will just pick the first option every time.
     """
     from game.states import GameState, Player
-    from game.transmission import ContextCall, AgentAnswer
+    from game.context import Context, AgentAnswer
     faction: Player
     name = 'Template Agent'
 
@@ -31,7 +31,7 @@ class Agent:
                 possible[name] = (method, check)
         return possible
 
-    def call(self, call: ContextCall) -> AgentAnswer:
+    def call(self, call: Context) -> AgentAnswer:
         """
         Determines the behaviour when the agent is called by the DecisionContext
 
@@ -64,7 +64,7 @@ class Agent:
     def spawn_worker(self, gamestate: GameState, options: dict) -> AgentAnswer:
         """Used to decide which worker to spawn"""
         logger.debug("Agent's worker process called")
-        from game.transmission import AgentAnswer
+        from game.context import AgentAnswer
         key = list(options.keys())[0]
         method = options[key][0]
         primary_bool = True
@@ -75,7 +75,7 @@ class Agent:
 
     def action(self, gamestate: GameState, options: dict) -> AgentAnswer:
         logger.debug("Agent's action process called")
-        from game.transmission import AgentAnswer
+        from game.context import AgentAnswer
         key = list(options.keys())[0]
         method = options[key][0]
         primary_bool = True if options[key][1].actiontype == 'Main' else False
@@ -86,7 +86,7 @@ class Agent:
     
     def election(self, gamestate: GameState, options: dict) -> AgentAnswer:
         logger.debug("Agent's election process called")
-        from game.transmission import AgentAnswer
+        from game.context import AgentAnswer
         #       - Some logic
         answer = AgentAnswer(options[0], options[1], True, [])
         return answer
@@ -94,14 +94,14 @@ class Agent:
 @dataclass
 class RandomAgent(Agent):
     from game.states import GameState
-    from game.transmission import ContextCall, AgentAnswer
+    from game.context import ContextCall, AgentAnswer
     operator = 'Script'
     name = 'Randy Random'
 
     def action(self, gamestate: GameState, options: dict) -> AgentAnswer:
         logger.debug("Agent's action process called")
         import random
-        from game.transmission import AgentAnswer
+        from game.context import AgentAnswer
 
         key = random.choice(list(options.keys()))
         logger.debug(f"Action choice = {key}")
@@ -115,7 +115,7 @@ class RandomAgent(Agent):
     def spawn_worker(self, gamestate: GameState, options: dict) -> AgentAnswer:
         logger.debug("Agent's worker process called")
         import random
-        from game.transmission import AgentAnswer
+        from game.context import AgentAnswer
 
         key = random.choice(list(options.keys()))
         logger.debug(f"Worker choice = {key}")
@@ -125,9 +125,6 @@ class RandomAgent(Agent):
 
         answer = AgentAnswer(key, method, primary_bool, params)
         return answer
-
-
-
 
 
 agent_refs = {

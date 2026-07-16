@@ -452,6 +452,7 @@ class GameState:
         logger.debug("Instantiating gamestate")
         import game.data.references as refs
         import random as rand
+        import itertools
         from copy import copy, deepcopy
         self.player_count = player_count
         self.players = players
@@ -463,6 +464,7 @@ class GameState:
 
         ## Game Metadata ##
         # player_count: int - from init
+        self.game_id: int = next(itertools.count())
         self.round: int = 0
         self.phase: str = "Preparation"
         self.turn: int = 1

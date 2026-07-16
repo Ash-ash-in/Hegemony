@@ -9,6 +9,7 @@ class Config:
     crisis_expansion: bool
     historic_expansion: bool
 
+
 @dataclass
 class Engine:
     from game.states import GameState
