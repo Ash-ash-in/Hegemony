@@ -122,6 +122,7 @@ class WorkingClass(Player):
         self._population_track = 0
         self._prosperity = 0
         self._population = self._update_population()
+        self._strike_tokens = 7
         
     ### Attributes ###
 
@@ -134,7 +135,9 @@ class WorkingClass(Player):
     @property
     def prosperity(self) -> int:
         return self._prosperity    
-
+    @property
+    def strike_tokens(self) -> int:
+        return self._strike_tokens  
 
     ### Modification Methods ###
         
@@ -313,7 +316,7 @@ class Capitalists(Player):
             "Luxuries": 12
         }
         self._storages = 0
-
+        self._machinery_tokens = 6
     ### Attributes ###
 
     @property
@@ -331,6 +334,9 @@ class Capitalists(Player):
     @property
     def storage(self) -> dict:
         return self._storage
+    @property
+    def machinery_tokens(self) -> int:
+        return self._machinery_tokens
     
     ### Methods ###
 
@@ -411,6 +417,11 @@ class PlayerState(NPCState):
                 storage
             )
         self._legitimacy = legitimacy
+        self._legitimacy_tokens = {
+            "Working Class": 6,
+            "Middle Class": 6,
+            "Capitalists": 6
+            }
 
     @property
     def food_storage(self) -> int:
@@ -421,6 +432,9 @@ class PlayerState(NPCState):
     @property
     def influence(self) -> int:
         return self._influence
+    @property
+    def legitmacy_tokens(self) -> dict:
+        return self._legitimacy_tokens
 
 
 class GameState:
@@ -459,12 +473,6 @@ class GameState:
         self.worker_pool: dict[str,list] = {faction:list(workers) for faction, workers in refs.worker_pool.items()}
         self.storages: int = copy(refs.default_storages)
         self.election_cubes: dict[str,int] = copy(refs.default_election_cubes)
-        
-        #### MOVE TO PLAYER STATE ####
-        self.machinery_tokens = copy(refs.default_machinery_tokens)
-        self.strike_tokens = copy(refs.default_strike_tokens)
-        self.legitimacy_tokens = copy(refs.default_legitimacy_tokens)
-        #### MOVE TO PLAYER STATE ####
 
         ## Board Areas ##
         # Unemployment Area
