@@ -25,7 +25,9 @@ class Player():
                 "Luxuries":0
                 }
         self._influence = 0
-        self._company_hand = []
+        self._market = []
+        self._deck = [] # Setup later
+        self._hand = []
 
     ### Attributes ###
     @property
@@ -59,8 +61,14 @@ class Player():
     def influence(self) -> int:
         return self._influence
     @property
-    def company_hand(self) -> list:
-        return self._company_hand
+    def market(self) -> list:
+        return self._market
+    @property
+    def deck(self) -> list:
+        return self._deck
+    @property
+    def hand(self) -> list:
+        return self._hand
     
 
     ### Methods ###
@@ -94,13 +102,13 @@ class Player():
 
     def _add_company_card_to_hand(self, card: Company):
         logger.debug(f"{self._faction} drawing company cards")
-        self._company_hand.append(card)
-        logger.debug(f"{self._faction} companies: {len(self._company_hand)}")
+        self._market.append(card)
+        logger.debug(f"{self._faction} companies: {len(self._market)}")
 
     def _remove_company_card_from_hand(self, card: Company):
         logger.debug(f"{self.faction} removing a company card")
-        self._company_hand.remove(card)
-        logger.debug(f"{self._faction} companies in market: {len(self._company_hand)}")
+        self._market.remove(card)
+        logger.debug(f"{self._faction} companies in market: {len(self._market)}")
 
 class WorkingClass(Player):
     def __init__(
@@ -457,6 +465,7 @@ class GameState:
         # Export Cards
         self.export_cards: list = list(refs.export_cards)
         rand.shuffle(self.export_cards)
+        self.update_export_card()
         # Political Agenda Cards
         self.political_agenda_cards: list = list(refs.political_agenda_cards)
         rand.shuffle(self.political_agenda_cards)
@@ -469,13 +478,17 @@ class GameState:
         self.worker_pool: dict[str,list] = {faction:list(workers) for faction, workers in refs.worker_pool.items()}
         self.storages: int = copy(refs.default_storages)
         self.election_cubes: dict[str,int] = copy(refs.default_election_cubes)
-        self.default_machinery_tokens = copy(refs.default_machinery_tokens)
-        self.default_strike_tokens = copy(refs.default_strike_tokens)
-        self.default_legitimacy_tokens = copy(refs.default_legitimacy_tokens)
+        
+        #### MOVE TO PLAYER STATE ####
+        self.machinery_tokens = copy(refs.default_machinery_tokens)
+        self.strike_tokens = copy(refs.default_strike_tokens)
+        self.legitimacy_tokens = copy(refs.default_legitimacy_tokens)
+        #### MOVE TO PLAYER STATE ####
 
         ## Board Areas ##
         # Unemployment Area
         self.unemployed_workers: dict[str,list] = {"Working Class": [], "Middle Class": []}
+        self.demonstration: bool = False
         # Company Slots
         def setup_companies():
             from game.data.classes import CompanySlot
@@ -497,6 +510,13 @@ class GameState:
         self.voting_area = deepcopy(refs.voting_area)
         self.voting_bag: dict = {player.faction: 0 for player in self.players.values()}
 
+
+    # Methods - Game Flow
+    def update_export_card(self):
+        card = self.export_cards[0]
+        self.active_export_card = card
+        self.export_cards.remove(card)
+        self.export_cards.append(card)
 
 
     # Safety Checks

@@ -3,8 +3,78 @@ logger = logging.getLogger(__name__)
 logger.debug("Importing agents.test_agents module")
 
 from dataclasses import dataclass
+from game.states import GameState
 
+def mask_gamestate_normal(gamestate: GameState, player) -> dict:
+    """
+    This is the masking process for all agents except the NN.
+    No concerns are taken over multicollinerarity.
+    Ease of representation is prioritised.
+    Raw values are submitted, nothing is normalised.
+    """
+    game_metadata = {
+        "player_count": gamestate.player_count,
+        "round": gamestate.round,
+        "phase": gamestate.phase,
+        "turn": gamestate.turn,
+        "player_turn": gamestate.active_player
+    }
 
+    board_data = {
+        "worker_pool": gamestate.worker_pool,
+        "storages": gamestate.storages,
+        "election_cubes": gamestate.election_cubes,
+        "unemployed_workers": gamestate.unemployed_workers,
+        "companies": gamestate.companies, # figure this out
+        "unions": gamestate.unions,
+        "laws": gamestate.laws,
+        "tariff_level": gamestate.tariff_level,
+        "voting_area:": gamestate.voting_area,
+        "demonstration": gamestate.demonstration,
+    }
+
+    def compile_player_data(gamestate, player) -> dict:
+        player_data = {
+            "faction": player.faction,
+            "victory_points": player.victory_points,
+            "money": player.money,
+            "loans": player.loans,
+            "resources": player.resources,
+            "influence": player.influence,
+            "market": player.market
+        }
+        if player.faction in ("Working Class", "Middle Class"):
+            player_data["population track"] = player.population_track,
+            player_data["population"] = player.population,
+            player_data["prosperity"] = player.prosperity
+        if player.faction == "Working Class":
+            player_data["strike_tokens"] = player.strike_tokens
+        else:
+            player_data["storage"] = player.storage
+        if player.faction == "Middle Class":
+            player_data["prosperity_track"] = player.prosperity_track
+        if player.faction in ("Middle Class", "Capitalists"):
+            player_data["storages"] = player.storages
+        if player.faction == "Capitalists":
+            player_data["revenue"] = player.revenue
+            player_data["capital"] = player.capital
+            player_data["free_trade_zone"] = player.free_trade_zone
+            player_data["machinery_tokens"] = player.machinery_tokens
+        elif player.faction == "State" and gamestate.player_count == 4:
+            player_data["legitimacy"] = player.legitimacy
+            player_data["legitimacy_tokens"] = player.legitimacy_tokens
+        return player_data
+    own_player_data = compile_player_data(gamestate, player)
+    own_player_data["hand"] = player.hand
+
+    other_player_data = {}
+    for other_player in gamestate.players:
+        if other_player.faction == player.faction:
+            continue
+        else:
+            other_player_data[other_player.faction] = compile_player_data(gamestate, other_player)
+
+    return {}
 
 
 @dataclass
