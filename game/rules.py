@@ -390,6 +390,7 @@ class FreeAction:
             # This has a simple intermediate step, so call that 
             return LoanRemoval.resolve(player)
 
+@dataclass
 class MainAction:
     logger.debug("called MainAction class")
     from game.states import Player

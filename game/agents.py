@@ -41,20 +41,20 @@ class Agent:
 
         # Validation
         if call.faction != self.faction:
-            logger.error(f"call meant for {call.faction.faction} sent to {self.faction.faction}")
+            logger.error(f"call meant for {call.faction} sent to {self.faction}")
             raise Exception("Context call Players do not match")
         
         # Decision Orchestration
-        possible_options = self.extract_options(call.options)
+        possible_options = self.extract_options(call.available_actions)
         if len(possible_options.keys()) == 0:
-            raise Exception('No response from agent is possible')
+            raise Exception('No response from agent is possible. Consider adding "None" option')
 
-        if call.role == 'Action':
-            answer = self.action(call.gamestate, possible_options)
-        elif call.role == 'Election':
-            answer = self.election(call.gamestate, possible_options)
-        elif call.role == 'Worker':
-            answer = self.spawn_worker(call.gamestate, possible_options)
+        if call.decision_type == 'Action':
+            answer = self.action(call.masked_state, possible_options)
+        elif call.decision_type == 'Election':
+            answer = self.election(call.masked_state, possible_options)
+        elif call.decision_type == 'Worker':
+            answer = self.spawn_worker(call.masked_state, possible_options)
 
         #       -more calls to role-specific methods as they are created
         else:
@@ -73,7 +73,7 @@ class Agent:
         answer = AgentAnswer(key, method, primary_bool, params)
         return answer
 
-    def action(self, gamestate: GameState, options: dict) -> AgentAnswer:
+    def action(self, gamestate: dict, options: dict) -> AgentAnswer:
         logger.debug("Agent's action process called")
         from game.context import AgentAnswer
         key = list(options.keys())[0]
