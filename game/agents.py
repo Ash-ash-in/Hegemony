@@ -3,6 +3,9 @@ logger = logging.getLogger(__name__)
 
 from dataclasses import dataclass
 
+# Setup Decision Log
+decision_log = []
+
 @dataclass
 class Agent:
     """
@@ -96,7 +99,7 @@ class RandomAgent(Agent):
         """
         logger.debug(f"Call made to {self.name}")
         import random as rand
-        from game.context import AgentAnswer
+        from game.context import AgentAnswer, DecsionLogEntry
 
         # Validation
         if call.faction != self.faction:
@@ -106,13 +109,16 @@ class RandomAgent(Agent):
             raise Exception("No types of response were requested of the agent. Ensure context.available_choices is updated.")
         for response_type, options in call.available_choices.items():
             if len(options) <= 0:
-                raise Exception(F'No response from agent is possible when selection {response_type}. Consider adding "None" option')
+                raise Exception(f'No response from agent is possible when selection {response_type}. Consider adding "None" option')
 
         # Option Selection
         answer = {}
         for request_type, options in call.available_choices.items():
             answer[request_type] = rand.choice(options)
-        return AgentAnswer(answer)
+
+        response = AgentAnswer(answer)
+        decision_log.append(DecsionLogEntry(call, response))
+        return response
 
 agent_refs = {
     'Random': RandomAgent

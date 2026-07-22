@@ -10,7 +10,6 @@ class Config:
     historic_expansion: bool
 
 
-@dataclass
 class Engine:
     from game.states import GameState
 
@@ -77,6 +76,172 @@ class Engine:
         self.setup_agents(config.agents, gamestate)
         return gamestate
 
-
     @staticmethod
     def start_position(gamestate: GameState): 
+        """
+        Sets up the board accoring the the rulebook, for a new game
+        WARNING this modifies the GameState and Player objects in place!
+        Only use this in a brand new game.
+        """
+        logger.debug('Called Engine.start_position')
+        import game.rules as rules
+
+        # Build player refs
+        for name, cls in gamestate.players.items():
+            if name == "Working Class":
+                working_class = cls
+            elif name == "Middle Class":
+                middle_class = cls
+            elif name == "Capitalists":
+                capitalists = cls
+            elif name == "State":
+                state = cls
+            else:
+                raise Exception("Unrecognised faction")
+
+        ####################################
+        ### TEMPORARY give everyone 120 ####
+        for name, inst in gamestate.players.items():
+            if rules.MoneyTransfer.check(None, inst, 120, True).validity:
+                rules.MoneyTransfer.resolve(None, inst, 120, True)
+        logger.debug('Temporary start position money complete')
+        ### TEMPORARY give everyone 120 ####
+        ####################################
+
+
+    def preparation_phase(self, gamestate: GameState):
+        """
+        Runs the system - driven preparation actions.
+        All actions are mandatory.
+        """
+        logger.debug('Called Engine.preparation_phase')
+        return gamestate
+    
+
+    def action_phase(self, gamestate: GameState):
+        """
+        Handles the process for calling the DecisionContext and sending commands downstream
+        
+        WARNING: This modifies GameState's 'turn', 'active_player', and 'free_action_taken' in place.
+        WARNING: This replaces the GameState based on ~decisions taken~
+        """
+        from game.context import ActionContext
+        from game.data.references import faction_play_order
+        logger.debug('Called Engine.action_phase')
+
+        ### Start the Action Phase ###
+
+        for turn_num in range(1,6):
+            logger.info(f'Starting action phase turn {turn_num}')
+            gamestate.turn = turn_num # Update for save file
+            for faction_name in faction_play_order:
+                if faction_name == 'State' and gamestate.player_count < 4:
+                    continue
+                if faction_name == "Middle Class" and gamestate.player_count < 3:
+                    continue
+                logger.info(f"It's the {faction_name}'s turn")
+                gamestate.active_player = faction_name
+                player = gamestate.players[faction_name]
+
+                # Call the agent
+                agent = self.agents[player.faction]
+                context = ActionContext(gamestate, player)
+                answer = context.call(agent)
+
+                # Build refs from answer
+                action_name = answer.answer["action"]
+                for action_type, name_method_dict in context.references.items():
+                    if action_name in name_method_dict.keys():
+                        action_method = name_method_dict[action_type]
+                        break
+                    raise Exception("Action not found in context references")
+                if action_method is None:
+                    raise Exception('Order "None" response given before any action taken')
+                logger.info(f"Agent selected: {action_name}")
+
+                # Build Context for action requred
+                
+
+                # Check for a free action following a main
+                if answer.primary_response == True:
+                    answer = ActionContext.action_call(agent, False, True, gamestate, player)
+                    if answer.order is None:
+                        continue
+                    args = [player] + answer.args
+                    mini_log = f"Enacting {answer.name}."
+                    if len(answer.args) > 0:
+                        mini_log += f" Args = {answer.args}"
+                    logger.info(mini_log)
+                    answer.order.resolve(*args)      
+                
+                # Otherwise demand a main action response
+                elif answer.primary_response == False:
+                    answer = ActionContext.action_call(agent, True, False, gamestate, player)
+                    if answer.order is None:
+                        raise Exception('Main action required, None cannot be passed')
+                    else:
+                        args = [player] + answer.args
+                        mini_log = f"Enacting {answer.name}."
+                        if len(answer.args) > 0:
+                            mini_log += f" Args = {answer.args}"
+                        logger.info(mini_log)
+                        answer.order.resolve(*args) 
+
+        return gamestate
+
+    @staticmethod
+    def production_phase(gamestate: GameState):
+        logger.debug('Called Engine.production_phase')
+        return gamestate
+
+    @staticmethod
+    def elections_phase(gamestate: GameState):
+        logger.debug('Called Engine.elections_phase')
+        return gamestate
+
+    @staticmethod
+    def scoring_phase(gamestate: GameState):
+        logger.debug('Called Engine.scoring_phase')
+        return gamestate
+
+    @staticmethod
+    def endgame_scoring(gamestate: GameState):
+        logger.debug('Called Engine.endgame_scoring')
+        return gamestate
+
+    def flow(self, gamestate: GameState):
+        """
+        Main Execution of game. Runs constantly during play.
+
+        WARNING: This modifies GameState's 'round' and 'phase' in place.
+        """
+        logger.debug('Called Engine.flow')
+        from game.data.common import phases
+
+        for round in range(0,6):
+            logger.info(f'Starting Round {round}')
+            gamestate.round = round
+
+            if round == 0:
+                self.start_position(gamestate)
+                continue
+
+            for phase in phases:
+
+                if phase == phases[0] and round == 1:
+                    continue # First round gets no preparation phase
+                
+                logger.info(f'Begining phase: {phase}')
+
+                if phase == phases[0]:
+                    gamestate = self.preparation_phase(gamestate)
+                elif phase == phases[1]:
+                    gamestate = self.action_phase(gamestate)
+                elif phase == phases[2]:
+                    gamestate = self.production_phase(gamestate)
+                elif phase == phases[3]:
+                    gamestate = self.elections_phase(gamestate)
+                elif phase == phases[4]:
+                    gamestate = self.scoring_phase(gamestate)
+
+        gamestate = self.endgame_scoring(gamestate)

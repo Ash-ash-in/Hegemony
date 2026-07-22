@@ -233,7 +233,7 @@ class AgentAnswer:
 
 @ dataclass
 class DecsionLogEntry:
-    
+
     # Context at Observation
     call: ContextCall
 
@@ -270,7 +270,7 @@ class CheckResponse:
     tooltip: str
     actiontype: str
     params: list
-    
+
 class Context:
     """
     Parent Class for all Context types.
@@ -303,8 +303,7 @@ class Context:
 
 class ActionContext(Context):
     """
-    Checks what is available when making an action.
-    Seperate methods for different types of agent.
+    
     """
     from game.agents import Agent
     from game.states import GameState, Player
@@ -321,7 +320,7 @@ class ActionContext(Context):
         self.parent_name = ""
         self.compile_options(player, True, True)
 
-    def compile_options(self, player: Player, allowed_free: bool, allowed_main: bool) -> None:
+    def compile_options(self, player: Player) -> None:
         """
         compile_options is found in all context classes, but returns a different format depending on the role.
         Action_context returns the action method directly. Others may reference strings or Worker objects, for instance.
@@ -337,6 +336,18 @@ class ActionContext(Context):
         from game.rules import FreeAction, MainAction
 
         self.available_choices["action"] = []
+
+        # Determine what actions have already been taken
+        if len(self.action_in_progress.keys()) > 0:
+            if self.action_in_progress["action"] in self.references["free_action"]:
+                allowed_free = False
+                allowed_main = True
+            else:
+                allowed_free = True
+                allowed_main = False
+        else:
+            allowed_free = True
+            allowed_main = True
 
         # Compile free actions from rules
         if allowed_free:
@@ -372,11 +383,12 @@ class ActionContext(Context):
 
         # Call the agent
         logger.debug("ActionContext making call to agent")
-        answer = agent.call(ContextCall(
+        call = ContextCall(
             self.masked_state, self.seq, self.game_id, self.parent_seq, 
             self.faction, self.agent_type, self.action_in_progress, self.decision_type,
             self.step, self.parent_name, self.available_choices
-        ))
+        )
+        answer = agent.call(call)
 
         # Check if this is the first or second part of the action turn
         if self.step[0] == 1:
