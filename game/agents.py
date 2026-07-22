@@ -13,7 +13,7 @@ class Agent:
     If this agent is actually used, it will just pick the first option every time.
     """
     from game.states import GameState, Player
-    from game.context import Context, AgentAnswer, BasicMaskedState
+    from game.context import ContextCall, AgentAnswer, BasicMaskedState
     faction: Player
     name = 'Template Agent'
 
@@ -31,7 +31,7 @@ class Agent:
                 possible[name] = (method, check)
         return possible
 
-    def call(self, call: Context) -> AgentAnswer:
+    def call(self, call: ContextCall) -> AgentAnswer:
         """
         Determines the behaviour when the agent is called by the DecisionContext
 
@@ -43,52 +43,44 @@ class Agent:
         if call.faction != self.faction:
             logger.error(f"call meant for {call.faction} sent to {self.faction}")
             raise Exception("Context call Players do not match")
+        if len(call.available_choices.keys()) == 0:
+            raise Exception("No types of response were requested of the agent. Ensure context.available_choices is updated.")
+        for response_type, options in call.available_choices.items():
+            if len(options) <= 0:
+                raise Exception(F'No response from agent is possible when selection {response_type}. Consider adding "None" option')
         
         # Decision Orchestration
-        possible_options = self.extract_options(call.available_choices)
-        if len(possible_options.keys()) == 0:
-            raise Exception('No response from agent is possible. Consider adding "None" option')
-
-        if call.decision_type == "Choose Action":
-            answer = self.action(call.masked_state, possible_options)
-        elif call.decision_type == 'Election':
-            answer = self.election(call.masked_state, possible_options)
-        elif call.decision_type == 'Worker':
-            answer = self.spawn_worker(call.masked_state, possible_options)
-
+        # if call.decision_type == "choose_action":
+        #     answer = self.action(call.masked_state, call.available_choices)
+        # elif call.decision_type == 'Election':
+        #     answer = self.election(call.masked_state, call.available_choices)
+        # elif call.decision_type == 'Worker':
+        #     answer = self.spawn_worker(call.masked_state, call.available_choices)
         #       -more calls to role-specific methods as they are created
-        else:
-            raise Exception('Role not understood from ContextCall')
-        return answer
+        # else:
+        #     raise Exception('Role not understood from ContextCall')
+
+        # Normally you would forward the answer from the commented section above.
+        # To ease development, we will just return an empty answer for now
+        return self.AgentAnswer({})
 
     def spawn_worker(self, masked_state: BasicMaskedState, options: dict) -> AgentAnswer:
         """Used to decide which worker to spawn"""
         logger.debug("Agent's worker process called")
         from game.context import AgentAnswer
-        key = list(options.keys())[0]
-        method = options[key][0]
-        primary_bool = True
-        params = options[key][1].params
-        
-        answer = AgentAnswer(key, method, primary_bool, params)
+        answer = AgentAnswer({})
         return answer
 
     def action(self, masked_state: BasicMaskedState, options: dict) -> AgentAnswer:
         logger.debug("Agent's action process called")
         from game.context import AgentAnswer
-        key = list(options.keys())[0]
-        method = options[key][0]
-        primary_bool = True if options[key][1].actiontype == 'Main' else False
-        params = options[key][1].params
-        
-        answer = AgentAnswer(key, method, primary_bool, params)
+        answer = AgentAnswer({})
         return answer
     
     def election(self, masked_state: BasicMaskedState, options: dict) -> AgentAnswer:
         logger.debug("Agent's election process called")
         from game.context import AgentAnswer
-        #       - Some logic
-        answer = AgentAnswer(options[0], options[1], True, [])
+        answer = AgentAnswer({})
         return answer
 
 @dataclass
@@ -98,34 +90,29 @@ class RandomAgent(Agent):
     operator = 'Script'
     name = 'Randy Random'
 
-    def action(self, gamestate: GameState, options: dict) -> AgentAnswer:
-        logger.debug("Agent's action process called")
-        import random
+    def call(self, call: ContextCall) -> AgentAnswer:
+        """
+        Rather than triaging, Randy just loops through all options and picks one at random.
+        """
+        logger.debug(f"Call made to {self.name}")
+        import random as rand
         from game.context import AgentAnswer
 
-        key = random.choice(list(options.keys()))
-        logger.debug(f"Action choice = {key}")
-        method = options[key][0]
-        primary_bool = True if options[key][1].actiontype == 'Main' else False
-        params = options[key][1].params
+        # Validation
+        if call.faction != self.faction:
+            logger.error(f"call meant for {call.faction} sent to {self.faction}")
+            raise Exception("Context call Players do not match")
+        if len(call.available_choices.keys()) == 0:
+            raise Exception("No types of response were requested of the agent. Ensure context.available_choices is updated.")
+        for response_type, options in call.available_choices.items():
+            if len(options) <= 0:
+                raise Exception(F'No response from agent is possible when selection {response_type}. Consider adding "None" option')
 
-        answer = AgentAnswer(key, method, primary_bool, params)
-        return answer
-    
-    def spawn_worker(self, gamestate: GameState, options: dict) -> AgentAnswer:
-        logger.debug("Agent's worker process called")
-        import random
-        from game.context import AgentAnswer
-
-        key = random.choice(list(options.keys()))
-        logger.debug(f"Worker choice = {key}")
-        method = options[key][0]
-        primary_bool = True if options[key][1].actiontype == 'Main' else False
-        params = options[key][1].params
-
-        answer = AgentAnswer(key, method, primary_bool, params)
-        return answer
-
+        # Option Selection
+        answer = {}
+        for request_type, options in call.available_choices.items():
+            answer[request_type] = rand.choice(options)
+        return AgentAnswer(answer)
 
 agent_refs = {
     'Random': RandomAgent

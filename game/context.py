@@ -210,7 +210,8 @@ class Context:
         self.step = ()
         self.parent_name = ""
         self.available_choices = {}
-        self.references = {}
+        # Context internal attributes
+        self.references = {} # should not be saved
 
 class ActionContext(Context):
     """
@@ -247,20 +248,21 @@ class ActionContext(Context):
         import inspect
         from game.rules import FreeAction, MainAction
 
+        self.available_choices["action"] = []
+
         # Compile free actions from rules
         if allowed_free:
             self.references["free_action"] = {}
-            self.available_choices["main_action"] = []
             for name, clsmthd in inspect.getmembers(FreeAction, inspect.isclass):
                 if hasattr(clsmthd, "check"):
                     if clsmthd.check(player).validity:
                         self.references["free_action"][name] = clsmthd
-                        self.available_choices["free_action"].append(name)
+                        self.available_choices["action"].append(name)
 
             # Create a default option if only free action is available
             if not allowed_main:
                 self.references["free_action"]['None'] = None
-                self.available_choices["free_action"].append("None")
+                self.available_choices["action"].append("None")
 
         # Compile main actions from rules
         if allowed_main:
@@ -269,7 +271,7 @@ class ActionContext(Context):
                 if hasattr(clsmthd, "check"):
                     if clsmthd.check(player).validity:
                         self.references["main_action"][name] = clsmthd
-                        self.available_choices["main_action"].append(name)
+                        self.available_choices["action"].append(name)
 
         logger.debug(f'Compiled ActionContext options for {player.faction}')
         return
@@ -305,6 +307,8 @@ class ContextCall:
     """
     # ContextCall
     This class contains the infomation that is sent to an agent.
+    This is the uniform call class that must be sent.
+    Forcing all types on contexts to use the same call class ensures uniformity
 
     ### Game information
     - Meta information about the game itself
@@ -338,7 +342,7 @@ class ContextCall:
         # Include free/main actions for choosing a primary, but not for their subordinate decisions
     """
     Format:
-     {
+    {
         "action": "assign_workers",
         "placements_so_far": [
             {"worker": "w3", "slot": "company_1_slot_3"}
@@ -347,15 +351,13 @@ class ContextCall:
     }
     """
 
-    # Available Actions
-    available_actions: dict[str, dict[str, list]]
+    # Available Choices
+    available_choices: dict[str, list]
     """
     Format:
-
-    {"available_actions": {
-        "workers": ["w1", "w2"],
-        "slots": ["company_1_slot_1"]
-        }
+    {
+    "workers": ["w1", "w2"],
+    "slots": ["company_1_slot_1"]
     }
     """
     
