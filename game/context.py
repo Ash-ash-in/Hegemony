@@ -105,6 +105,7 @@ class BasicMaskedState:
 
 def mask_gamestate_basic(gamestate: GameState, player) -> dict:
     """
+    # OBSOLETE FUNCTION
     This is the masking process for all agents except the NN.
     No concerns are taken over multicollinerarity.
     Ease of representation is prioritised.
@@ -208,8 +209,8 @@ class Context:
         self.decision_type = ""
         self.step = ()
         self.parent_name = ""
-        self.available_actions = {}
-
+        self.available_choices = {}
+        self.references = {}
 
 class ActionContext(Context):
     """
@@ -226,14 +227,16 @@ class ActionContext(Context):
         ):
         super().__init__(gamestate, player)
         logger.debug('New ActionContext')
-        self.decision_type = "Action"
+        self.decision_type = "Choose Action"
         self.step = (1,2)
-        self.parent_name = "Action Phase"
-        self.available_actions = self.compile_options(player, True, True)
+        self.parent_name = ""
+        self.compile_options(player, True, True)
 
-    @staticmethod
-    def compile_options(player: Player, allowed_free: bool, allowed_main: bool) -> dict:
+    def compile_options(self, player: Player, allowed_free: bool, allowed_main: bool) -> None:
         """
+        compile_options is found in all context classes, but returns a different format depending on the role.
+        Action_context returns the action method directly. Others may reference strings or Worker objects, for instance.
+
         Takes the list of attributes from the Action classes
         Looks for a 'check' method (which all actions should have)
         Runs the check and records the result
@@ -241,38 +244,61 @@ class ActionContext(Context):
         The result is a dict - string: (classmethod, CheckResponse)
         """
         logger.debug("Compiling ActionContext options")
-        from game.rules import FreeAction, MainAction, CheckResponse
-
-        context = {}
+        import inspect
+        from game.rules import FreeAction, MainAction
 
         # Compile free actions from rules
         if allowed_free:
-            free_options = FreeAction.context(player)
-            context = {**context, **free_options}
-            logging.debug(f"Options from FreeAction.context(): {free_options}")
+            self.references["free_action"] = {}
+            self.available_choices["main_action"] = []
+            for name, clsmthd in inspect.getmembers(FreeAction, inspect.isclass):
+                if hasattr(clsmthd, "check"):
+                    if clsmthd.check(player).validity:
+                        self.references["free_action"][name] = clsmthd
+                        self.available_choices["free_action"].append(name)
 
-            if allowed_main: # Create a default option to pass regardless
-                context['None'] = (None,CheckResponse(False, ""))
-            else: # Create a way to not perform anything if necessary
-                context['None'] = (None,CheckResponse(True, ""))
+            # Create a default option if only free action is available
+            if not allowed_main:
+                self.references["free_action"]['None'] = None
+                self.available_choices["free_action"].append("None")
 
-        # Compile main actions
+        # Compile main actions from rules
         if allowed_main:
-            main_options = MainAction.context(player)
-            context = {**context, **main_options}
-            logging.debug(f"Options from MainAction.context(): {main_options}")
+            self.references["main_action"] = {}
+            for name, clsmthd in inspect.getmembers(MainAction, inspect.isclass):
+                if hasattr(clsmthd, "check"):
+                    if clsmthd.check(player).validity:
+                        self.references["main_action"][name] = clsmthd
+                        self.available_choices["main_action"].append(name)
 
         logger.debug(f'Compiled ActionContext options for {player.faction}')
-        return context
+        return
     
-    def call(self, agent: Agent, ) -> dict:
+    def call(self, agent: Agent) -> dict:
         """
         - Activates the agent's call function 
         - Updates self with response data
         """
+
+        # Call the agent
+        logger.debug("ActionContext making call to agent")
         answer = agent.call(self)
 
-        return {}
+        # Check if this is the first or second part of the action turn
+        if self.step[0] == 1:
+            # Can safely copy the first key as only one action could have been taken
+            old_key = list(self.action_in_progress.keys())[0]
+            # Update step
+            self.step = (2,2)
+        else:
+            old_key = None
+
+        # Update action in progress
+        for key in self.action_in_progress.keys():
+            if key != old_key:
+                self.action_in_progress[key] = answer[key]
+
+        return answer 
 
 @dataclass
 class ContextCall:
@@ -347,9 +373,12 @@ class AgentAnswer:
     Simply contains the response for the agent
 
     This should be a simple dict that can be understood by the requester that made the call. 
-    Example: {Worker: "WC1", Slot: "Company3Slot2"}
+    Dictionary values must be strings, so that the NN can read them. 
+    This means objects and methods can't be passed directly, so they should be help in the context object and returned to the engine from there.
+
+    Example: {"Worker": "WC1", "Slot": "Company3Slot2"}
     """
-    answer: dict[str,dict[str,str]]
+    answer: dict[str, str]
 
 @ dataclass
 class DecsionLogEntry:

@@ -13,7 +13,7 @@ class Agent:
     If this agent is actually used, it will just pick the first option every time.
     """
     from game.states import GameState, Player
-    from game.context import Context, AgentAnswer
+    from game.context import Context, AgentAnswer, BasicMaskedState
     faction: Player
     name = 'Template Agent'
 
@@ -45,11 +45,11 @@ class Agent:
             raise Exception("Context call Players do not match")
         
         # Decision Orchestration
-        possible_options = self.extract_options(call.available_actions)
+        possible_options = self.extract_options(call.available_choices)
         if len(possible_options.keys()) == 0:
             raise Exception('No response from agent is possible. Consider adding "None" option')
 
-        if call.decision_type == 'Action':
+        if call.decision_type == "Choose Action":
             answer = self.action(call.masked_state, possible_options)
         elif call.decision_type == 'Election':
             answer = self.election(call.masked_state, possible_options)
@@ -61,7 +61,7 @@ class Agent:
             raise Exception('Role not understood from ContextCall')
         return answer
 
-    def spawn_worker(self, gamestate: GameState, options: dict) -> AgentAnswer:
+    def spawn_worker(self, masked_state: BasicMaskedState, options: dict) -> AgentAnswer:
         """Used to decide which worker to spawn"""
         logger.debug("Agent's worker process called")
         from game.context import AgentAnswer
@@ -73,7 +73,7 @@ class Agent:
         answer = AgentAnswer(key, method, primary_bool, params)
         return answer
 
-    def action(self, gamestate: dict, options: dict) -> AgentAnswer:
+    def action(self, masked_state: BasicMaskedState, options: dict) -> AgentAnswer:
         logger.debug("Agent's action process called")
         from game.context import AgentAnswer
         key = list(options.keys())[0]
@@ -84,7 +84,7 @@ class Agent:
         answer = AgentAnswer(key, method, primary_bool, params)
         return answer
     
-    def election(self, gamestate: GameState, options: dict) -> AgentAnswer:
+    def election(self, masked_state: BasicMaskedState, options: dict) -> AgentAnswer:
         logger.debug("Agent's election process called")
         from game.context import AgentAnswer
         #       - Some logic

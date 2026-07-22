@@ -345,27 +345,7 @@ class FreeAction:
     """
     logger.debug("called FreeAction class")
     from game.states import Player
-
-    @staticmethod
-    def context(player: Player) -> dict:
-        """
-        Used by the DecisionContext to create a list, which it will check for validity
-
-        ### Agrs
-            player
-        ### Returns 
-            CheckResponse
-        """
-        import inspect
-        logger.debug("FreeAction.context() called")
-
-        options_dict = {}
-        for name, clsmthd in inspect.getmembers(FreeAction, inspect.isclass):
-            if hasattr(clsmthd, "check"):
-                options_dict[name] = (clsmthd, clsmthd.check(player))
-        return options_dict
     
-
     @dataclass
     class RepayLoan:
         logger.debug("called RepayLoan subclass")
@@ -394,26 +374,6 @@ class FreeAction:
 class MainAction:
     logger.debug("called MainAction class")
     from game.states import Player
-
-    @staticmethod
-    def context(player: Player) -> dict:
-        """
-        Used by the DecisionContext to create a list of possible actions, which it will check for validity
-
-        Args
-            player: Player instance
-
-        Returns
-            dict (name: (classmethod, checkresponse)
-        """
-        import inspect
-        logger.debug("MainAction.context() called")
-
-        options_dict = {}
-        for name, clsmthd in inspect.getmembers(MainAction, inspect.isclass):
-            if hasattr(clsmthd, "check"):
-                options_dict[name] = (clsmthd, clsmthd.check(player))
-        return options_dict
 
     @dataclass
     class TestAction1:
