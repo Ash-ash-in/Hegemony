@@ -244,16 +244,44 @@ class Election:
     opponents: dict[str,tuple[int, int]] # {"Faction":(cubes, influence)}
 
 
-
-
 ## Utils
 class Config:
     def __init__(self, config: dict):
         self.player_count = config["player_count"]
         self.agents = config["agents"]
+        self.expansions = config["expansions"]
+        
+        # setup game_id
+        exp_count = 0
+
+            # Part 1 - which expansions are used and what engine version is used
+        for exp_bool in config["expansions"].values():
+            exp_count += exp_bool
+        if exp_count == 0:
+            ID1 = "G"
+        elif exp_count == 2:
+            ID1 = "B"
+        else:
+            if config["expansions"]["historical_events"] == 1:
+                ID1 = "H"
+            else:
+                ID1 = "C"
+
+            # Part 3 - increase counter
+        for i_char in range(len(config["game_id"]),0, -1):
+            if config["game_id"][i_char] == "_":
+                old_val = int(config["game_id"][i_char+1:])
+                break
+
+            # Assemble ID
+        self.game_id = f"{ID1}_{self.player_count}_{old_val + 1}"
 
         # Validation
         if type(self.player_count) != int:
             raise Exception("Invalid datatype passed as player_count (should be int)")
         if type(self.agents) != dict:
             raise Exception("Invalid datatype passed as agents (should be dict)")
+        if type(self.expansions) != dict:
+            raise Exception("Invalid datatype passed as expansions (should be dict)")
+        if type(self.game_id) != str:
+            raise Exception("Invalid datatype passed as game_id (should be string)")

@@ -25,7 +25,6 @@ from game.data.classes import Config
 with open(os.path.join("game","config.json"), 'r', encoding='utf-8') as file:
     config = Config(json.load(file))
     
-    
 ########## Initialise GameState ##########
 # ----------------------------------------
 from game.engine import Engine

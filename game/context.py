@@ -102,7 +102,6 @@ class BasicMaskedState:
         self.OwnPlayerData = BasicMaskedState._OwnPlayerData(gamestate, player)
         self.OtherPlayerData = BasicMaskedState._OtherPlayerData(gamestate, player)
         
-
 def mask_gamestate_basic(gamestate: GameState, player) -> dict:
     """
     # OBSOLETE FUNCTION
@@ -182,7 +181,96 @@ def mask_gamestate_basic(gamestate: GameState, player) -> dict:
         "other_player_data": other_player_data
     }
 
+@dataclass
+class ContextCall:
+    """
+    # ContextCall
+    This class contains the infomation that is sent to an agent.
+    This is the uniform call class that must be sent.
+    Forcing all types on contexts to use the same call class ensures uniformity
 
+    ### Game information
+    - Meta information about the game itself
+    - It must contain all necessary masked data (player hands, card decks etc.)
+    - If must be perosonalised for the agent's faction
+    - It should only contain the bare minimum representation of that data (eg. a law will be "6B")
+    - It must contain "temporal" data of what stage of the game this is from
+
+    ### Decision information
+    - It needs to state what level of decision this is (primary, sub)
+        - Assign Workers is primary
+        - Each movement is a sub
+    - It needs a unique ID for the request
+    - It needs a parent ID for the main request, to keep subs grouped together
+    - It needs to detail what action is in progress, and the actions taken so far (which workers are moved so far)
+    - If needs to detail the actual options for the agent to make (which worker to move, and where)
+    """
+    masked_gamestate: BasicMaskedState
+    seq: int
+    game_id: str
+    parent_seq: int
+    faction: str
+    agent_type: str
+    action_in_progress: dict
+    decision_type: str
+    step: tuple
+    parent_name: str
+    available_choices: dict
+
+@dataclass
+class AgentAnswer:
+    """
+    # Agent Answer
+    Simply contains the response for the agent
+
+    This should be a simple dict that can be understood by the requester that made the call. 
+    Dictionary values must be strings, so that the NN can read them. 
+    This means objects and methods can't be passed directly, so they should be help in the context object and returned to the engine from there.
+
+    Example: {"Worker": "WC1", "Slot": "Company3Slot2"}
+    """
+    answer: dict[str, str]
+
+@ dataclass
+class DecsionLogEntry:
+    
+    # Context at Observation
+    call: ContextCall
+
+    # Response at Observation
+    response: AgentAnswer
+
+    # Agent Evaluation
+    reward: None = None
+    game_outcome: None = None
+
+@dataclass
+class GameSummary:
+
+    game_id: str
+    winner: str
+    scores: dict[str,int]
+    total_decisions: int
+
+
+# Internal Engine Checks
+
+@dataclass
+class CheckResponse:
+    """
+    Contains all the information that would allow an agent to successfully complete this action
+    
+    # Attributes:
+    validity: bool
+    tooltip: str
+    actiontype: str
+    params: list    
+    """
+    validity: bool
+    tooltip: str
+    actiontype: str
+    params: list
+    
 class Context:
     """
     Parent Class for all Context types.
@@ -210,8 +298,8 @@ class Context:
         self.step = ()
         self.parent_name = ""
         self.available_choices = {}
-        # Context internal attributes
-        self.references = {} # should not be saved
+        # Context internal attributes (not included in ContextCall)
+        self.references = {} # Objects and methods for easy selection
 
 class ActionContext(Context):
     """
@@ -276,7 +364,7 @@ class ActionContext(Context):
         logger.debug(f'Compiled ActionContext options for {player.faction}')
         return
     
-    def call(self, agent: Agent) -> dict:
+    def call(self, agent: Agent) -> AgentAnswer:
         """
         - Activates the agent's call function 
         - Updates self with response data
@@ -284,7 +372,11 @@ class ActionContext(Context):
 
         # Call the agent
         logger.debug("ActionContext making call to agent")
-        answer = agent.call(self)
+        answer = agent.call(ContextCall(
+            self.masked_state, self.seq, self.game_id, self.parent_seq, 
+            self.faction, self.agent_type, self.action_in_progress, self.decision_type,
+            self.step, self.parent_name, self.available_choices
+        ))
 
         # Check if this is the first or second part of the action turn
         if self.step[0] == 1:
@@ -298,126 +390,7 @@ class ActionContext(Context):
         # Update action in progress
         for key in self.action_in_progress.keys():
             if key != old_key:
-                self.action_in_progress[key] = answer[key]
+                self.action_in_progress[key] = answer.answer[key]
 
         return answer 
 
-@dataclass
-class ContextCall:
-    """
-    # ContextCall
-    This class contains the infomation that is sent to an agent.
-    This is the uniform call class that must be sent.
-    Forcing all types on contexts to use the same call class ensures uniformity
-
-    ### Game information
-    - Meta information about the game itself
-    - It must contain all necessary masked data (player hands, card decks etc.)
-    - If must be perosonalised for the agent's faction
-    - It should only contain the bare minimum representation of that data (eg. a law will be "6B")
-    - It must contain "temporal" data of what stage of the game this is from
-
-    ### Decision information
-    - It needs to state what level of decision this is (primary, sub)
-        - Assign Workers is primary
-        - Each movement is a sub
-    - It needs a unique ID for the request
-    - It needs a parent ID for the main request, to keep subs grouped together
-    - It needs to detail what action is in progress, and the actions taken so far (which workers are moved so far)
-    - If needs to detail the actual options for the agent to make (which worker to move, and where)
-    """
-    masked_gamestate: dict
-
-    # This Decision
-    decision_type: str # The kind of call being made eg action, worker_placement, company_selling
-    step: tuple # For decisions with multiple stages, this is how the agent knows how far along the process it is.
-        # For multistage, use (2,3) for the second of three calls. 
-        # For indefinite calls, use (2, 0) for the second of an unknown number of calls
-        # For single stage, use (1, 1)
-
-    # Parent Decision
-    parent_name: str # The name of primary reason for this call
-    action_in_progress: dict # For helping the agent keep a cohesive view
-        # {} for primary decisions
-        # Include free/main actions for choosing a primary, but not for their subordinate decisions
-    """
-    Format:
-    {
-        "action": "assign_workers",
-        "placements_so_far": [
-            {"worker": "w3", "slot": "company_1_slot_3"}
-        ],
-        "placements_remaining": 2
-    }
-    """
-
-    # Available Choices
-    available_choices: dict[str, list]
-    """
-    Format:
-    {
-    "workers": ["w1", "w2"],
-    "slots": ["company_1_slot_1"]
-    }
-    """
-    
-    # Logging - For data collection
-    seq: int # unique ID for this call
-    game_id: str # set when the game is set up, and remains consistent throughout
-    parent_seq: int # The parent ID for this call if it's a sub. Same as Seq if this is a main
-    faction: str # The faction making this decision
-    agent_type: str # The kind of agent that made this decision eg Automa
-
-@dataclass
-class AgentAnswer:
-    """
-    # Agent Answer
-    Simply contains the response for the agent
-
-    This should be a simple dict that can be understood by the requester that made the call. 
-    Dictionary values must be strings, so that the NN can read them. 
-    This means objects and methods can't be passed directly, so they should be help in the context object and returned to the engine from there.
-
-    Example: {"Worker": "WC1", "Slot": "Company3Slot2"}
-    """
-    answer: dict[str, str]
-
-@ dataclass
-class DecsionLogEntry:
-    
-    # Context at Observation
-    call: ContextCall
-
-    # Response at Observation
-    response: AgentAnswer
-
-    # Agent Evaluation
-    reward: None = None
-    game_outcome: None = None
-
-@dataclass
-class GameSummary:
-
-    game_id: str
-    winner: str
-    scores: dict[str,int]
-    total_decisions: int
-
-
-# Internal Engine Checks
-
-@dataclass
-class CheckResponse:
-    """
-    Contains all the information that would allow an agent to successfully complete this action
-    
-    # Attributes:
-    validity: bool
-    tooltip: str
-    actiontype: str
-    params: list    
-    """
-    validity: bool
-    tooltip: str
-    actiontype: str
-    params: list

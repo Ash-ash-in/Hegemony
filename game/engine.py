@@ -43,7 +43,8 @@ class Engine:
         # Setup GameState
         gamestate = GameState(
                 players,
-                config.player_count
+                config.player_count,
+                config.game_id
             )
 
         return gamestate

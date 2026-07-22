@@ -3,5 +3,10 @@
     "agents": {
         "Working Class": "Random",
         "Capitalists": "Random"
+    },
+    "game_id": "G_2_0",
+    "expansions": {
+        "historical_events": 0,
+        "crisis_and_control": 0
     }
 }

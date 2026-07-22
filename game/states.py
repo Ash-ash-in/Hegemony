@@ -444,7 +444,7 @@ class GameState:
     Masking needs to take place before this can be passed to an agent
     """
 
-    def __init__(self, players: dict, player_count: int):
+    def __init__(self, players: dict, player_count: int, game_id: str):
         """
         Gamestate initiailisation creates the frameworks for all concepts in the game
         These frameworks may be empty and should be set up later, to aid implementation of expansion packs
@@ -452,7 +452,6 @@ class GameState:
         logger.debug("Instantiating gamestate")
         import game.data.references as refs
         import random as rand
-        import itertools
         from copy import copy, deepcopy
         self.player_count = player_count
         self.players = players
@@ -464,7 +463,7 @@ class GameState:
 
         ## Game Metadata ##
         # player_count: int - from init
-        self.game_id: int = next(itertools.count())
+        self.game_id: str = game_id
         self.round: int = 0
         self.phase: str = "Preparation"
         self.turn: int = 1
