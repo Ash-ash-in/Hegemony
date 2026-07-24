@@ -51,7 +51,7 @@ class Agent:
             raise Exception("No types of response were requested of the agent. Ensure context.available_choices is updated.")
         for response_type, options in call.available_choices.items():
             if len(options) <= 0:
-                raise Exception(F'No response from agent is possible when selection {response_type}. Consider adding "None" option')
+                raise Exception(f'No response from agent is possible when selection {response_type}. Consider adding "None" option')
         
         # Decision Orchestration
         # if call.decision_type == "choose_action":

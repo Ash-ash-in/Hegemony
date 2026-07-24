@@ -11,10 +11,10 @@ This module pertains to every part of making a call to an agent
 import logging
 from typing import Any
 logger = logging.getLogger(__name__)
-logger.debug("Importing agents.test_agents module")
 
 from dataclasses import dataclass
 from game.states import GameState, Player
+from game.rules import ActionResult
 
 @dataclass
 class BasicMaskedState:
@@ -262,7 +262,6 @@ class Context:
     Ingests the least amount of variables, so that they can be parsed downstream
     """
     from game.states import Player, GameState
-    from game.agents import Agent
     from game.context import AgentAnswer
     import itertools
     seq_gen = itertools.count()
@@ -295,10 +294,10 @@ class Context:
     def compile_options(self, gamestate: GameState, player: Player) -> dict:
         raise Exception("Parent compile_options method called")
         
-    def call(self, agent: Agent) -> AgentAnswer:
+    def call(self, agent) -> AgentAnswer:
         raise Exception("Parent call method called")
     
-    def execute(self, gamestate: GameState, player: Player) -> None:
+    def execute(self, gamestate: GameState, player: Player) -> ActionResult:
         raise Exception("Parent execute method called")
 
 class ActionContext(Context):
@@ -309,9 +308,7 @@ class ActionContext(Context):
     - Initialises context for chosen action
     - Runs until action is complete
     """
-    from game.agents import Agent
     from game.states import GameState, Player
-    from game.context import AgentAnswer
 
     def __init__(
             self,
@@ -323,10 +320,6 @@ class ActionContext(Context):
         self.decision_type = "choose_action"
         self.step = (1,2)
         self.parent_name = ""
-        # while self.step[0] < self.step[1]:
-        #     self.compile_options(player)
-        #     self.call(player.agent) # type: ignore
-        #     self.execute(gamestate, player)
 
     def compile_options(self, gamestate: GameState, player: Player) -> dict:
         """
@@ -379,14 +372,17 @@ class ActionContext(Context):
         logger.debug(f'Compiled ActionContext options for {player.faction}')
         return self.available_choices
     
-    def call(self, agent: Agent) -> AgentAnswer:
+    def call(self, agent) -> AgentAnswer:
         """
         - Activates the agent's call function 
         - Updates self with response data
         - Activate the relevent action's context function
         - Increases step iterator
         """
-        from game.context import ContextCall
+        from game.agents import Agent
+        if not isinstance(agent, Agent):
+            raise Exception("agent arg must be an instance of Agent")
+
 
         # Call the agent
         logger.debug("ActionContext making call to agent")
@@ -416,13 +412,13 @@ class ActionContext(Context):
         self.action_name = action_name
         return answer
 
-    def execute(self, gamestate: GameState, player: Player) -> None:
+    def execute(self, gamestate: GameState, player: Player) -> ActionResult:
         """Manages interactions with all top-level action classes"""
         logger.debug("Executing ActionContext decision")
 
         # Handle 'None' free_action
         if self.action_method == None:
-            return
+            return ActionResult([])
         
         # All other actions       
         import inspect
@@ -430,15 +426,15 @@ class ActionContext(Context):
         args = {}
         for name, clsmthd in inspect.getmembers(self.action_method, inspect.isfunction):
             if name == "context":
-                args = self.action_method.context(gamestate, player)
+                args = self.action_method.context(gamestate, player, self)
                 print("found")
                 break
         if args == {}:
             print("not found")
 
-        self.action_method.resolve(gamestate, player, args)
-        
-        # if self.action_name == "TestAction1":
-        #     self.action_method.execute()
-        # elif self.action_name == "TestAction2":
+        # Update internal data
+        self.step = (self.step[0] + 1, self.step[1])
+
+        changes = self.action_method.resolve(gamestate, player, args)
+        return changes
 

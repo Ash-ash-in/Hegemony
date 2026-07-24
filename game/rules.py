@@ -1,9 +1,7 @@
 import logging
 logger = logging.getLogger(__name__)
-logger.debug("Importing rules.rules module")
 
 from dataclasses import dataclass
-from enum import Enum, auto
 from game.states import GameState, Player, WorkingClass, MiddleClass
 
 # Rule Interaction Classes
@@ -40,7 +38,7 @@ class PointAssign:
     from game.states import GameState, Player
 
     @staticmethod
-    def check(gamestate: GameState, player: Player, amount: int):
+    def check(gamestate: GameState, player: Player, amount: int) -> CheckResponse:
         """
         Determines whether a transaction is possible. 
         This should ALWAYS be called before resolving.
@@ -64,7 +62,7 @@ class PointAssign:
         return CheckResponse(True, '')
 
     @staticmethod
-    def resolve(gamestate: GameState, player: Player, amount: int):
+    def resolve(gamestate: GameState, player: Player, amount: int) -> ActionResult:
         """
         Apply the points. Only call this after check returns True, or risk an exception.
         All mutations happen here — never partially applied.
@@ -210,7 +208,7 @@ class WorkerSpawn:
     from game.states import Player, GameState
 
     @staticmethod
-    def check(gamestate: GameState, player: WorkingClass | MiddleClass, skill: str):
+    def check(gamestate: GameState, player: WorkingClass | MiddleClass, skill: str) -> CheckResponse:
         """
         Determines whether spawning is possible. 
         This should ALWAYS be called before resolving.
@@ -242,7 +240,7 @@ class WorkerSpawn:
         return CheckResponse(True, '')
 
     @staticmethod
-    def resolve(gamestate: GameState, player: WorkingClass | MiddleClass, skill: str):
+    def resolve(gamestate: GameState, player: WorkingClass | MiddleClass, skill: str) -> ActionResult:
         """
         Spawn the worker into the unemployment area. 
         Updates player's population.
@@ -350,10 +348,13 @@ class FreeAction:
         logger.debug("called RepayLoan subclass")
 
         @staticmethod
-        def context(gamestate: GameState, player: Player) -> dict:
+        def context(gamestate: GameState, player: Player, parent) -> dict:
             """Builds the args for a successful call 
             These are made with the context layer for complex decisions 
             Otherwise a blank dictionary is returned""" 
+            from game.context import Context
+            if not isinstance(parent, Context):
+                raise Exception("parent arg must be a Context instance")
             return {}
 
         @staticmethod
@@ -364,11 +365,11 @@ class FreeAction:
             return LoanRemoval.check(player)
 
         @staticmethod
-        def resolve(gamestate: GameState, player: Player, args: dict = {}):
+        def resolve(gamestate: GameState, player: Player, args: dict = {}) -> ActionResult:
             logger.debug('ReplayLoan resolve called')
 
             # Confirm validity
-            check = FreeAction.RepayLoan.check(gamestate, player)
+            check = FreeAction.RepayLoan.check(gamestate, player, args)
             if not check.validity:
                 raise Exception("Invalid call to resolve loan repayment. Ensure validity check is being called prior and is working.")
 
@@ -386,14 +387,17 @@ class MainAction:
         """
 
         @staticmethod
-        def context(gamestate: GameState, player: Player) -> dict:
+        def context(gamestate: GameState, player: Player, parent) -> dict:
             """Builds the args for a successful call 
             These are made with the context layer for complex decisions 
             Otherwise a blank dictionary is returned""" 
+            from game.context import Context
+            if not isinstance(parent, Context):
+                raise Exception("parent arg must be a Context instance")
             return {}
 
         @staticmethod
-        def check(gamestate: GameState, player: Player, args: dict = {}):
+        def check(gamestate: GameState, player: Player, args: dict = {}) -> CheckResponse:
             logger.warning('Called MainAction.TestAction1.check()')
             check = MoneyTransfer.check(None, player, 30, False)
             if not check.validity:
@@ -401,11 +405,11 @@ class MainAction:
             return CheckResponse(True, '')
         
         @staticmethod
-        def resolve(gamestate: GameState, player: Player, args: dict = {}):
+        def resolve(gamestate: GameState, player: Player, args: dict = {}) -> ActionResult:
             logger.warning('Called MainAction.TestAction1.resolve()')
 
             # Validity
-            check = MainAction.TestAction1.check(gamestate, player)
+            check = MainAction.TestAction1.check(gamestate, player, args)
             if not check.validity:
                 raise Exception('Check failed when calling resolve')
             
@@ -420,23 +424,26 @@ class MainAction:
         """
 
         @staticmethod
-        def context(gamestate: GameState, player: Player) -> dict:
+        def context(gamestate: GameState, player: Player, parent) -> dict:
             """Builds the args for a successful call 
             These are made with the context layer for complex decisions 
             Otherwise a blank dictionary is returned""" 
+            from game.context import Context
+            if not isinstance(parent, Context):
+                raise Exception("parent arg must be a Context instance")
             return {}
 
         @staticmethod
-        def check(gamestate: GameState, player: Player, args: dict = {}):
+        def check(gamestate: GameState, player: Player, args: dict = {}) -> CheckResponse:
             logger.warning('Called MainAction.TestAction2.check()')
             return CheckResponse(True, '')
         
         @staticmethod
-        def resolve(gamestate: GameState, player: Player, args: dict = {}):
+        def resolve(gamestate: GameState, player: Player, args: dict = {}) -> ActionResult:
             logger.warning('Called MainAction.TestAction2.resolve()')
 
             # Validity
-            check = MainAction.TestAction2.check(gamestate, player)
+            check = MainAction.TestAction2.check(gamestate, player, args)
             if not check.validity:
                 raise Exception('Check failed when calling resolve')
             

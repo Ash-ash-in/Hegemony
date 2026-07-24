@@ -31,7 +31,7 @@ from game.engine import Engine
 
 engine = Engine()
 gamestate = engine.engine_startup(config)
-# Engine.flow(LiveGamestate)
+engine.flow(gamestate)
 
 
 

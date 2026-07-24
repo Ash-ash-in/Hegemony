@@ -132,7 +132,7 @@ class Engine:
         """
         Handles the process for calling the DecisionContext and sending commands downstream
         
-        WARNING: This modifies GameState's 'turn', 'active_player', and 'free_action_taken' in place.
+        WARNING: This modifies GameState's 'turn', 'active_player', and 'free_action_taken' in place. 
         WARNING: This replaces the GameState based on ~decisions taken~
         """
         from game.context import ActionContext
@@ -143,8 +143,10 @@ class Engine:
 
         for turn_num in range(1,6):
             logger.info(f'Starting action phase turn {turn_num}')
-            gamestate.turn = turn_num # Update for save file
+            gamestate.turn = turn_num
             for faction_name in faction_play_order:
+
+                # Update gamestate's temporal data with who's turn it is
                 if faction_name == 'State' and gamestate.player_count < 4:
                     continue
                 if faction_name == "Middle Class" and gamestate.player_count < 3:
@@ -153,49 +155,14 @@ class Engine:
                 gamestate.active_player = faction_name
                 player = gamestate.players[faction_name]
 
-                # Call the agent
-                agent = self.agents[player.faction]
+                # Run the action
                 context = ActionContext(gamestate, player)
-                answer = context.call(agent)
-
-                # Build refs from answer
-                action_name = answer.answer["action"]
-                for action_type, name_method_dict in context.references.items():
-                    if action_name in name_method_dict.keys():
-                        action_method = name_method_dict[action_type]
-                        break
-                    raise Exception("Action not found in context references")
-                if action_method is None:
-                    raise Exception('Order "None" response given before any action taken')
-                logger.info(f"Agent selected: {action_name}")
-
-                # Build Context for action requred
-                
-
-                # Check for a free action following a main
-                if answer.primary_response == True:
-                    answer = ActionContext.action_call(agent, False, True, gamestate, player)
-                    if answer.order is None:
-                        continue
-                    args = [player] + answer.args
-                    mini_log = f"Enacting {answer.name}."
-                    if len(answer.args) > 0:
-                        mini_log += f" Args = {answer.args}"
-                    logger.info(mini_log)
-                    answer.order.resolve(*args)      
-                
-                # Otherwise demand a main action response
-                elif answer.primary_response == False:
-                    answer = ActionContext.action_call(agent, True, False, gamestate, player)
-                    if answer.order is None:
-                        raise Exception('Main action required, None cannot be passed')
-                    else:
-                        args = [player] + answer.args
-                        mini_log = f"Enacting {answer.name}."
-                        if len(answer.args) > 0:
-                            mini_log += f" Args = {answer.args}"
-                        logger.info(mini_log)
-                        answer.order.resolve(*args) 
+                while context.step[0] < context.step[1]:
+                    context.compile_options(gamestate, player)
+                    answer = context.call(player.agent) # type: ignore
+                    logger.info(f"Action selected: {answer.answer["action"]}")
+                    result = context.execute(gamestate, player)
+                    logger.info(result.state_changes)
 
         return gamestate
 
@@ -226,7 +193,7 @@ class Engine:
         WARNING: This modifies GameState's 'round' and 'phase' in place.
         """
         logger.debug('Called Engine.flow')
-        from game.data.common import phases
+        from game.data.references import phases
 
         for round in range(0,6):
             logger.info(f'Starting Round {round}')
