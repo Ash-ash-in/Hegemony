@@ -16,7 +16,7 @@ class ContextCall:
         options: dict of all actions, regardless of validity (name: (classmethod, checkresult))
     """
     from game.data.classes import GameState
-    from game.old_factions import Player
+    from game.old_game.old_factions import Player
     gamestate: GameState
     faction: Player # Player object the agent is controlling
     role: str # The type of decision that needs to be made eg. actions, voting
@@ -48,7 +48,7 @@ class Agent:
 
     If this agent is actually used, it will just pick the first option every time.
     """
-    from game.old_factions import Player
+    from game.old_game.old_factions import Player
     from game.data.classes import GameState
     faction: Player
     name = 'Template Agent'

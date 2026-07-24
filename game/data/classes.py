@@ -268,7 +268,7 @@ class Config:
                 ID1 = "C"
 
             # Part 3 - increase counter
-        for i_char in range(len(config["game_id"]),0, -1):
+        for i_char in range(len(config["game_id"]) -1, 0, -1):
             if config["game_id"][i_char] == "_":
                 old_val = int(config["game_id"][i_char+1:])
                 break

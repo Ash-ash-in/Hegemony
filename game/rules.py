@@ -352,11 +352,12 @@ class FreeAction:
         from game.states import Player
 
         @staticmethod
-        def check(player: Player):
+        def check(player: Player) -> CheckResponse:
             logger.debug('RepayLoan check called')
 
             # This has a simple intermediate step, so call that 
             return LoanRemoval.check(player)
+        
         
         @staticmethod
         def resolve(player: Player):

@@ -306,10 +306,10 @@ class Capitalists(Player):
         self._revenue = 0
         self._capital = 0
         self._storage = {
-                "Food":8,
-                "Healthcare":12,
-                "Education":12,
-                "Luxuries":12
+                "Food": 8,
+                "Healthcare": 12,
+                "Education": 12,
+                "Luxuries": 12
                 }
         self._free_trade_zone = {
             "Food": 8,
@@ -317,8 +317,18 @@ class Capitalists(Player):
         }
         self._storages = 0
         self._machinery_tokens = 6
+
     ### Attributes ###
 
+    @property
+    def revenue(self) -> int:
+        return self._revenue
+    @property
+    def capital(self) -> int:
+        return self._capital
+    @property # Overwrites parent property
+    def money(self) -> int:
+        return self._revenue + self._capital
     @property
     def food_storage(self) -> int:
         return self._storage["Food"]
@@ -335,9 +345,15 @@ class Capitalists(Player):
     def storage(self) -> dict:
         return self._storage
     @property
+    def free_trade_zone(self) -> dict:
+        return self._free_trade_zone
+    @property
+    def storages(self) -> int:
+        return self._storages
+    @property
     def machinery_tokens(self) -> int:
         return self._machinery_tokens
-    
+
     ### Methods ###
 
     def _add_storage(self, type):
@@ -545,7 +561,7 @@ class GameState:
                 self.business_deal_cards.append(card)
                 logger.debug("card moved to back of deck")
                 self.active_business_deals.append(card)
-                logger.debug("active export card updated")
+                logger.debug("active business deal card updated")
         logger.debug("business deal cards updated")
 
     # Safety Checks

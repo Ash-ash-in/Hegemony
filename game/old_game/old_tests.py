@@ -4,7 +4,7 @@ logger.debug("Importing save_testing module")
 
 def test_save_and_load():
     logger.info("Starting test_save_and_load")
-    from game.old_system import Save
+    from game.old_game.old_system import Save
     import os
 
     # Clear existing test save file if it exists
@@ -100,7 +100,7 @@ def test_save_and_load():
 
 def test_player_functions(gamestate, player_references):
     logger.debug("Starting test_player_functions")
-    from game import old_rules
+    from game.old_game import old_rules
 
     ### Victory Points ###
 

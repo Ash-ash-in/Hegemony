@@ -1,13 +1,197 @@
 import logging
 logger = logging.getLogger(__name__)
 from dataclasses import dataclass, field
+from game.data.classes import Config
 
 @dataclass
-class Config:
-    player_count: int
-    agents: dict
-    crisis_expansion: bool
-    historic_expansion: bool
+class CheckResponse:
+    """
+    Contains all the information that would allow an agent to successfully complete this action
+    
+    # Attributes:
+    validity: bool
+    tooltip: str
+    actiontype: str
+    params: list    
+    """
+    validity: bool
+    tooltip: str
+    actiontype: str
+    params: list
+
+class Context:
+    """
+    Parent Class for all Context types.
+    Child classes must compose all data for a ContextCall
+    
+    Ingests the least amount of variables, so that they can be parsed downstream
+    """
+    from game.states import Player, GameState
+    from game.agents import Agent
+    from game.context import AgentAnswer
+    import itertools
+    seq_gen = itertools.count()
+    def __init__(
+            self,
+            gamestate: GameState, 
+            player: Player
+        ):
+        # Update State
+        from game.context import BasicMaskedState
+        self.masked_state = BasicMaskedState(gamestate, player)
+        # Context Metadata
+        self.seq = next(self.seq_gen)
+        self.game_id = gamestate.game_id
+        self.parent_seq = self.seq
+        self.faction = player.faction
+        self.agent_type = player.agent.name # type: ignore
+        self.action_in_progress = {}
+        self.decision_type = ""
+        self.step = (0,0)
+        self.parent_name = ""
+        self.available_choices = {}
+        # Context internal attributes (not included in ContextCall)
+        self.references = {} # Objects and methods for easy selection
+        # self.compile_options(player)
+        # while self.step[0] < self.step[1]:
+        #     self.call(player.agent) # type: ignore
+        #     self.execute()
+
+    def compile_options(self, player: Player) -> dict:
+        raise Exception("Parent compile_options method called")
+        
+    def call(self, agent: Agent) -> AgentAnswer:
+        raise Exception("Parent call method called")
+    
+    def execute(self, gamestate: GameState, player: Player) -> None:
+        raise Exception("Parent execute method called")
+
+class ActionContext(Context):
+    """
+    Handles action decsisions
+    - Contains context instance for action decision
+    - Calls agent to choose
+    - Initialises context for chosen action
+    - Runs until action is complete
+    """
+    from game.agents import Agent
+    from game.states import GameState, Player
+    from game.context import AgentAnswer
+
+    def __init__(
+            self,
+            gamestate: GameState, 
+            player: Player
+        ):
+        logger.debug('New ActionContext')
+        super().__init__(gamestate, player)
+        self.decision_type = "choose_action"
+        self.step = (1,2)
+        self.parent_name = ""
+        # while self.step[0] < self.step[1]:
+        #     self.compile_options(player)
+        #     self.call(player.agent) # type: ignore
+        #     self.execute(gamestate, player)
+
+    def compile_options(self, player: Player) -> dict:
+        """
+        Takes the list of attributes from the Action classes
+        Looks for a 'check' method (which all actions should have)
+        Runs the check and records the result
+        Classes with a valid check are appended to self.available_choices
+        """
+        logger.debug("Compiling ActionContext options")
+        import inspect
+        from game.rules import FreeAction, MainAction
+
+        self.available_choices["action"] = []
+
+        # Determine what actions have already been taken
+        if len(self.action_in_progress.keys()) > 0:
+            if self.action_in_progress[self.step[0] - 1] in self.references["free_action"]:
+                allowed_free = False
+                allowed_main = True
+            else:
+                allowed_free = True
+                allowed_main = False
+        else:
+            allowed_free = True
+            allowed_main = True
+
+        # Compile free actions from rules
+        if allowed_free:
+            self.references["free_action"] = {}
+            for name, clsmthd in inspect.getmembers(FreeAction, inspect.isclass):
+                if hasattr(clsmthd, "check"):
+                    if clsmthd.check(player).validity:
+                        self.references["free_action"][name] = clsmthd
+                        self.available_choices["action"].append(name)
+
+            # Create a default option if only free action is available
+            if not allowed_main:
+                self.references["free_action"]['None'] = None
+                self.available_choices["action"].append("None")
+
+        # Compile main actions from rules
+        if allowed_main:
+            self.references["main_action"] = {}
+            for name, clsmthd in inspect.getmembers(MainAction, inspect.isclass):
+                if hasattr(clsmthd, "check"):
+                    if clsmthd.check(player).validity:
+                        self.references["main_action"][name] = clsmthd
+                        self.available_choices["action"].append(name)
+
+        logger.debug(f'Compiled ActionContext options for {player.faction}')
+        return self.available_choices
+    
+    def call(self, agent: Agent) -> AgentAnswer:
+        """
+        - Activates the agent's call function 
+        - Updates self with response data
+        - Activate the relevent action's context function
+        - Increases step iterator
+        """
+        from game.context import ContextCall
+
+        # Call the agent
+        logger.debug("ActionContext making call to agent")
+        call = ContextCall(
+            self.masked_state, self.seq, self.game_id, self.parent_seq, 
+            self.faction, self.agent_type, self.action_in_progress, self.decision_type,
+            self.step, self.parent_name, self.available_choices
+        )
+        answer = agent.call(call)
+
+        # Build refs from answer
+        action_name = answer.answer["action"]
+        action_method = None
+        for action_type, name_method_dict in self.references.items():
+            if action_name in name_method_dict.keys():
+                action_method = name_method_dict[action_name]
+                break
+        if action_method is None:
+            raise Exception("Action not found in context references")
+        logger.info(f"Agent selected: {action_name}")
+
+        # Update self with response
+        self.action_in_progress[self.step[0]] = answer.answer["action"]
+        self.answer = answer
+        self.action_method = action_method
+        self.action_type = action_type
+        self.action_name = action_name
+        return answer
+
+    def execute(self, gamestate: GameState, player: Player) -> None:
+        """Manages interactions with all top-level action classes"""
+        
+        # Handle 'None' free_action
+        if self.action_method == None:
+            return
+        
+        # if self.action_name == "TestAction1":
+        #     self.action_method.execute()
+        # elif self.action_name == "TestAction2":
+
 
 
 class Engine:

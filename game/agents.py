@@ -17,7 +17,7 @@ class Agent:
     """
     from game.states import GameState, Player
     from game.context import ContextCall, AgentAnswer, BasicMaskedState
-    faction: Player
+    player: Player
     name = 'Template Agent'
 
     def extract_options(self, options_dict: dict) -> dict:
@@ -37,14 +37,15 @@ class Agent:
     def call(self, call: ContextCall) -> AgentAnswer:
         """
         Determines the behaviour when the agent is called by the DecisionContext
-
-        Its basically a triage for incoming calls
+        - Validates incoming calls
+        - Triages incoming calls by activating the relevent method
+        - Appends the call and answer to the decision log
         """
         logger.debug(f"Call made to {self.name}")
 
         # Validation
-        if call.faction != self.faction:
-            logger.error(f"call meant for {call.faction} sent to {self.faction}")
+        if call.faction != self.player.faction:
+            logger.error(f"call meant for {call.faction} sent to {self.player.faction}")
             raise Exception("Context call Players do not match")
         if len(call.available_choices.keys()) == 0:
             raise Exception("No types of response were requested of the agent. Ensure context.available_choices is updated.")
@@ -96,14 +97,15 @@ class RandomAgent(Agent):
     def call(self, call: ContextCall) -> AgentAnswer:
         """
         Rather than triaging, Randy just loops through all options and picks one at random.
+        The decision is still added to the log
         """
         logger.debug(f"Call made to {self.name}")
         import random as rand
         from game.context import AgentAnswer, DecsionLogEntry
 
         # Validation
-        if call.faction != self.faction:
-            logger.error(f"call meant for {call.faction} sent to {self.faction}")
+        if call.faction != self.player.faction:
+            logger.error(f"call meant for {call.faction} sent to {self.player.faction}")
             raise Exception("Context call Players do not match")
         if len(call.available_choices.keys()) == 0:
             raise Exception("No types of response were requested of the agent. Ensure context.available_choices is updated.")

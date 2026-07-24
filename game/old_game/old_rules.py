@@ -4,7 +4,7 @@ logger.debug("Importing rules.rules module")
 
 from dataclasses import dataclass
 from enum import Enum, auto
-from game.old_factions import Player, WorkingClass, MiddleClass
+from game.old_game.old_factions import Player, WorkingClass, MiddleClass
 from game.data.classes import GameState
 
 ######################### Utilities #######################################
@@ -60,7 +60,7 @@ class CompanyFound:
     This handles the physical aspects of putting the card in place, but does not involve any exchange of money or assignment of workers.
     """
     logger.debug("called CompanyFound class")
-    from game.old_factions import Player
+    from game.old_game.old_factions import Player
     from game.data.classes import GameState, Company
 
     @staticmethod
@@ -193,7 +193,7 @@ class WorkerSpawn:
     Handles birthing workers from the pool to the unemployment area
     """
     logger.debug("called WorkerSpawn class")
-    from game.old_factions import WorkingClass, MiddleClass
+    from game.old_game.old_factions import WorkingClass, MiddleClass
     from game.data.classes import GameState
 
     @staticmethod
@@ -311,7 +311,7 @@ class ImmigrationCardDraw:
             logger.info(f"No {player.faction} worker available with skill: {skill}")
             if skill == 'Unskilled':
                 # Request to agent
-                from game.old_agents import Calls
+                from game.old_game.old_agents import Calls
                 Calls.worker_call(gamestate, player, player.agent)
                 # assign answer to 'skill'
                 pass # temp
