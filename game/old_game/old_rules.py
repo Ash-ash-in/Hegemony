@@ -328,8 +328,6 @@ class ImmigrationCardDraw:
         return ActionResult(Outcome.OK, log, changes)
         
 
-
-
 ############################# Action Layer ########################################
 
 logger.debug("Finished importing rules.rules module")

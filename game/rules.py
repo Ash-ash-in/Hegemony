@@ -10,8 +10,8 @@ from game.states import GameState, Player, WorkingClass, MiddleClass
 @dataclass
 class CheckResponse:
     """
-    Contains all the information that would allow an agent to successfully complete this action
-    
+    Contains the validity of an action, and the reason why if False
+
     # Attributes:
     validity: bool
     tooltip: str
@@ -22,7 +22,7 @@ class CheckResponse:
 @dataclass
 class ActionResult:
     """
-    Parent class for the result of action rules
+    Ensures uniformatiy of the text response from a sequence of actions
 
     # Attributes
     state_changes[list[str]]
@@ -344,27 +344,31 @@ class FreeAction:
         dict (name: (classmethod, checkresponse)
     """
     logger.debug("called FreeAction class")
-    from game.states import Player
     
     @dataclass
     class RepayLoan:
         logger.debug("called RepayLoan subclass")
-        from game.states import Player
 
         @staticmethod
-        def check(player: Player) -> CheckResponse:
+        def context(gamestate: GameState, player: Player) -> dict:
+            """Builds the args for a successful call 
+            These are made with the context layer for complex decisions 
+            Otherwise a blank dictionary is returned""" 
+            return {}
+
+        @staticmethod
+        def check(gamestate: GameState, player: Player, args: dict = {}) -> CheckResponse:
             logger.debug('RepayLoan check called')
 
             # This has a simple intermediate step, so call that 
             return LoanRemoval.check(player)
-        
-        
+
         @staticmethod
-        def resolve(player: Player):
+        def resolve(gamestate: GameState, player: Player, args: dict = {}):
             logger.debug('ReplayLoan resolve called')
 
             # Confirm validity
-            check = FreeAction.RepayLoan.check(player)
+            check = FreeAction.RepayLoan.check(gamestate, player)
             if not check.validity:
                 raise Exception("Invalid call to resolve loan repayment. Ensure validity check is being called prior and is working.")
 
@@ -374,29 +378,34 @@ class FreeAction:
 @dataclass
 class MainAction:
     logger.debug("called MainAction class")
-    from game.states import Player
 
     @dataclass
     class TestAction1:
         """
         Sends 50 quid to the player. Don't forget to remove before training begins!
         """
-        from game.states import Player
 
         @staticmethod
-        def check(player: Player):
-            logger.debug('Called MainAction.TestAction1.check()')
+        def context(gamestate: GameState, player: Player) -> dict:
+            """Builds the args for a successful call 
+            These are made with the context layer for complex decisions 
+            Otherwise a blank dictionary is returned""" 
+            return {}
+
+        @staticmethod
+        def check(gamestate: GameState, player: Player, args: dict = {}):
+            logger.warning('Called MainAction.TestAction1.check()')
             check = MoneyTransfer.check(None, player, 30, False)
             if not check.validity:
                 return CheckResponse(False, f"Money check failed: {check.tooltip}")
             return CheckResponse(True, '')
         
         @staticmethod
-        def resolve(player: Player):
-            logger.debug('Called MainAction.TestAction1.resolve()')
+        def resolve(gamestate: GameState, player: Player, args: dict = {}):
+            logger.warning('Called MainAction.TestAction1.resolve()')
 
             # Validity
-            check = MainAction.TestAction1.check(player)
+            check = MainAction.TestAction1.check(gamestate, player)
             if not check.validity:
                 raise Exception('Check failed when calling resolve')
             
@@ -409,19 +418,25 @@ class MainAction:
         """
         Adds a loan to a player. Don't forget to remove before training begins!
         """
-        from game.states import Player
 
         @staticmethod
-        def check(player: Player):
-            logger.debug('Called MainAction.TestAction2.check()')
+        def context(gamestate: GameState, player: Player) -> dict:
+            """Builds the args for a successful call 
+            These are made with the context layer for complex decisions 
+            Otherwise a blank dictionary is returned""" 
+            return {}
+
+        @staticmethod
+        def check(gamestate: GameState, player: Player, args: dict = {}):
+            logger.warning('Called MainAction.TestAction2.check()')
             return CheckResponse(True, '')
         
         @staticmethod
-        def resolve(player: Player):
-            logger.debug('Called MainAction.TestAction2.resolve()')
+        def resolve(gamestate: GameState, player: Player, args: dict = {}):
+            logger.warning('Called MainAction.TestAction2.resolve()')
 
             # Validity
-            check = MainAction.TestAction2.check(player)
+            check = MainAction.TestAction2.check(gamestate, player)
             if not check.validity:
                 raise Exception('Check failed when calling resolve')
             
