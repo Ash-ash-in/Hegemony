@@ -430,7 +430,7 @@ class Capitalists(Player):
 class NPCState(Player): 
     def __init__(
             self,
-            faction: str = "NPC State",
+            faction: str = "State",
             storage: dict = {
                 "Food":0,
                 "Healthcare":0,

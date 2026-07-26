@@ -170,6 +170,133 @@ class Engine:
         if gamestate.check_founded_companies('Capitalists') != 4:
             raise Exception(f'Incorrect number of capitalist companies at startup ({gamestate.check_founded_companies('Capitalists')})')
 
+        ### Found Middle Class Companies ### 
+
+        if gamestate.player_count > 2:
+            founded_companies = []
+            checked_companies = [] # Non-starter companies
+            slotnum = 0
+            for company in gamestate.company_deck['Middle Class']:
+
+                # Found
+                if company.name in ("Convenience Store", "Doctor's Office") and company.name not in founded_companies:
+                    companyslot = gamestate.companies["Middle Class"][slotnum]
+                    gamestate.players['Middle Class']._company_hand.append(company)
+                    rules._CompanyFound.resolve(gamestate.players['Middle Class'], gamestate, company)
+                    founded_companies.append(company.name)
+
+                    # Hire
+                    if company.worker_slots[1].skill == 'Any':
+                        skill = 'Unskilled'
+                    else:
+                        skill = company.worker_slots[1].skill
+                    rules._WorkerSpawn.resolve(gamestate, middle_class, skill)
+                    worker = gamestate.unemployed_workers['Middle Class'][-1]
+                    rules._WorkerHire.resolve(gamestate, worker, company, 1)
+                    slotnum += 1
+
+                # Ignore
+                else:
+                    checked_companies.append(company)
+            gamestate.company_deck['Middle Class'] = checked_companies
+            # Final Validity Checks
+            if gamestate.check_founded_companies('Middle Class') != 2:
+                raise Exception(f'Incorrect number of middle class companies at startup ({gamestate.check_founded_companies('Middle Class')})')
+
+        ### Found State Companies ### 
+
+        founded_companies = []
+        removed_companies = [] # Clear 3 companies for state
+        checked_companies = [] # Non-starter companies
+        slotnum = 0
+        for company in gamestate.company_deck['State']:
+
+            # Companies to found / ignore
+            if gamestate.player_count == 2:
+
+                # Found
+                if company.name in ("Regional TV Station", "Public University", "Public Hospital") and company.name not in founded_companies:
+                    companyslot = gamestate.companies["State"][slotnum]
+                    gamestate.players['State']._market.append(company)
+                    rules._CompanyFound.resolve(gamestate.players['State'], gamestate, company)
+                    founded_companies.append(company.name)
+
+                    # Hire
+                    if company.name in ("Public University", "Public Hospital"):
+                        hire_from_scratch(companyslot, working_class)
+
+                    slotnum += 1
+
+                # Ignore
+                if company.name in ("University Hospital", "Technical University", "National Public Broadcasting"):
+                    removed_companies.append(company.name) # Adding it to the list prevents duplicates.
+                    # The removal happens when checked_companies replaces the pool in gamestate
+
+            elif gamestate.player_count > 2:
+
+                # Found
+                if company.name in ("University Hospital", "Technical University", "National Public Broadcasting"):
+                    companyslot = gamestate.companies["State"][slotnum]
+                    gamestate.players['State']._market.append(company)
+                    rules._CompanyFound.resolve(gamestate.players['State'], gamestate, company)
+                    founded_companies.append(company.name)
+
+                    # Hire 
+                    if company.name == "University Hospital":
+                        hire_from_scratch(companyslot, working_class)
+                    if company.name == "Technical University":
+                        hire_from_scratch(companyslot, middle_class)
+
+                    slotnum += 1
+
+                # Ignore
+                if company.name in ("Regional TV Station", "Public University", "Public Hospital") and company.name not in removed_companies:
+                    removed_companies.append(company.name) # Adding it to the list prevents duplicates.
+                    # The removal happens when checked_companies replaces the pool in gamestate
+
+            # Companies for the State's "Market"
+            else:
+                checked_companies.append(company)
+        gamestate.company_deck['State'] = checked_companies
+        # Final Validity Checks
+        if gamestate.check_founded_companies('State') != 3:
+            raise Exception(f'Incorrect number of state companies at startup ({gamestate.check_founded_companies('State')})')
+        if len(removed_companies) != 3:
+            raise Exception(f"Incorrent number of state companies removed ({len(removed_companies)})")
+        
+        logger.debug('All starter companies founded successfully')
+
+        ### Unemployed Worker Spawning ###
+
+        # # Working Class first worker
+        # rules.WorkerSpawn.resolve(gamestate, working_class, 'Unskilled')
+
+        # # Working Class immigration cards
+        # rules.ImmigrationCardDraw.resolve(gamestate, working_class)
+        # if gamestate.player_count > 2:
+        #     rules.ImmigrationCardDraw.resolve(gamestate, working_class)
+
+        #     # Middle Class first worker
+        #     answer = SimpleContext.spawn_worker_call( # Call agent for a decision to start
+        #         gamestate, 
+        #         middle_class, 
+        #         middle_class.agent
+        #         )
+        #     rules.WorkerSpawn.resolve(gamestate, middle_class, answer.name)
+            
+        #     # Middle Class immigration cards
+        #     rules.ImmigrationCardDraw.resolve(gamestate, middle_class)
+        #     rules.ImmigrationCardDraw.resolve(gamestate, middle_class)
+
+        # assert gamestate.corroborate_worker_count()
+        # logger.debug("All workers spawned and placed successfully")
+        
+        return gamestate
+
+
+
+
+
     def preparation_phase(self, gamestate: GameState):
         """
         Runs the system - driven preparation actions.
