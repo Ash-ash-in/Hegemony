@@ -19,6 +19,9 @@ class Worker:
         elif faction == "Middle Class":
             self.id = "MC"+str(next(self.mc_gen))
 
+    def __repr__(self) -> str:
+        return f"{self.faction} {self.skill} worker"
+
     def check(self):
         return {
             'faction': self.faction,
@@ -76,8 +79,8 @@ class Company:
             cost: int,
             production: int,
             production_bonus: int,
-            wages: dict | None,
-            worker_requirements: dict
+            wages: dict[str, int] | None, # eg. 'L1': 5
+            worker_requirements: dict[int,dict[str,str]] # eg. 1: {'faction': 'Working Class', 'skill': 'Luxury'}
         ):
         self._name = name
         self._faction = faction
@@ -88,6 +91,10 @@ class Company:
         self._wages = wages
         self._worker_requirements = worker_requirements
         self._id = "company_"+str(next(self.id_gen))
+
+    def __repr__(self) -> str:
+        from game.data.references import industries
+        return f"{self.name}: {self.faction} company with {len(self.worker_requirements)} worker slots. Produces {self.production} {industries[self.industry]}"
 
     ### Attributes ###
     @property
@@ -117,85 +124,6 @@ class Company:
     @property
     def id(self) -> str:
         return self._id
-
-class CompanySlot:
-    """
-    The main element to interact with companies and workers.
-    References to companies and workers are held as attributes while they are placed here,
-    and are simply removed when they are not.
-
-    These are instantiated when the gamestate is first created, and are only modified from then on.
-
-    The validation checks only maintain internal consistency and are a last resort, 
-    real validity should take place at the rules layer
-    """
-    def __init__(
-                self,
-                faction: str
-            ):
-        self.faction = faction # Name of 
-        self.company = None # Company | Noneq
-        self.workers = None # list[Worker | None]
-        self.wage = 0 # int
-        self.bonus_active = False # bool
-        self.committed = False # bool
-        self.strike = False # bool
-
-    def validate(self):
-    # Quicky Validity Checks to check internal rules. 
-    # Cannot prove all rules are met.
-    # Could benefit from extra check.
-        if self.company is not None:
-            # Wages
-            if self.company.wages is None:
-                if self.wage != 0:
-                    raise Exception("Company does not have wages, value should be set to 0")
-            else:
-                if self.wage < 1 or self.wage > 3:
-                    raise Exception("Companies with wages should be between 1 and 3")
-            # Bonus Production
-            if self.company.production_bonus == 0 and self.bonus_active:
-                raise Exception("Company has no production bonus, yet was passed as true")
-            # Workers
-            if self.workers is not None:
-                if len(self.company.worker_requirements.keys()) != len(self.workers):
-                    raise Exception(f"Number of workers positions passed ({len(self.workers)}) does not match number of slots in company ({len(self.company.worker_requirements.keys())})")
-                if self.company.faction == "Middle Class" and self.bonus_active and self.workers[-1] is None:
-                    raise Exception("Middle Class company production bonus is active without worker")                                                              
-            # Strikes
-            if self.strike and not self.committed:
-                raise Exception("Striking workers but be committed")
-
-
-
-
-    # def _remove_worker(self, index: int):
-    #     self.workers[index] = None
-    #     logger.debug(f"Worker removed from {self._name}")
-
-    # def _add_worker(self, index:int, worker: object):
-    #     self.workers[index] = worker
-    #     logger.debug(f"Worker added to {self._name}")
-
-    # def _toggle_production_bonus(self):
-    #     if self._production_bonus == 0:
-    #         raise Exception(f"Instructed to toggle production bonus on company without one ({self._name})")
-    #     self._production_bonus_active = not self._production_bonus_active
-    #     logger.debug(f"{self._name} production bonus {'activated' if self._production_bonus_active else 'deactivated'}")
-
-    # def _set_wages(self, L_value: str):
-    #     if L_value[0:] != 'L' or len(L_value) != 2:
-    #         raise Exception(f"Wage instruction must be in format 'L2'. Received: {L_value}") 
-    #     if self._wages is None:
-    #         raise Exception(f"Instructed to change wages on company without wages ({self._name})")
-    #     self._current_wage = L_value
-    #     logger.debug(f"{self._name} wages set to {L_value}")
-
-    # def _transfer_ownership(self, target_faction):
-    #     """This needs to happen alongside moving the company to the relevant area on the board"""
-    #     if target_faction == self._faction:
-    #         raise Exception("Cannot transfer company to self ({target_faction} selected as target)")
-    #     self._faction = target_faction
 
 class Storage:
     def __init__(self, resource: str):

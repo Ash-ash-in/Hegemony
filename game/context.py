@@ -402,7 +402,7 @@ class ActionContext(Context):
                 break
         if action_method is None:
             raise Exception("Action not found in context references")
-        logger.info(f"Agent selected: {action_name}")
+        logger.debug(f"Agent selected: {action_name}")
 
         # Update self with response
         self.action_in_progress[self.step[0]] = answer.answer["action"]
@@ -427,10 +427,7 @@ class ActionContext(Context):
         for name, clsmthd in inspect.getmembers(self.action_method, inspect.isfunction):
             if name == "context":
                 args = self.action_method.context(gamestate, player, self)
-                print("found")
                 break
-        if args == {}:
-            print("not found")
 
         # Update internal data
         self.step = (self.step[0] + 1, self.step[1])
@@ -438,3 +435,20 @@ class ActionContext(Context):
         changes = self.action_method.resolve(gamestate, player, args)
         return changes
 
+# class WorkerSpawnContext(Context):
+#     from game.states import GameState, Player
+
+#     def __init__(
+#             self,
+#             gamestate: GameState, 
+#             player: Player,
+#             parent: Context,
+
+#         ):
+#         logger.debug('New WorkerSpawnContext')
+#         if "count" not in args.keys():
+#             raise Exception("Specify count to control spawn loop")
+#         super().__init__(gamestate, player)
+#         self.decision_type = "spawn_worker"
+#         self.step = (1,args["count"])
+#         self.parent_name = parent.decision_type

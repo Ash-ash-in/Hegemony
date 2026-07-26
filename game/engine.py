@@ -111,13 +111,64 @@ class Engine:
 
         ####################################
         ### TEMPORARY give everyone 120 ####
+        logger.warning('Using temporary start position money')
         for name, inst in gamestate.players.items():
-            if rules.MoneyTransfer.check(None, inst, 120, True).validity:
-                rules.MoneyTransfer.resolve(None, inst, 120, True)
-        logger.debug('Temporary start position money complete')
+            rules._MoneyTransfer.resolve(None, inst, 120, True)
         ### TEMPORARY give everyone 120 ####
         ####################################
 
+        logger.debug("Founding starter companies")
+        def hire_from_scratch(_companyslot, _faction) -> None:
+            """Handy tool to spawn all workers for and staff a company"""
+            logger.debug("Hiring 'from scratch'")
+            for slotname, ref in _companyslot.company.worker_requirements.items():
+                if ref['skill'] == 'Any':
+                    skill = 'Unskilled'
+                else:
+                    skill = ref['skill']
+                rules._WorkerSpawn.resolve(gamestate, _faction, skill)
+                worker = gamestate.unemployed_workers[_faction.faction][-1]
+                rules._WorkerHire.resolve(gamestate, worker, _companyslot, slotname)
+            return
+
+        ### Found  Capitalist Companies ###
+
+        founded_companies = [] # Start companies
+        checked_companies = [] # Non-starter companies
+        slotnum = 0
+        for company in gamestate.company_deck['Capitalists']:
+            if company.name in ("Supermarket", "Shopping Mall", "College", "Clinic") and company.name not in founded_companies:
+                companyslot = gamestate.companies["Capitalists"][slotnum]
+
+                # Add company to market and found
+                gamestate.players['Capitalists']._market.append(company)
+                rules._CompanyFound.resolve(gamestate.players['Capitalists'], gamestate, company)
+                founded_companies.append(company.name)
+
+                # Supermarket - always working class
+                if company.name == 'Supermarket':
+                    hire_from_scratch(companyslot, working_class)
+                
+                # Shopping mall - class depends on player count
+                elif company.name == "Shopping Mall":
+                    if gamestate.player_count == 2:
+                        hire_from_scratch(companyslot, working_class)
+                    elif gamestate.player_count > 2:
+                        hire_from_scratch(companyslot, middle_class)
+
+                # College - only staffed when > 2 players
+                elif gamestate.player_count > 2 and company.name == 'College':
+                    hire_from_scratch(companyslot, working_class)
+
+                slotnum += 1
+
+            # Non-Starter companies
+            else:
+                checked_companies.append(company)
+        gamestate.company_deck['Capitalists'] = checked_companies
+        # Final Validity Checks
+        if gamestate.check_founded_companies('Capitalists') != 4:
+            raise Exception(f'Incorrect number of capitalist companies at startup ({gamestate.check_founded_companies('Capitalists')})')
 
     def preparation_phase(self, gamestate: GameState):
         """

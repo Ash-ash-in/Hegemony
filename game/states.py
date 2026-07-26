@@ -2,6 +2,59 @@ import logging
 logger = logging.getLogger(__name__)
 from dataclasses import dataclass, field
 
+class CompanySlot:
+    """
+    The main element to interact with companies and workers.
+    References to companies and workers are held as attributes while they are placed here,
+    and are simply removed when they are not.
+
+    These are instantiated when the gamestate is first created, and are only modified from then on.
+
+    The validation checks only maintain internal consistency and are a last resort, 
+    real validity should take place at the rules layer
+    """
+    
+    def __init__(
+                self,
+                faction: str
+            ):
+        from game.data.classes import Company, Worker
+        self.faction: str = faction # Name of faction owning the slot
+        self.company: Company | None = None
+        self.workers: list[Worker | None] = []
+        self.wage: int = 0
+        self.bonus_active: bool = False
+        self.committed: bool = False
+        self.strike: bool = False
+
+    def __repr__(self) -> str:
+        return f"Company: ({self.company}). Workers: {self.workers}"
+
+    def validate(self):
+    # Quicky Validity Checks to check internal rules. 
+    # Cannot prove all rules are met.
+    # Could benefit from extra check.
+        if self.company is not None:
+            # Wages
+            if self.company.wages is None:
+                if self.wage != 0:
+                    raise Exception("Company does not have wages, value should be set to 0")
+            else:
+                if self.wage < 1 or self.wage > 3:
+                    raise Exception("Companies with wages should be between 1 and 3")
+            # Bonus Production
+            if self.company.production_bonus == 0 and self.bonus_active:
+                raise Exception("Company has no production bonus, yet was passed as true")
+            # Workers
+            if self.workers is not None:
+                if len(self.company.worker_requirements.keys()) != len(self.workers):
+                    raise Exception(f"Number of workers positions passed ({len(self.workers)}) does not match number of slots in company ({len(self.company.worker_requirements.keys())})")
+                if self.company.faction == "Middle Class" and self.bonus_active and self.workers[-1] is None:
+                    raise Exception("Middle Class company production bonus is active without worker")                                                              
+            # Strikes
+            if self.strike and not self.committed:
+                raise Exception("Striking workers but be committed")
+
 class Player():
     """
     Player contains all the information unique to a player
@@ -100,12 +153,12 @@ class Player():
         self._loans -= 1
         logger.debug(f"{self._faction} total loans: {self._loans}")
 
-    def _add_company_card_to_hand(self, card: Company):
+    def _add_company_to_market(self, card: Company):
         logger.debug(f"{self._faction} drawing company cards")
         self._market.append(card)
         logger.debug(f"{self._faction} companies: {len(self._market)}")
 
-    def _remove_company_card_from_hand(self, card: Company):
+    def _remove_company_from_market(self, card: Company):
         logger.debug(f"{self.faction} removing a company card")
         self._market.remove(card)
         logger.debug(f"{self._faction} companies in market: {len(self._market)}")
@@ -497,7 +550,6 @@ class GameState:
         self.demonstration: bool = False
         # Company Slots
         def setup_companies():
-            from game.data.classes import CompanySlot
             company_slots = {"Working Class": [], "Middle Class": [], "Capitalists": [], "State": []}
             for _ in range(2):
                 company_slots["Working Class"].append(CompanySlot("Working Class"))
@@ -508,7 +560,7 @@ class GameState:
             for _ in range(9):
                 company_slots["State"].append(CompanySlot("State"))
             return {key: tuple(value) for key, value in company_slots.items()}
-        self.companies: dict[str,tuple] = setup_companies()
+        self.companies: dict[str,tuple[CompanySlot]] = setup_companies()
         self.unions = deepcopy(refs.unions)
         # Laws / Elections
         self.laws: dict = deepcopy(refs.default_laws)
@@ -563,6 +615,13 @@ class GameState:
                 self.active_business_deals.append(card)
                 logger.debug("active business deal card updated")
         logger.debug("business deal cards updated")
+
+    def check_founded_companies(self, faction: str) -> int:
+        compcount = 0
+        for compslot in self.companies[faction]:
+            if compslot.company is not None:
+                compcount += 1
+        return compcount
 
     # Safety Checks
     def corroborate_worker_count(self):

@@ -61,11 +61,11 @@ def build_company_decks() -> dict[str,tuple]:
         # Worker slots
         slots = {}
         if not pd.isnull(row['Class1']):
-            slots[1] = {"faction":row['Class1'], "skill": row['Skill1']}
+            slots[0] = {"faction":row['Class1'], "skill": row['Skill1']}
         if not pd.isnull(row['Class2']):
-            slots[2] = {"faction":row['Class2'], "skill": row['Skill2']}
+            slots[1] = {"faction":row['Class2'], "skill": row['Skill2']}
         if not pd.isnull(row['Class3']):
-            slots[3] = {"faction":row['Class3'], "skill": row['Skill3']}    
+            slots[2] = {"faction":row['Class3'], "skill": row['Skill3']}    
         comp = Company(
             row['Name'], 
             row['Owner'], 
@@ -234,7 +234,7 @@ def build_business_deal_cards() -> tuple:
 faction_play_order = ["Working Class", "Middle Class", "Capitalists", "State"]
 faction_instantiate_order = ["Working Class", "Capitalists", "Middle Class", "State"]
 phases = ['Preparation','Action','Production','Elections','Scoring']
-industries = ['Healthcare','Education','Luxury','Agriculture','Media']
+industries = {'Healthcare': 'Healthcare','Education': 'Education','Luxury': 'Luxuries','Agriculture': 'Food','Media': 'Influence'}
 
 # Core Mechanics
 unions = build_unions()

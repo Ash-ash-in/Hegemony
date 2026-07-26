@@ -77,22 +77,36 @@ The AI will save the current state, and create multiple new ones for comparison
 Gamestates should be changable with careful preservation 
 
 # To Do
+- Overhaul engine
+    - rebuild startup (no save process) - DONE
+    - state building - DONE
+    - state masking - DONE
+    - agent ingestion - DONE
+    - context layer - DONE
+        - engine side - DONE
+        - rules side - DONE
+    - engine cleanup - DONE
+    - run test flow - DONE
+    - reinstall company setup - In progress
+    - run test flow
+- Bugfixes
+    - game.engine INFO log always records palyer money as 0
 - Worker assignment action
-    - checks - DONE
-    - context - In progress
-    - resolve - In progress
-- Worker Swap free action
-    - checks
     - context
+    - checks - Paused
+    - resolve - Paused
+- Worker Swap free action
+    - context
+    - checks
     - resolve
 - Sell Company action
-    - checks
     - context
+    - checks
     - resolve
     - check trade unions
 - Found company action
-    - checks
     - context
+    - checks
     - add workers too?
     - resolve
 ---
