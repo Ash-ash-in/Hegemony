@@ -173,6 +173,22 @@ class Election:
 
 
 ## Utils
+@dataclass
+class CheckResponse:
+    """
+    Contains all the information that would allow an agent to successfully complete this action
+    
+    # Attributes:
+    validity: bool
+    tooltip: str
+    actiontype: str
+    params: list    
+    """
+    validity: bool
+    tooltip: str
+    actiontype: str
+    params: list
+
 class Config:
     def __init__(self, config: dict):
         self.player_count = config["player_count"]

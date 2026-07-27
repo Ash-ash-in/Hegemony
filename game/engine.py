@@ -3,23 +3,6 @@ logger = logging.getLogger(__name__)
 from dataclasses import dataclass, field
 from game.data.classes import Config
 
-@dataclass
-class CheckResponse:
-    """
-    Contains all the information that would allow an agent to successfully complete this action
-    
-    # Attributes:
-    validity: bool
-    tooltip: str
-    actiontype: str
-    params: list    
-    """
-    validity: bool
-    tooltip: str
-    actiontype: str
-    params: list
-
-
 class Engine:
     from game.states import GameState
 
@@ -269,12 +252,12 @@ class Engine:
         ### Unemployed Worker Spawning ###
 
         # # Working Class first worker
-        # rules.WorkerSpawn.resolve(gamestate, working_class, 'Unskilled')
+        # rules._WorkerSpawn.resolve(gamestate, working_class, 'Unskilled')
 
         # # Working Class immigration cards
-        # rules.ImmigrationCardDraw.resolve(gamestate, working_class)
+        # rules._ImmigrationCardDraw.resolve(gamestate, working_class)
         # if gamestate.player_count > 2:
-        #     rules.ImmigrationCardDraw.resolve(gamestate, working_class)
+        #     rules._ImmigrationCardDraw.resolve(gamestate, working_class)
 
         #     # Middle Class first worker
         #     answer = SimpleContext.spawn_worker_call( # Call agent for a decision to start
@@ -282,7 +265,7 @@ class Engine:
         #         middle_class, 
         #         middle_class.agent
         #         )
-        #     rules.WorkerSpawn.resolve(gamestate, middle_class, answer.name)
+        #     rules._WorkerSpawn.resolve(gamestate, middle_class, answer.name)
             
         #     # Middle Class immigration cards
         #     rules.ImmigrationCardDraw.resolve(gamestate, middle_class)
@@ -320,7 +303,7 @@ class Engine:
         ### Start the Action Phase ###
 
         for turn_num in range(1,6):
-            logger.info(f'Starting action phase turn {turn_num}')
+            logger.info(f'\n{'#'*20} Starting action phase turn {turn_num} {'#'*20}')
             gamestate.turn = turn_num
             for faction_name in faction_play_order:
 
@@ -329,7 +312,7 @@ class Engine:
                     continue
                 if faction_name == "Middle Class" and gamestate.player_count < 3:
                     continue
-                logger.info(f"It's the {faction_name}'s turn")
+                logger.info(f"\n{'#'*10} It's the {faction_name}'s turn {'#'*10}")
                 gamestate.active_player = faction_name
                 player = gamestate.players[faction_name]
 
@@ -381,22 +364,27 @@ class Engine:
                 self.start_position(gamestate)
                 continue
 
+            logger.info(f"\n{'#'*30}\n{'#'*20} ROUND {round} {'#'*20}\n{'#'*30}")
+
             for phase in phases:
 
                 if phase == phases[0] and round == 1:
                     continue # First round gets no preparation phase
-                
-                logger.info(f'Begining phase: {phase}')
 
                 if phase == phases[0]:
+                    logger.info(f"\n{'#'*20} PREPARATION PHASE {'#'*20}")
                     gamestate = self.preparation_phase(gamestate)
                 elif phase == phases[1]:
+                    logger.info(f"\n{'#'*20} ACTION PHASE {'#'*20}")
                     gamestate = self.action_phase(gamestate)
                 elif phase == phases[2]:
+                    logger.info(f"\n{'#'*20} PRODUCTION PHASE {'#'*20}")
                     gamestate = self.production_phase(gamestate)
                 elif phase == phases[3]:
+                    logger.info(f"\n{'#'*20} ELECTIONS PHASE {'#'*20}")
                     gamestate = self.elections_phase(gamestate)
                 elif phase == phases[4]:
+                    logger.info(f"\n{'#'*20} SCORING PHASE {'#'*20}")
                     gamestate = self.scoring_phase(gamestate)
 
         gamestate = self.endgame_scoring(gamestate)

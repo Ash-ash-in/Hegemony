@@ -87,10 +87,12 @@ Gamestates should be changable with careful preservation
         - rules side - DONE
     - engine cleanup - DONE
     - run test flow - DONE
-    - reinstall company setup - In progress
+    - reinstall company setup - DONE
+    - reinstall worker spawning - In Progress
     - run test flow
 - Bugfixes
     - game.engine INFO log always records palyer money as 0
+    - NPC state has its own influence
 - Worker assignment action
     - context
     - checks - Paused

@@ -7,14 +7,14 @@
 import logging
 import os
 try:
-    os.remove("game.log")
+    os.remove(os.path.join("logs", "game.log"))
 except(FileNotFoundError):
     pass
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     handlers=[
-        logging.FileHandler("game.log"),
+        logging.FileHandler(os.path.join("logs", "game.log")),
         logging.StreamHandler()
     ]
 )

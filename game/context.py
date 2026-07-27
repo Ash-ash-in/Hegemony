@@ -211,7 +211,7 @@ class ContextCall:
     parent_seq: int
     faction: str
     agent_type: str
-    action_in_progress: dict
+    decision_in_progress: dict
     decision_type: str
     step: tuple
     parent_name: str
@@ -279,7 +279,7 @@ class Context:
         self.parent_seq = self.seq
         self.faction = player.faction
         self.agent_type = player.agent.name # type: ignore
-        self.action_in_progress = {}
+        self.decision_in_progress = {}
         self.decision_type = ""
         self.step = (0,0)
         self.parent_name = ""
@@ -335,8 +335,8 @@ class ActionContext(Context):
         self.available_choices["action"] = []
 
         # Determine what actions have already been taken
-        if len(self.action_in_progress.keys()) > 0:
-            if self.action_in_progress[self.step[0] - 1] in self.references["free_action"]:
+        if len(self.decision_in_progress.keys()) > 0:
+            if self.decision_in_progress[self.step[0] - 1] in self.references["free_action"]:
                 allowed_free = False
                 allowed_main = True
             else:
@@ -388,7 +388,7 @@ class ActionContext(Context):
         logger.debug("ActionContext making call to agent")
         call = ContextCall(
             self.masked_state, self.seq, self.game_id, self.parent_seq, 
-            self.faction, self.agent_type, self.action_in_progress, self.decision_type,
+            self.faction, self.agent_type, self.decision_in_progress, self.decision_type,
             self.step, self.parent_name, self.available_choices
         )
         answer = agent.call(call)
@@ -405,11 +405,12 @@ class ActionContext(Context):
         logger.debug(f"Agent selected: {action_name}")
 
         # Update self with response
-        self.action_in_progress[self.step[0]] = answer.answer["action"]
+        self.decision_in_progress[self.step[0]] = answer.answer["action"]
         self.answer = answer
         self.action_method = action_method
         self.action_type = action_type
         self.action_name = action_name
+        self.step = (self.step[0] + 1, self.step[1])
         return answer
 
     def execute(self, gamestate: GameState, player: Player) -> ActionResult:
@@ -429,26 +430,84 @@ class ActionContext(Context):
                 args = self.action_method.context(gamestate, player, self)
                 break
 
-        # Update internal data
-        self.step = (self.step[0] + 1, self.step[1])
-
         changes = self.action_method.resolve(gamestate, player, args)
         return changes
 
-# class WorkerSpawnContext(Context):
-#     from game.states import GameState, Player
+class WorkerSpawnContext(Context):
+    from game.states import GameState, Player
 
-#     def __init__(
-#             self,
-#             gamestate: GameState, 
-#             player: Player,
-#             parent: Context,
+    def __init__(
+            self,
+            gamestate: GameState, 
+            player: Player,
+            parent_decision: str,
+            total_steps: int
+        ) -> None:
+        logger.debug('New WorkerSpawnContext')
+        super().__init__(gamestate, player)
+        self.decision_type = "spawn_worker"
+        self.step = (1,total_steps)
+        self.parent_name = parent_decision
+        self.selected_workers = []
 
-#         ):
-#         logger.debug('New WorkerSpawnContext')
-#         if "count" not in args.keys():
-#             raise Exception("Specify count to control spawn loop")
-#         super().__init__(gamestate, player)
-#         self.decision_type = "spawn_worker"
-#         self.step = (1,args["count"])
-#         self.parent_name = parent.decision_type
+
+    def compile_options(self, gamestate: GameState, player: Player) -> dict:
+
+        # Build skills references to limit options to one per industry
+        from game.data.references import industries
+        skills_dict = {}
+        for skill in industries.keys():
+            skills_dict[skill] = False
+
+        # Find an example worker of eack skill
+        options_dict = {}
+        for worker in gamestate.worker_pool[player.faction]:
+            if worker not in self.selected_workers and not skills_dict[worker.skill]:
+                options_dict[worker.skill] = worker # Keep reference of the real worker object
+                skills_dict[worker.skill] = True # So only one example of the skill is used
+
+        # Update internal references to manage agent's answer
+        self.references = options_dict
+
+        # Final list of strings for agent call
+        self.available_choices = {'worker_skill': list(self.references.keys())}
+        return self.available_choices
+
+    def call(self, agent) -> AgentAnswer:
+        from game.agents import Agent
+        if not isinstance(agent, Agent):
+            raise Exception("agent arg must be instance of Agent")
+
+        # Call the agent
+        logger.debug("ActionContext making call to agent")
+        call = ContextCall(
+            self.masked_state, self.seq, self.game_id, self.parent_seq, 
+            self.faction, self.agent_type, self.decision_in_progress, self.decision_type,
+            self.step, self.parent_name, self.available_choices
+        )
+        answer = agent.call(call)
+
+        # Build refs from answer
+        worker_skill = answer.answer["worker_skill"]
+        logger.debug(f"Agent selected: {worker_skill}")
+        if worker_skill not in self.references.keys():
+            raise Exception("Agent selected a worker but no reference object exists in WorkerSpawnContext")
+
+        # Update self with response
+        self.decision_in_progress[self.step[0]] = worker_skill # for next call to agent
+        self.answer = answer # for saving data
+        self.selected_workers.append(self.references[worker_skill])
+        self.step = (self.step[0] + 1, self.step[1])
+
+        return answer
+
+    def execute(self, gamestate: GameState, player: Player) -> ActionResult:
+        """Iteratively calls the spawn worker rules base on decision_in_progress"""
+        logger.debug("Executing ActionContext decision")
+
+        changes = []
+        for step, skill in self.decision_in_progress:
+            from game.rules import _WorkerSpawn
+            changes.append(_WorkerSpawn.resolve(gamestate, player, skill))
+
+        return changes
