@@ -146,12 +146,16 @@ class Player():
     def _take_loan(self):
         logger.debug(f"{self._faction} _take_loan()")
         self._loans += 1
+        self._money += 50
+        logger.debug(f"{self._faction} money: {self.money}")
         logger.debug(f"{self._faction} total loans: {self._loans}")
 
-    def _remove_loan(self):
+    def _repay_loan(self):
         logger.debug(f"{self._faction} _remove_loan()")
         self._loans -= 1
-        logger.debug(f"{self._faction} total loans: {self._loans}")
+        self._money -= 50
+        logger.debug(f"{self._faction} money: {self._money}")
+        logger.debug(f"{self._faction} remaining loans: {self._loans}")
 
     def _add_company_to_market(self, card: Company):
         logger.debug(f"{self._faction} drawing company cards")
@@ -265,6 +269,9 @@ class MiddleClass(Player):
     def prosperity(self) -> int:
         return self._prosperity    
     @property
+    def prosperity_track(self) -> int:
+        return self._prosperity_track   
+    @property
     def food_storage(self) -> int:
         return self._storage["Food"]
     @property
@@ -279,7 +286,10 @@ class MiddleClass(Player):
     @property
     def storage(self) -> dict:
         return self._storage
-
+    @property
+    def storages(self) -> int:
+        return self._storages
+    
     ### Methods ###
 
     def _update_population(self):
@@ -426,6 +436,31 @@ class Capitalists(Player):
         self._storage[type] -= storage.size
         self._storages -= 1
         return
+
+    def _add_money(self, amount):
+        logger.debug(f"{self._faction} _add_money({amount})")
+        self._revenue += amount
+        logger.debug(f"{self._faction} money: {self.money} (revenue: {self._revenue}, capital: {self._capital})")
+
+    def _take_loan(self):
+        logger.debug(f"{self._faction} _take_loan()")
+        self._loans += 1
+        self._capital += 50
+        logger.debug(f"{self._faction} money: {self.money} (revenue: {self._revenue}, capital: {self._capital})")
+        logger.debug(f"{self._faction} total loans: {self._loans}")
+
+    def _repay_loan(self):
+        logger.debug(f"{self._faction} _remove_loan()")
+        self._loans -= 1
+        if self._capital < 50:
+            remainder = 50 - self._capital
+            self._capital = 0
+            self._revenue -= remainder
+        else:
+            self._capital -= 50
+        logger.debug(f"{self._faction} money: {self.money} (revenue: {self._revenue}, capital: {self._capital})")
+        logger.debug(f"{self._faction} remaining loans: {self._loans}")
+
 
 class NPCState(Player): 
     def __init__(

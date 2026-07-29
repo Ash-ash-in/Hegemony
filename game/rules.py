@@ -179,7 +179,7 @@ class _MoneyTransfer:
         
         # Sender has enough money:
         sender._add_money(amount * -1)
-        changes.append(f"{sender.faction} sent {sender.money} Vardis")
+        changes.append(f"{sender.faction} sent {amount} Vardis")
         changes.append(f"{sender.faction} money: {sender.money}")
         logger.info(f"removed {amount} money from {sender.faction}")
 
@@ -195,9 +195,9 @@ class _MoneyTransfer:
         # Payment to player
         else:
             receiver._add_money(amount)
-            changes.append(f"{receiver.faction} received {receiver.money} Vardis")
+            changes.append(f"{receiver.faction} received {amount} Vardis")
             changes.append(f"{receiver.faction} money: {receiver.money}")
-            logger.info(f"added {amount} money to {receiver}")
+            logger.info(f"added {amount} money to {receiver.faction}")
             return ActionResult(
                 state_changes=changes
             )
@@ -386,6 +386,8 @@ class _LoanRemove:
         # Basic check flow
         if player.loans <= 0:
             return CheckResponse(False, "Player has no loans")
+        if player.money < 50:
+            return CheckResponse(False, "Player cannot afford to repay loan")
         return CheckResponse(True, "")
     
     @staticmethod
@@ -403,9 +405,8 @@ class _LoanRemove:
 
         # Enact
         changes = []
-        player._remove_loan()
+        player._repay_loan()
         changes.append(f"{player.faction} had 1 loan removed")
-        logger.info(f"removed a loan from {player.faction}")
         return ActionResult(changes)
 
 @dataclass
@@ -611,7 +612,7 @@ class MainAction:
     @dataclass
     class TestAction1:
         """
-        Sends 50 quid to the player. Don't forget to remove before training begins!
+        Sends 30 quid to the player. Don't forget to remove before training begins!
         """
 
         @staticmethod

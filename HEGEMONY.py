@@ -33,7 +33,13 @@ engine = Engine()
 gamestate = engine.engine_startup(config)
 engine.flow(gamestate)
 
-
-
+########## Save Training Data ##########
+from game.agents import decision_log
+from dataclasses import asdict
+decisions = {}
+for i in range(len(decision_log)):
+    decisions[i] = asdict(decision_log[i])
+with open("decisions.json", "w", encoding='utf-8') as file:
+    json.dump(decisions, file, indent=4)
 
 

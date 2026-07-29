@@ -58,7 +58,7 @@ def build_company_decks() -> dict[str,tuple]:
         else: 
             wages = {'L1': row['L1'], 'L2': row['L2'], 'L3': row['L3']}
         
-        # Worker slots
+        # Worker requirements
         slots = {}
         if not pd.isnull(row['Class1']):
             slots[0] = {"faction":row['Class1'], "skill": row['Skill1']}

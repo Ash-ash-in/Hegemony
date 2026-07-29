@@ -1,8 +1,9 @@
 {
-    "player_count": 2,
+    "player_count": 3,
     "agents": {
         "Working Class": "Random",
-        "Capitalists": "Random"
+        "Capitalists": "Random",
+        "Middle Class": "Random"
     },
     "game_id": "G_2_0",
     "expansions": {

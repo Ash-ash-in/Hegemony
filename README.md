@@ -103,8 +103,9 @@ Gamestates should be changable with careful preservation
 
 ### Soon
 - Bugfixes
-    - game.engine INFO log always records palyer money as 0
+    - game.engine INFO log always records player money as 0 - DONE
     - NPC state has its own influence
+    - Action phase is only recording one decision in output json
 
 ### Eventually
 - Worker assignment action

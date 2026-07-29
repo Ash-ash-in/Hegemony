@@ -164,18 +164,15 @@ class Engine:
                 # Found
                 if company.name in ("Convenience Store", "Doctor's Office") and company.name not in founded_companies:
                     companyslot = gamestate.companies["Middle Class"][slotnum]
-                    gamestate.players['Middle Class']._company_hand.append(company)
+                    gamestate.players['Middle Class']._market.append(company)
                     rules._CompanyFound.resolve(gamestate.players['Middle Class'], gamestate, company)
                     founded_companies.append(company.name)
 
                     # Hire
-                    if company.worker_slots[1].skill == 'Any':
-                        skill = 'Unskilled'
-                    else:
-                        skill = company.worker_slots[1].skill
+                    skill = company.worker_requirements[0]["skill"]
                     rules._WorkerSpawn.resolve(gamestate, middle_class, skill)
                     worker = gamestate.unemployed_workers['Middle Class'][-1]
-                    rules._WorkerHire.resolve(gamestate, worker, company, 1)
+                    rules._WorkerHire.resolve(gamestate, worker, companyslot, 0)
                     slotnum += 1
 
                 # Ignore

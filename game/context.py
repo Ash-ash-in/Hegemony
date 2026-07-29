@@ -284,18 +284,18 @@ class Context:
         self.available_choices = {}
         # Context internal attributes (not included in ContextCall)
         self.references = {} # Objects and methods for easy selection
-        while self.step[0] < self.step[1]:
-            self.compile_options(gamestate, player)
-            self.call(gamestate, player)
-            self.execute(gamestate, player)
+        # while self.step[0] < self.step[1]:
+        #     self.compile_options(gamestate, player)
+        #     self.call(gamestate, player)
+        #     self.execute(gamestate, player)
 
-    def compile_options(self, gamestate: GameState, player: Player) -> dict:
+    def compile_options(self, gamestate: GameState, player: Player) -> None:
         raise Exception("Parent compile_options method called")
         
-    def call(self, gamestate: GameState, player: Player) -> AgentAnswer:
+    def call(self, gamestate: GameState, player: Player) -> None:
         raise Exception("Parent call method called")
     
-    def execute(self, gamestate: GameState, player: Player) -> ActionResult:
+    def execute(self, gamestate: GameState, player: Player) -> None:
         raise Exception("Parent execute method called")
 
 class ActionContext(Context):
@@ -319,15 +319,17 @@ class ActionContext(Context):
         self.step = (1,2)
         self.parent_name = ""
         while self.step[0] < self.step[1]:
-            result = self.execute(gamestate, player)
-            
+            self.compile_options(gamestate, player)
+            self.call(gamestate, player)
+            self.execute(gamestate, player)
 
-    def compile_options(self, gamestate: GameState, player: Player) -> dict:
+            
+    def compile_options(self, gamestate: GameState, player: Player) -> None:
         """
-        Takes the list of attributes from the Action classes
-        Looks for a 'check' method (which all actions should have)
-        Runs the check and records the result
-        Classes with a valid check are appended to self.available_choices
+        Takes the list of attributes from the Action classes. 
+        Looks for a 'check' method (which all actions should have). 
+        Runs the check and records the result. 
+        Classes with a valid check are appended to self.available_choices.
         """
         logger.debug("Compiling ActionContext options")
         import inspect
@@ -371,17 +373,15 @@ class ActionContext(Context):
                         self.available_choices["action"].append(name)
 
         logger.debug(f'Compiled ActionContext options for {player.faction}')
-        return self.available_choices
+        return
     
-    def call(self, gamestate: GameState, player: Player) -> AgentAnswer:
+    def call(self, gamestate: GameState, player: Player) -> None:
         """
         - Activates the agent's call function 
         - Updates self with response data
         - Activate the relevent action's context function
         - Increases step iterator
         """
-        # Compile options
-        self.compile_options(gamestate, player)
 
         # Call the agent
         logger.debug("ActionContext making call to agent")
@@ -411,18 +411,15 @@ class ActionContext(Context):
         self.action_type = action_type
         self.action_name = action_name
         self.step = (self.step[0] + 1, self.step[1])
-        return answer
+        return
 
-    def execute(self, gamestate: GameState, player: Player) -> ActionResult:
+    def execute(self, gamestate: GameState, player: Player) -> None:
         """Manages interactions with all top-level action classes"""
-        logger.debug("Executing ActionContext decision")
-
-        # Call agent
-        self.call(gamestate, player)
+        logger.debug("Executing ActionContext decision")        
 
         # Handle 'None' free_action
         if self.action_method == None:
-            return ActionResult([])
+            return
         
         # All other actions       
         import inspect
@@ -435,7 +432,7 @@ class ActionContext(Context):
 
         changes = self.action_method.resolve(gamestate, player, args)
         logger.info(changes)
-        return changes
+        return
 
 class SpawnedWorkerSkillContext(Context):
     """Used by a player to decide what worker to spawn
@@ -456,9 +453,12 @@ class SpawnedWorkerSkillContext(Context):
         self.step = (1,total_steps)
         self.parent_name = parent_decision
         self.selected_workers = []
+        while self.step[0] < self.step[1]:
+            self.compile_options(gamestate, player)
+            self.call(gamestate, player)
         self.execute(gamestate, player)
 
-    def compile_options(self, gamestate: GameState, player: Player) -> dict:
+    def compile_options(self, gamestate: GameState, player: Player) -> None:
         logger.debug("Compiling options for ActionContext")
 
         # Build skills references to limit options to one per industry
@@ -479,45 +479,39 @@ class SpawnedWorkerSkillContext(Context):
 
         # Final list of strings for agent call
         self.available_choices = {'worker_skill': list(self.references.keys())}
-        return self.available_choices
+        return
 
-    def call(self, gamestate: GameState, player: Player) -> AgentAnswer:
+    def call(self, gamestate: GameState, player: Player) -> None:
 
-        # Call the agent
-        while self.step[0] < self.step[1]:
-            self.compile_options(gamestate, player)
+        logger.debug(f"[{self.step[0]}/{self.step[1]}] ActionContext making call to agent")
+        call = ContextCall(
+            self.masked_state, self.seq, self.game_id, self.parent_seq, 
+            self.faction, self.agent_type, self.decision_in_progress, self.decision_type,
+            self.step, self.parent_name, self.available_choices
+        )
+        answer = player.agent.call(call)
 
-            logger.debug(f"[{self.step[0]}/{self.step[1]}] ActionContext making call to agent")
-            call = ContextCall(
-                self.masked_state, self.seq, self.game_id, self.parent_seq, 
-                self.faction, self.agent_type, self.decision_in_progress, self.decision_type,
-                self.step, self.parent_name, self.available_choices
-            )
-            answer = player.agent.call(call)
+        # Build refs from answer
+        worker_skill = answer.answer["worker_skill"]
+        logger.debug(f"Agent selected: {worker_skill}")
+        if worker_skill not in self.references.keys():
+            raise Exception("Agent selected a worker but no reference object exists in WorkerSpawnContext")
 
-            # Build refs from answer
-            worker_skill = answer.answer["worker_skill"]
-            logger.debug(f"Agent selected: {worker_skill}")
-            if worker_skill not in self.references.keys():
-                raise Exception("Agent selected a worker but no reference object exists in WorkerSpawnContext")
+        # Update self with response
+        self.decision_in_progress[self.step[0]] = worker_skill # for next call to agent
+        self.answer = answer # for saving data
+        self.selected_workers.append(self.references[worker_skill])
+        self.step = (self.step[0] + 1, self.step[1])
 
-            # Update self with response
-            self.decision_in_progress[self.step[0]] = worker_skill # for next call to agent
-            self.answer = answer # for saving data
-            self.selected_workers.append(self.references[worker_skill])
-            self.step = (self.step[0] + 1, self.step[1])
+        return
 
-        return answer
-
-    def execute(self, gamestate: GameState, player: Player) -> ActionResult:
+    def execute(self, gamestate: GameState, player: Player) -> None:
         """Iteratively calls the spawn worker rules base on decision_in_progress"""
         logger.debug("Executing ActionContext decision")
-
-        self.call(gamestate, player)
 
         changes = []
         for _, skill in self.decision_in_progress:
             from game.rules import _WorkerSpawn
             changes.append(_WorkerSpawn.resolve(gamestate, player, skill))
 
-        return changes
+        return
