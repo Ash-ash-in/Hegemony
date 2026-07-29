@@ -251,33 +251,25 @@ class Engine:
 
         ### Unemployed Worker Spawning ###
 
-        # # Working Class first worker
-        # rules._WorkerSpawn.resolve(gamestate, working_class, 'Unskilled')
+        # Working Class first worker
+        rules._WorkerSpawn.resolve(gamestate, working_class, 'Unskilled')
 
-        # # Working Class immigration cards
-        # rules._ImmigrationCardDraw.resolve(gamestate, working_class)
-        # if gamestate.player_count > 2:
-        #     rules._ImmigrationCardDraw.resolve(gamestate, working_class)
+        # Working Class immigration cards
+        rules.ImmigrationCardDraw.resolve(gamestate, working_class)
+        if gamestate.player_count > 2:
+            rules.ImmigrationCardDraw.resolve(gamestate, working_class)
 
-        #     # Middle Class first worker
-        #     answer = SimpleContext.spawn_worker_call( # Call agent for a decision to start
-        #         gamestate, 
-        #         middle_class, 
-        #         middle_class.agent
-        #         )
-        #     rules._WorkerSpawn.resolve(gamestate, middle_class, answer.name)
-            
-        #     # Middle Class immigration cards
-        #     rules.ImmigrationCardDraw.resolve(gamestate, middle_class)
-        #     rules.ImmigrationCardDraw.resolve(gamestate, middle_class)
+            # Middle Class first worker
+            from game.context import SpawnedWorkerSkillContext
+            SpawnedWorkerSkillContext(gamestate, middle_class, "", 1)
+            # Middle Class immigration cards
+            rules.ImmigrationCardDraw.resolve(gamestate, middle_class)
+            rules.ImmigrationCardDraw.resolve(gamestate, middle_class)
 
-        # assert gamestate.corroborate_worker_count()
-        # logger.debug("All workers spawned and placed successfully")
+        assert gamestate.corroborate_worker_count()
+        logger.debug("All workers spawned and placed successfully")
         
         return gamestate
-
-
-
 
 
     def preparation_phase(self, gamestate: GameState):
@@ -317,13 +309,7 @@ class Engine:
                 player = gamestate.players[faction_name]
 
                 # Run the action
-                context = ActionContext(gamestate, player)
-                while context.step[0] < context.step[1]:
-                    context.compile_options(gamestate, player)
-                    answer = context.call(player.agent) # type: ignore
-                    logger.info(f"Action selected: {answer.answer["action"]}")
-                    result = context.execute(gamestate, player)
-                    logger.info(result.state_changes)
+                ActionContext(gamestate, player)
 
         return gamestate
 
@@ -364,7 +350,7 @@ class Engine:
                 self.start_position(gamestate)
                 continue
 
-            logger.info(f"\n{'#'*30}\n{'#'*20} ROUND {round} {'#'*20}\n{'#'*30}")
+            logger.info(f"\n{'#'*40}\n{'#'*20} ROUND {round} {'#'*20}\n{'#'*40}")
 
             for phase in phases:
 

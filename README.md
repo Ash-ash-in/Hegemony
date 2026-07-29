@@ -77,6 +77,7 @@ The AI will save the current state, and create multiple new ones for comparison
 Gamestates should be changable with careful preservation 
 
 # To Do
+### Now
 - Overhaul engine
     - rebuild startup (no save process) - DONE
     - state building - DONE
@@ -88,11 +89,24 @@ Gamestates should be changable with careful preservation
     - engine cleanup - DONE
     - run test flow - DONE
     - reinstall company setup - DONE
-    - reinstall worker spawning - In Progress
-    - run test flow
+    - reinstall worker spawning - DONE
+    - run test flow - DONE
+- Finish Neural Net Training Data
+    - Post-processing script
+        - Split per faction
+        - Assign rewards
+        - Backfill terminal reward
+    - End-game script
+    - Short term rewards
+    - Terminal rewards
+- Run Neural Net on test actions, based on money only
+
+### Soon
 - Bugfixes
     - game.engine INFO log always records palyer money as 0
     - NPC state has its own influence
+
+### Eventually
 - Worker assignment action
     - context
     - checks - Paused
@@ -101,14 +115,14 @@ Gamestates should be changable with careful preservation
     - context
     - checks
     - resolve
-- Sell Company action
-    - context
-    - checks
-    - resolve
-    - check trade unions
 - Found company action
     - context
     - checks
     - add workers too?
     - resolve
+- Sell Company action
+    - context
+    - checks
+    - resolve
+    - check trade unions
 ---

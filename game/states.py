@@ -591,7 +591,9 @@ class GameState:
     ### Methods ###
 
     # Game Flow
-    def update_export_card(self):
+    def update_export_card(self) -> None:
+        """Updates active export card with the first in the deck 
+        and moves that card to the back"""
         logger.debug("updating active export card")
         card = self.export_cards[0]
         self.export_cards.remove(card)
@@ -600,7 +602,10 @@ class GameState:
         self.active_export_card = card
         logger.debug("active export card updated")
 
-    def update_business_deals(self):
+    def update_business_deals(self) -> None:
+        """Updates active business deals accoring to law 6. 
+        Uses the first cards in the deck 
+        and moves them to the back"""
         logger.debug("updating active business deals")
         self.active_business_deals = []
         position = self.laws[6].position
@@ -616,7 +621,17 @@ class GameState:
                 logger.debug("active business deal card updated")
         logger.debug("business deal cards updated")
 
+    def update_immigration_card(self) -> None:
+        """Simply moves the front card to the back. 
+        Should only be called through the rule layer"""
+        logger.debug("updating immigration card")
+        card = self.immigration_cards[0]
+        self.immigration_cards.remove(card)
+        self.immigration_cards.append(card)
+        logger.debug("card moved to back of deck")
+
     def check_founded_companies(self, faction: str) -> int:
+        """Returns the number of founded companies owned by the given faction"""
         compcount = 0
         for compslot in self.companies[faction]:
             if compslot.company is not None:
@@ -636,15 +651,15 @@ class GameState:
             
         # Count Workers in Companies
         for factioncomps in self.companies.values():
-            for comp in factioncomps.values():
-                if comp is None: # Ignore unfilled company slots
+            for slot in factioncomps:
+                if slot.company is None: # Ignore unfilled company slots
                     continue
-                for worker in comp.workers.values():
+                for worker in slot.workers:
                     if worker is None: # If there is no worker in the first slot, there are no workers
                         continue
-                    if worker.faction == 'Working Class':
+                    elif worker.faction == 'Working Class':
                         WC_track += 1
-                    if worker.faction == 'Middle Class':
+                    elif worker.faction == 'Middle Class':
                         MC_track += 1
 
         # Count Unemployed Workers
@@ -657,8 +672,9 @@ class GameState:
         acc = True
         if WC_track != WC_num:
             acc = False
-        if self.player_count > 2 and MC_track != MC_num:
-            acc = False
+        if self.player_count > 2:
+            if MC_track != MC_num:
+                acc = False
 
         # Display Error Messages
         if not acc:

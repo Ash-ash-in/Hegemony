@@ -489,6 +489,10 @@ class _CompanyFound:
 
         return ActionResult(changes)
 
+########################## Intermediate Rule Layer ###########################
+### These rules handle functions of the system ###
+### Or handle actions the require more than one simple rule to be checked ###
+##############################################################################
 
 @dataclass
 class ImmigrationCardDraw:
@@ -511,44 +515,42 @@ class ImmigrationCardDraw:
         logger.debug("Called ImmigrationCardDraw.resolve")
         check = ImmigrationCardDraw.check(gamestate, player)
         if not check.validity:
-            raise Exception("Invalid call to resolve transfer. Ensure validity check is being called prior and is working.")
+            raise Exception("Invalid call to resolve immigration card. Ensure validity check is being called prior and is working.")
         changes = []
 
-        # Redraw deck if no cards are left
-        if len(gamestate.immigration_card_deck) == 0:
-            gamestate.build_immigration_cards()
-        
         # Draw a card
-        card = gamestate.immigration_card_deck[0]
-        gamestate.immigration_card_deck.remove(card)
+        card = gamestate.immigration_cards[0]
+        gamestate.update_immigration_card # Moves the card to the back of the deck
         changes.append('Immigration card drawn')
-        log = "Drew an immigration card"
-        logger.debug("Immigration card removed from deck")
 
-        # Spawn the worker
+        # Check if a worker of that skill is available
         if player.faction == 'Working Class':
-            skill = card.WorkingClass.skill
+            skill = card.WorkingClass[1]
         else:
-            skill = card.MiddleClass.skill
+            skill = card.MiddleClass[1]
         check = _WorkerSpawn.check(gamestate, player, skill)
 
-        # Request player decision if worker not available
+        # Request player decision if worker skill not available
         if not check.validity:
             logger.info(f"No {player.faction} worker available with skill: {skill}")
+
+            # Handle no workers at all (extremely rare)
+            if len(gamestate.worker_pool[player.faction]) == 0:
+                changes.append("No workers were available")
+                return ActionResult(changes)
+
             if skill == 'Unskilled':
                 # Request to agent
-                from game.old_game.old_agents import Calls
-                Calls.worker_call(gamestate, player, player.agent)
-                # assign answer to 'skill'
-                pass # temp
+                from game.context import SpawnedWorkerSkillContext
+                SpawnedWorkerSkillContext(gamestate, player, "", 1)
             else:
                 skill = 'Unskilled'
             # Now handling the alternative skill
             check = _WorkerSpawn.check(gamestate, player, skill)
             if not check.validity:
-                log += ", but there were no workers available"
-                return ActionResult(changes)
+                raise Exception(f"{skill} worker was returned by SpawnedWorkerSkillContext, but check could not be validated")
 
+        # Spawn the worker
         inner_response = _WorkerSpawn.resolve(gamestate, player, skill)
         changes += inner_response.state_changes
         return ActionResult(changes)

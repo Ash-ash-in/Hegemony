@@ -252,8 +252,6 @@ class GameSummary:
     scores: dict[str,int]
     total_decisions: int
 
-
-
 class Context:
     """
     Parent Class for all Context types.
@@ -286,15 +284,15 @@ class Context:
         self.available_choices = {}
         # Context internal attributes (not included in ContextCall)
         self.references = {} # Objects and methods for easy selection
-        # self.compile_options(player)
-        # while self.step[0] < self.step[1]:
-        #     self.call(player.agent) # type: ignore
-        #     self.execute()
+        while self.step[0] < self.step[1]:
+            self.compile_options(gamestate, player)
+            self.call(gamestate, player)
+            self.execute(gamestate, player)
 
     def compile_options(self, gamestate: GameState, player: Player) -> dict:
         raise Exception("Parent compile_options method called")
         
-    def call(self, agent) -> AgentAnswer:
+    def call(self, gamestate: GameState, player: Player) -> AgentAnswer:
         raise Exception("Parent call method called")
     
     def execute(self, gamestate: GameState, player: Player) -> ActionResult:
@@ -320,6 +318,9 @@ class ActionContext(Context):
         self.decision_type = "choose_action"
         self.step = (1,2)
         self.parent_name = ""
+        while self.step[0] < self.step[1]:
+            result = self.execute(gamestate, player)
+            
 
     def compile_options(self, gamestate: GameState, player: Player) -> dict:
         """
@@ -372,17 +373,15 @@ class ActionContext(Context):
         logger.debug(f'Compiled ActionContext options for {player.faction}')
         return self.available_choices
     
-    def call(self, agent) -> AgentAnswer:
+    def call(self, gamestate: GameState, player: Player) -> AgentAnswer:
         """
         - Activates the agent's call function 
         - Updates self with response data
         - Activate the relevent action's context function
         - Increases step iterator
         """
-        from game.agents import Agent
-        if not isinstance(agent, Agent):
-            raise Exception("agent arg must be an instance of Agent")
-
+        # Compile options
+        self.compile_options(gamestate, player)
 
         # Call the agent
         logger.debug("ActionContext making call to agent")
@@ -391,7 +390,8 @@ class ActionContext(Context):
             self.faction, self.agent_type, self.decision_in_progress, self.decision_type,
             self.step, self.parent_name, self.available_choices
         )
-        answer = agent.call(call)
+        answer = player.agent.call(call)
+        logger.info(f"Action selected: {answer.answer["action"]}")
 
         # Build refs from answer
         action_name = answer.answer["action"]
@@ -417,6 +417,9 @@ class ActionContext(Context):
         """Manages interactions with all top-level action classes"""
         logger.debug("Executing ActionContext decision")
 
+        # Call agent
+        self.call(gamestate, player)
+
         # Handle 'None' free_action
         if self.action_method == None:
             return ActionResult([])
@@ -431,9 +434,13 @@ class ActionContext(Context):
                 break
 
         changes = self.action_method.resolve(gamestate, player, args)
+        logger.info(changes)
         return changes
 
-class WorkerSpawnContext(Context):
+class SpawnedWorkerSkillContext(Context):
+    """Used by a player to decide what worker to spawn
+    
+    Methods in this class are chained together in init"""
     from game.states import GameState, Player
 
     def __init__(
@@ -443,15 +450,16 @@ class WorkerSpawnContext(Context):
             parent_decision: str,
             total_steps: int
         ) -> None:
-        logger.debug('New WorkerSpawnContext')
+        logger.debug('New SpawnedWorkerSkillContext')
         super().__init__(gamestate, player)
-        self.decision_type = "spawn_worker"
+        self.decision_type = "spawn_worker_skill"
         self.step = (1,total_steps)
         self.parent_name = parent_decision
         self.selected_workers = []
-
+        self.execute(gamestate, player)
 
     def compile_options(self, gamestate: GameState, player: Player) -> dict:
+        logger.debug("Compiling options for ActionContext")
 
         # Build skills references to limit options to one per industry
         from game.data.references import industries
@@ -473,31 +481,31 @@ class WorkerSpawnContext(Context):
         self.available_choices = {'worker_skill': list(self.references.keys())}
         return self.available_choices
 
-    def call(self, agent) -> AgentAnswer:
-        from game.agents import Agent
-        if not isinstance(agent, Agent):
-            raise Exception("agent arg must be instance of Agent")
+    def call(self, gamestate: GameState, player: Player) -> AgentAnswer:
 
         # Call the agent
-        logger.debug("ActionContext making call to agent")
-        call = ContextCall(
-            self.masked_state, self.seq, self.game_id, self.parent_seq, 
-            self.faction, self.agent_type, self.decision_in_progress, self.decision_type,
-            self.step, self.parent_name, self.available_choices
-        )
-        answer = agent.call(call)
+        while self.step[0] < self.step[1]:
+            self.compile_options(gamestate, player)
 
-        # Build refs from answer
-        worker_skill = answer.answer["worker_skill"]
-        logger.debug(f"Agent selected: {worker_skill}")
-        if worker_skill not in self.references.keys():
-            raise Exception("Agent selected a worker but no reference object exists in WorkerSpawnContext")
+            logger.debug(f"[{self.step[0]}/{self.step[1]}] ActionContext making call to agent")
+            call = ContextCall(
+                self.masked_state, self.seq, self.game_id, self.parent_seq, 
+                self.faction, self.agent_type, self.decision_in_progress, self.decision_type,
+                self.step, self.parent_name, self.available_choices
+            )
+            answer = player.agent.call(call)
 
-        # Update self with response
-        self.decision_in_progress[self.step[0]] = worker_skill # for next call to agent
-        self.answer = answer # for saving data
-        self.selected_workers.append(self.references[worker_skill])
-        self.step = (self.step[0] + 1, self.step[1])
+            # Build refs from answer
+            worker_skill = answer.answer["worker_skill"]
+            logger.debug(f"Agent selected: {worker_skill}")
+            if worker_skill not in self.references.keys():
+                raise Exception("Agent selected a worker but no reference object exists in WorkerSpawnContext")
+
+            # Update self with response
+            self.decision_in_progress[self.step[0]] = worker_skill # for next call to agent
+            self.answer = answer # for saving data
+            self.selected_workers.append(self.references[worker_skill])
+            self.step = (self.step[0] + 1, self.step[1])
 
         return answer
 
@@ -505,8 +513,10 @@ class WorkerSpawnContext(Context):
         """Iteratively calls the spawn worker rules base on decision_in_progress"""
         logger.debug("Executing ActionContext decision")
 
+        self.call(gamestate, player)
+
         changes = []
-        for step, skill in self.decision_in_progress:
+        for _, skill in self.decision_in_progress:
             from game.rules import _WorkerSpawn
             changes.append(_WorkerSpawn.resolve(gamestate, player, skill))
 
