@@ -1,0 +1,12 @@
+{
+    "player_count": 3,
+    "agents": {
+        "Working Class": "Random",
+        "Capitalists": "Random",
+        "Middle Class": "Random"
+    },
+    "expansions": {
+        "historical_events": 0,
+        "crisis_and_control": 0
+    }
+}

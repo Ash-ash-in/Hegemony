@@ -273,7 +273,7 @@ class Engine:
         """
         logger.debug('Called Engine.start_position')
         import game.rules as rules
-        from game.context import SimpleContext
+        from game.context import SimpleContex
 
         # Build player refs
         working_class, middle_class, capitalists, state  = gamestate.players.values()
@@ -590,4 +590,3 @@ class Engine:
                     gamestate = self.scoring_phase(gamestate)
 
         gamestate = self.endgame_scoring(gamestate)
-

@@ -77,22 +77,53 @@ The AI will save the current state, and create multiple new ones for comparison
 Gamestates should be changable with careful preservation 
 
 # To Do
+### Now
+- Overhaul engine
+    - rebuild startup (no save process) - DONE
+    - state building - DONE
+    - state masking - DONE
+    - agent ingestion - DONE
+    - context layer - DONE
+        - engine side - DONE
+        - rules side - DONE
+    - engine cleanup - DONE
+    - run test flow - DONE
+    - reinstall company setup - DONE
+    - reinstall worker spawning - DONE
+    - run test flow - DONE
+- Finish Neural Net Training Data
+    - Post-processing script
+        - Split per faction
+        - Assign rewards
+        - Backfill terminal reward
+    - End-game script
+    - Short term rewards
+    - Terminal rewards
+- Run Neural Net on test actions, based on money only
+
+### Soon
+- Bugfixes
+    - game.engine INFO log always records player money as 0 - DONE
+    - NPC state has its own influence
+    - Action phase is only recording one decision in output json
+
+### Eventually
 - Worker assignment action
-    - checks - DONE
-    - context - In progress
-    - resolve - In progress
+    - context
+    - checks - Paused
+    - resolve - Paused
 - Worker Swap free action
-    - checks
     - context
-    - resolve
-- Sell Company action
     - checks
-    - context
     - resolve
-    - check trade unions
 - Found company action
-    - checks
     - context
+    - checks
     - add workers too?
     - resolve
+- Sell Company action
+    - context
+    - checks
+    - resolve
+    - check trade unions
 ---

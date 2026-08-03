@@ -1,47 +1,45 @@
 ###################################
 ############# HEGEMONY ############
 ###################################
-####### Global User Inputs ########
-
-player_count = 3
-filename = 'HegemonySave'
-
-####### Global User Inputs ########
-###################################
 
 # Establish Log
 # -------------
 import logging
+import os
+try:
+    os.remove(os.path.join("logs", "game.log"))
+except(FileNotFoundError):
+    pass
 logging.basicConfig(
-    level=logging.WARNING, 
-    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+    level=logging.DEBUG,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     handlers=[
-        logging.FileHandler("game.log", mode = 'w'),
+        logging.FileHandler(os.path.join("logs", "game.log")),
         logging.StreamHandler()
-        ]
-    )
+    ]
+)
+    
+# Import Config
+import json
+from game.data.classes import Config
+with open(os.path.join("game","config.json"), 'r', encoding='utf-8') as file:
+    config = Config(json.load(file))
 
-# Check Parameters
-# ----------------
-if player_count < 2 | player_count > 4:
-    raise Exception("Player count must be between 2 and 4")
-if filename:
-    if type(filename) == int | type(filename) == float:
-        raise Exception("save_file must be string or None type")
     
 ########## Initialise GameState ##########
 # ----------------------------------------
-from game.system import Engine
+from game.engine import Engine
 
-LiveGamestate, PlayerRefs = Engine.startup(player_count=2, filename='Hegemony', overwrite=True)
-Engine.flow(LiveGamestate)
+engine = Engine()
+gamestate = engine.engine_startup(config)
+engine.flow(gamestate)
 
-
-# Set up references
-# -----------------
-# player_references = engine.gen_refs(LiveGamestate) # Keep this or just look at gamestate?
-
-
-print(PlayerRefs.capitalists)
-
+########## Save Training Data ##########
+from game.agents import decision_log
+from dataclasses import asdict
+decisions = {}
+for i in range(len(decision_log)):
+    decisions[i] = asdict(decision_log[i])
+with open("decisions.json", "w", encoding='utf-8') as file:
+    json.dump(decisions, file, indent=4)
 
