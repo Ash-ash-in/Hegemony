@@ -10,71 +10,97 @@ The vision is to have three working modules:
 
 The game should serve as the 'core' of the program, with different actors, be them humans, AI, or a rule-set, attached to different factions for the game.
 
-The project serves primarily as an educational and entertainment tool for myself, so it should stay fun for me. I don't want it to get overwhelming, and I want to keep it manageable. That means taking things one step at a time, doing proof-of concept before diving in to the final product, and acheiving managable goals that can pass test or add new features. I reserve the right to make braindead decisions and do things like a fucking moron.
+The project serves primarily as an educational and entertainment tool for myself, so it should stay fun for me. I don't want it to get overwhelming, and I want to keep it manageable. That means taking things one step at a time, doing proof-of concept before diving in to the final product, and acheiving managable goals that can pass tests or add new features. I reserve the right to make braindead decisions and do things like a fucking moron.
 
 No code is written by AI, but AI is used as a last resort to teach me new concepts.
 
-
 # How it works
 
-## Code structure
-- The game itself is genereally organised into 3 levels: data, rules, engine
+- Two branches of code, one for the game engine, one for the NN training
+- The game itself is genereally organised into 3 levels:
+    - Lowest - References -> Classes
+    - Middle - Rules -> States -> Context -> Rules ->
+    - Highest - Engine
+- Agents sit outside of this hierarchy but are always called from Context objects.
 - These levels can only see themselves and the levels before it
+- The middle layer can involve recursion, as each Context gathers information to resolve itself.
 - Levels never look to anything higher than themselves. This promotes a single source of truth
-- This is not strictly true, for example when setting up agent references, but upstream references are only created at the engine level, and not when a class is instantiated
-- Agents exist as an outside entitiy, which connect to each part of the game as required
-### Data
+- The top layer (HEGEMONY.py) controls the whole game superstructure and triggers both branches.
+
+# Game Engine
+
+## Data
+
+- Found in the 'data' folder - references.py and classes.py
 - This only includes resources - lists of game assets etc
-- Classes of this type can only modify themselves (eg. factions, workers)
-- These methods will never be called directly, but should instead by called through functions defined in rules
-- Rules should always call those methods if they are the result of an agent decision. The engine itself can do it in hard-coded situations
-- Any functions affect only one entity. Anything more complex is handled by rules/engine
-### Rules
-- This is how things happen. It move things around, gets objects to change themselves, adds things to the gamestate
+- Classes of this layer are dumb and cannot be modified
+- Functions exists to esablish variables once at startup, and are not triggered at any other point
+
+## Rules & States & Context
+
+### Rules.py
+- This is how things happen. It moves things around, gets objects to change themselves, adds things to the gamestate
 - Rules is where player and gamestate objects are changed
     - Runs transfers of money - instructs players to add/subtract money
     - Plays cards - Removes them from a hand, and activates their effect
     - Votes
     - Proposes laws
     - Instructs players to add points
-- Agents cannot trigger these, they follow as a consequence of their decisions
-- Rules can make calls to the agents, but usually only for simpler decisions
-### Engine
-- Controls the setup, save state, and movement of the game
-- Controls the flow between stages of the game, movement between rounds
-- Makes Action calls to the agents, which causes a cascade of minor decisions made by the rules
-### Agents
-- They receive packaged context calls
-- They have their own processes to make a decision
-    - Random
+- Agents cannot trigger these, but they may follow as a consequence of their decisions
+- Rules can make calls to the agents for sub-tasks, such as choosing the location of a worker
+
+### States.py
+- Complex classes that contain information about the current game position
+- There are 5 types:
+    - Company slots, which contain all variable information about a company (workers emplyed, strike status, wage level)
+    - One for each of the 4 players. The state's depends on whether an agent is controlling that faction
+    - The gamestate, which contains everything else on and off the board, including card decks, worker pools, round number, laws etc.
+- States are modified by their own methods, and are not changed by external calls. This allows them to contain their own simple validity checks.
+- These methods are called by rules or the engine
+- Anything affecting more than one state is instead handled by rules or the engine.
+
+### Context.py
+- Build a uniform snapshot of the state of play, passing all information that an agent can legally see
+- Memorises all relevent game objects for easy access
+- Compiles all options available for the decision required
+- Calls the agent for its decision, recursively if necessary
+- Unpacks the agent's response and matches it with the references in memory
+- Executes that decision by triggering rules, passing the references and states along
+- Top level context objects are triggered by the engine. The engine's context is resolved.
+
+## Engine & Agents
+
+### Engine.py
+- Controls the setup and progression of the game
+- Attaches agent instances to player states at the start of the game, giving them their 'head'
+- Triggers the highest-level context windows, which allows the game to play out through a cascade of decisions.
+- Records end-game results in memory
+
+### Agents.py
+- They receive packaged context calls and return a decision from the options contained in those calls
+- Agents fall into several categories
+    - Simple/Random Selectors
+    - Pre-defined automa rules
     - Text context to human player
-    - Neural Net fine tuning
-- They return their answer in a uniform package, which the engine can receive and understand
+    - Neural Net
+- One agent spun up per player and attached to the relevent player-state at startup
+- They return their answer in a uniform package, which the context instance can receive and understand
+- They save the call recevied and their answer to the decision log. This is where the bulk of the raw, unprocessed training data is saved in memory
 
 ### Architecture Diagram
 ![Hegemony Architecture-File Structure](<images/Hegemony Architecture-File Structure.png>)
 
-## Game States
-These store information about the game and players. They are the real-life boards that things sit on.\n
-They only contain material things that would be required to recreate the game position.\n
-For a ML to train, it may need to make multiple deepcopies of the live gamestate, and simulate outcomes
+# Neural Net 
 
-## Player States
-These act a similar way to the gamestate in that they store board information, but they should only be modified through rules, whereas the gamestate is much more flexible
+The model will be trained with a PPO algorithm. The full state provided by the context needs to be encoded so that it is represented by a number of input nodes. The output will be interpreted by the model's head, which is determined by the type of action required of it. 
 
-## Action Flow
-Actions are called through several layers, which help manage dependencies. As a general rule, validity checks flow upstream, and instructions flow downstream.
-See below:
-![Hegemony Architecture-Action Flow](<images/Hegemony Architecture-Action Flow.png>)
+PPO models use an actor-critic function, and compute cost via backpropagation all the way back to the first encoding. The critic head will be used to determine expected cost, which also requires its own head.
 
-The impact of every decision is not made directly to the game/player state, it is made to a copy, and the final decision is enacted by overwriting the state with the copy. *This still needs to be implimented with the resolve functions*
+None of this development has started, but the architecture of the game engine is designed so that the NN can be attached when ready, and so that training data is recorded throughout.
 
-## Neural Net 
-The AI will need to simulate lots of different outcomes, compare them, and make its decision
-This is the only part of the game that needs such comparisons, except to confirm rules such as players having enough money to pay
-This means no comparison or easy access to the data needs to built into the game engine itself
-The AI will save the current state, and create multiple new ones for comparison
-Gamestates should be changable with careful preservation 
+The reward functions will be recorded by postprocessing.py (not yet implimented), which handle intermittent rewards and the diminishing terminal reward.
+
+The training of the model will be handled by training.py (not yet implimented), which will strip and shuffle decision batches out from recorded, post-processed games, which can be used for training. It will update the weights of the model and save them, which can then be attached to future games. 
 
 # To Do
 ### Now
@@ -91,7 +117,7 @@ Gamestates should be changable with careful preservation
     - reinstall company setup - DONE
     - reinstall worker spawning - DONE
     - run test flow - DONE
-- Finish Neural Net Training Data
+- Finish Neural Net Training Data Pipeline
     - Post-processing script
         - Split per faction
         - Assign rewards
@@ -99,7 +125,7 @@ Gamestates should be changable with careful preservation
     - End-game script
     - Short term rewards
     - Terminal rewards
-- Run Neural Net on test actions, based on money only
+- Run Neural Net on test actions, based on optimising money, as POC
 
 ### Soon
 - Bugfixes
