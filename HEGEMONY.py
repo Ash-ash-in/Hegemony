@@ -18,12 +18,13 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
-
+    
 # Import Config
 import json
 from game.data.classes import Config
 with open(os.path.join("game","config.json"), 'r', encoding='utf-8') as file:
     config = Config(json.load(file))
+
     
 ########## Initialise GameState ##########
 # ----------------------------------------
@@ -41,5 +42,4 @@ for i in range(len(decision_log)):
     decisions[i] = asdict(decision_log[i])
 with open("decisions.json", "w", encoding='utf-8') as file:
     json.dump(decisions, file, indent=4)
-
 

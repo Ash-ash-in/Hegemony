@@ -191,41 +191,50 @@ class CheckResponse:
 
 class Config:
     def __init__(self, config: dict):
+
+        # Validation
+        if type(config["player_count"]) != int:
+            raise Exception("Invalid datatype passed as player_count (should be int)")
+        if type(config["agents"]) != dict:
+            raise Exception("Invalid datatype passed as agents (should be dict)")
+        if type(config["expansions"]) != dict:
+            raise Exception("Invalid datatype passed as expansions (should be dict)")
+
         self.player_count = config["player_count"]
         self.agents = config["agents"]
         self.expansions = config["expansions"]
-        
-        # setup game_id
-        exp_count = 0
 
-            # Part 1 - which expansions are used and what engine version is used
+        # Build Game ID
+        # Read in previously used IDs
+        import os
+        import pandas as pd
+        if os.path.exists(os.path.join("training", "game_ids.csv")):
+            ids = pd.read_csv(os.path.join("training", "game_ids.csv"))
+        else:
+            ids = pd.DataFrame(columns=["ID", "expansion", "player_count", "count"])
+
+        # Prepare new instance
+        # Player Count
+        id_append = {"player_count": [config["player_count"]]}
+        # Expansions
+        exp_count = 0
         for exp_bool in config["expansions"].values():
             exp_count += exp_bool
         if exp_count == 0:
-            ID1 = "G"
+            id_append["expansion"] = ["G"]
         elif exp_count == 2:
-            ID1 = "B"
+            id_append["expansion"] = ["B"]
         else:
             if config["expansions"]["historical_events"] == 1:
-                ID1 = "H"
+                id_append["expansion"] = ["H"]
             else:
-                ID1 = "C"
+                id_append["expansion"] = ["C"]
+        # Iterator
+        id_append["count"] = [len(ids[(ids["expansion"] == id_append["expansion"]) & (ids["player_count"] == id_append["player_count"])])]
+        # Full ID
+        id_append["ID"] = [f"{id_append['expansion']}_{id_append['player_count']}_{id_append['count']}"]
+        self.game_id = id_append["ID"]
 
-            # Part 3 - increase counter
-        for i_char in range(len(config["game_id"]) -1, 0, -1):
-            if config["game_id"][i_char] == "_":
-                old_val = int(config["game_id"][i_char+1:])
-                break
-
-            # Assemble ID
-        self.game_id = f"{ID1}_{self.player_count}_{old_val + 1}"
-
-        # Validation
-        if type(self.player_count) != int:
-            raise Exception("Invalid datatype passed as player_count (should be int)")
-        if type(self.agents) != dict:
-            raise Exception("Invalid datatype passed as agents (should be dict)")
-        if type(self.expansions) != dict:
-            raise Exception("Invalid datatype passed as expansions (should be dict)")
-        if type(self.game_id) != str:
-            raise Exception("Invalid datatype passed as game_id (should be string)")
+        # Append new ID
+        ids = pd.concat([ids, pd.DataFrame.from_dict(id_append)], axis=0, ignore_index=True)
+        ids.to_csv(os.path.join("training", "game_ids.csv"))

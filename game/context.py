@@ -47,7 +47,7 @@ class BasicMaskedState:
             self.business_deals = gamestate.active_business_deals,
             self.export_card = gamestate.active_export_card
 
-    class _PlayerData:
+    class _SinglePlayerData:
         def __init__(self, gamestate: GameState, player: Player) -> None:
             self.faction = player.faction,
             self.victory_points = player.victory_points,
@@ -82,25 +82,23 @@ class BasicMaskedState:
             super().__init__(gamestate, player)
             self.hand = player.hand
 
-    class _OtherPlayerData:
-        def __init__(self, gamestate: GameState, player: Player) -> None:
-            for other_player in gamestate.players.values():
-                if other_player.faction == player.faction:
-                    continue
-                elif other_player.faction == "Working Class":
-                    self.working_class = BasicMaskedState._PlayerData(gamestate, other_player)
-                elif other_player.faction == "Middle Class":
-                    self.middle_class = BasicMaskedState._PlayerData(gamestate, other_player)
-                elif other_player.faction == "Capitalists":
-                    self.capitalists = BasicMaskedState._PlayerData(gamestate, other_player)
-                elif other_player.faction == "State":
-                    self.state = BasicMaskedState._PlayerData(gamestate, other_player)
+    class _PlayerData:
+        def __init__(self, gamestate: GameState) -> None:
+            for player in gamestate.players.values():
+                if player.faction == "Working Class":
+                    self.working_class = BasicMaskedState._SinglePlayerData(gamestate, player)
+                elif player.faction == "Middle Class":
+                    self.middle_class = BasicMaskedState._SinglePlayerData(gamestate, player)
+                elif player.faction == "Capitalists":
+                    self.capitalists = BasicMaskedState._SinglePlayerData(gamestate, player)
+                elif player.faction == "State":
+                    self.state = BasicMaskedState._SinglePlayerData(gamestate, player)
 
     def __init__(self, gamestate: GameState, player: Player) -> None:
         self.GameMetaData = BasicMaskedState._GameMetaData(gamestate)
         self.BoardData = BasicMaskedState._BoardData(gamestate)
         self.OwnPlayerData = BasicMaskedState._OwnPlayerData(gamestate, player)
-        self.OtherPlayerData = BasicMaskedState._OtherPlayerData(gamestate, player)
+        self.OtherPlayerData = BasicMaskedState._PlayerData(gamestate)
         
 def mask_gamestate_basic(gamestate: GameState, player) -> dict:
     """

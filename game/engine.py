@@ -275,6 +275,15 @@ class Engine:
         All actions are mandatory.
         """
         logger.debug('Called Engine.preparation_phase')
+        from game.rules import _MoneyTransfer
+
+        # Pay interest on loans
+        logger.info("Paying interest on any loans")
+        for player in gamestate.players.values():
+            for i in range(player.loans):
+                assert _MoneyTransfer.check(player, None, 5, True).validity == True
+                _MoneyTransfer.resolve(player, None, 5, True)
+
         return gamestate
     
 
