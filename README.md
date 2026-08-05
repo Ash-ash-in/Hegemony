@@ -16,11 +16,15 @@ No code is written by AI, but AI is used as a last resort to teach me new concep
 
 # How it works
 
+## Summary
+![Hegemony Architecture-File Structure](<images/Hegemony - Full Architecture.png>)
+
+
 - Two branches of code, one for the game engine, one for the NN training
 - The game itself is genereally organised into 3 levels:
-    - Lowest - References -> Classes
-    - Middle - Rules -> States -> Context -> Rules ->
-    - Highest - Engine
+    - Data - Classes -> References -> Assets
+    - Function - Rules -> States -> Context -> Rules ->
+    - Game Engine - Engine, Agents, Interface
 - Agents sit outside of this hierarchy but are always called from Context objects.
 - These levels can only see themselves and the levels before it
 - The middle layer can involve recursion, as each Context gathers information to resolve itself.
@@ -87,9 +91,6 @@ No code is written by AI, but AI is used as a last resort to teach me new concep
 - They return their answer in a uniform package, which the context instance can receive and understand
 - They save the call recevied and their answer to the decision log. This is where the bulk of the raw, unprocessed training data is saved in memory
 
-### Architecture Diagram
-![Hegemony Architecture-File Structure](<images/Hegemony Architecture-File Structure.png>)
-
 # Neural Net 
 
 The model will be trained with a PPO algorithm. The full state provided by the context needs to be encoded so that it is represented by a number of input nodes. The output will be interpreted by the model's head, which is determined by the type of action required of it. 
@@ -104,19 +105,6 @@ The training of the model will be handled by training.py (not yet implimented), 
 
 # To Do
 ### Now
-- Overhaul engine
-    - rebuild startup (no save process) - DONE
-    - state building - DONE
-    - state masking - DONE
-    - agent ingestion - DONE
-    - context layer - DONE
-        - engine side - DONE
-        - rules side - DONE
-    - engine cleanup - DONE
-    - run test flow - DONE
-    - reinstall company setup - DONE
-    - reinstall worker spawning - DONE
-    - run test flow - DONE
 - Finish Neural Net Training Data Pipeline
     - Post-processing script
         - Split per faction
@@ -132,6 +120,20 @@ The training of the model will be handled by training.py (not yet implimented), 
     - game.engine INFO log always records player money as 0 - DONE
     - NPC state has its own influence
     - Action phase is only recording one decision in output json
+- Engine
+    - Prep Phase
+        - Political agenda cards
+    - Action Phase
+        - Election Test Action (to propose tax law)
+    - Elections phase
+        - Elections flow
+    - Context
+        - Election context
+        - Law Proposal context
+        - Random agent response
+- NN
+    - Proposal decision
+    - Election decision
 
 ### Eventually
 - Worker assignment action

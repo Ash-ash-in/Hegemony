@@ -228,6 +228,10 @@ class AgentAnswer:
     Example: {"Worker": "WC1", "Slot": "Company3Slot2"}
     """
     answer: dict[str, str]
+    value_estimate: float | None
+    log_prob: float | None
+
+
 
 @ dataclass
 class DecsionLogEntry:

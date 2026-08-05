@@ -66,7 +66,7 @@ class Agent:
 
         # Normally you would forward the answer from the commented section above.
         # To ease development, we will just return an empty answer for now
-        return self.AgentAnswer({})
+        return self.AgentAnswer({}, None, None)
 
     def spawn_worker(self, masked_state: BasicMaskedState, options: dict) -> AgentAnswer:
         """Used to decide which worker to spawn"""
@@ -118,7 +118,7 @@ class RandomAgent(Agent):
         for request_type, options in call.available_choices.items():
             answer[request_type] = rand.choice(options)
 
-        response = AgentAnswer(answer)
+        response = AgentAnswer(answer, None, None)
         decision_log.append(DecsionLogEntry(call, response))
         return response
 

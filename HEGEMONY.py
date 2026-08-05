@@ -22,7 +22,7 @@ logging.basicConfig(
 # Import Config
 import json
 from game.data.classes import Config
-with open(os.path.join("game","config.json"), 'r', encoding='utf-8') as file:
+with open("config.json", 'r', encoding='utf-8') as file:
     config = Config(json.load(file))
 
     
@@ -35,6 +35,11 @@ gamestate = engine.engine_startup(config)
 engine.flow(gamestate)
 
 ########## Save Training Data ##########
+
+### Game ID
+config.game_id.save()
+
+### Decision Log
 from game.agents import decision_log
 from dataclasses import asdict
 decisions = {}

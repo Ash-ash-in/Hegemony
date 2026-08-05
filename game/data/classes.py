@@ -190,6 +190,65 @@ class CheckResponse:
     params: list
 
 class Config:
+
+
+    class GameID:
+        def __init__(self, config):
+
+            # Read in previously used IDs
+            import os
+            import pandas as pd
+            if os.path.exists(os.path.join("training", "game_ids.csv")):
+                ids = pd.read_csv(os.path.join("training", "game_ids.csv"))
+            else:
+                ids = pd.DataFrame(columns=["game_id", "expansion", "player_count", "count"])
+
+            # Player Count
+            self.player_count = config.player_count
+
+            # Expansions
+            exp_count = 0
+            for exp_bool in config.expansions.values():
+                exp_count += exp_bool
+            if exp_count == 0:
+                self.expansion = "G"
+            elif exp_count == 2:
+                self.expansion = "B"
+            else:
+                if config.expansions["historical_events"] == 1:
+                    self.expansion = "H"
+                else:
+                    self.expansion = "C"
+
+            # Iterator
+            self.iterator = len(ids[(ids["expansion"] == self.expansion) & (ids["player_count"] == self.player_count)])
+
+            # Full ID
+            self.game_id = f"{self.expansion}_{self.player_count}_{self.iterator}"
+
+
+        def save(self):
+            # Read in previously used IDs
+            import os
+            import pandas as pd
+            if os.path.exists(os.path.join("training", "game_ids.csv")):
+                ids = pd.read_csv(os.path.join("training", "game_ids.csv"))
+            else:
+                ids = pd.DataFrame(columns=["ID", "expansion", "player_count", "count"])
+
+            # Prepare new instance
+            id_append = {}
+            # Player Count
+            id_append["player_count"] = self.player_count
+            id_append["expansion"] = self.expansion
+            id_append["iterator"] = self.iterator
+            id_append["game_id"] = self.game_id
+
+            # Append new ID
+            ids = pd.concat([ids, pd.DataFrame([id_append])], axis=0, ignore_index=True)
+            ids.to_csv(os.path.join("training", "game_ids.csv"), index=False)
+
+
     def __init__(self, config: dict):
 
         # Validation
@@ -204,37 +263,5 @@ class Config:
         self.agents = config["agents"]
         self.expansions = config["expansions"]
 
-        # Build Game ID
-        # Read in previously used IDs
-        import os
-        import pandas as pd
-        if os.path.exists(os.path.join("training", "game_ids.csv")):
-            ids = pd.read_csv(os.path.join("training", "game_ids.csv"))
-        else:
-            ids = pd.DataFrame(columns=["ID", "expansion", "player_count", "count"])
+        self.game_id = Config.GameID(self)
 
-        # Prepare new instance
-        # Player Count
-        id_append = {"player_count": [config["player_count"]]}
-        # Expansions
-        exp_count = 0
-        for exp_bool in config["expansions"].values():
-            exp_count += exp_bool
-        if exp_count == 0:
-            id_append["expansion"] = ["G"]
-        elif exp_count == 2:
-            id_append["expansion"] = ["B"]
-        else:
-            if config["expansions"]["historical_events"] == 1:
-                id_append["expansion"] = ["H"]
-            else:
-                id_append["expansion"] = ["C"]
-        # Iterator
-        id_append["count"] = [len(ids[(ids["expansion"] == id_append["expansion"]) & (ids["player_count"] == id_append["player_count"])])]
-        # Full ID
-        id_append["ID"] = [f"{id_append['expansion']}_{id_append['player_count']}_{id_append['count']}"]
-        self.game_id = id_append["ID"]
-
-        # Append new ID
-        ids = pd.concat([ids, pd.DataFrame.from_dict(id_append)], axis=0, ignore_index=True)
-        ids.to_csv(os.path.join("training", "game_ids.csv"))
