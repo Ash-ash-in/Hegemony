@@ -191,7 +191,6 @@ class CheckResponse:
 
 class Config:
 
-
     class GameID:
         def __init__(self, config):
 
@@ -264,4 +263,3 @@ class Config:
         self.expansions = config["expansions"]
 
         self.game_id = Config.GameID(self)
-
