@@ -106,7 +106,7 @@ The training of the model will be handled by training.py (not yet implimented), 
 # To Do
 ### Now
 - Finish Neural Net Training Data Pipeline
-    - Decisions saving  both actions properly
+    - Decisions saving  both actions properly - DONE
     - Decisions appends to existing file
     - End-game file
     - Post-processing script
@@ -121,7 +121,7 @@ The training of the model will be handled by training.py (not yet implimented), 
 - Bugfixes
     - game.engine INFO log always records player money as 0 - DONE
     - NPC state has its own influence
-    - Action phase is only recording one decision in output json
+    - Action phase is only recording one decision in output json - DONE
 - Engine
     - Prep Phase
         - Political agenda cards

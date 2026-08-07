@@ -230,11 +230,10 @@ class ActionContext(Context):
         self.decision_type = "choose_action"
         self.step = (1,2)
         self.parent_name = ""
-        while self.step[0] < self.step[1]:
+        while self.step[0] <= self.step[1]:
             self.compile_options(gamestate, player)
             self.call(gamestate, player)
             self.execute(gamestate, player)
-
             
     def compile_options(self, gamestate: GameState, player: Player) -> None:
         """
@@ -308,19 +307,20 @@ class ActionContext(Context):
         # Build refs from answer
         action_name = answer.answer["action"]
         action_method = None
-        for action_type, name_method_dict in self.references.items():
-            if action_name in name_method_dict.keys():
-                action_method = name_method_dict[action_name]
-                break
-        if action_method is None:
-            raise Exception("Action not found in context references")
+        if action_name != "None":
+            for action_type, name_method_dict in self.references.items():
+                if action_name in name_method_dict.keys():
+                    action_method = name_method_dict[action_name]
+                    break
+            if action_method is None:
+                raise Exception("Action not found in context references")
         logger.debug(f"Agent selected: {action_name}")
 
         # Update self with response
         self.decision_in_progress[self.step[0]] = answer.answer["action"]
         self.answer = answer
         self.action_method = action_method
-        self.action_type = action_type
+        self.action_type = "free_action" if action_name == "None" else action_type
         self.action_name = action_name
         self.step = (self.step[0] + 1, self.step[1])
         return
@@ -330,7 +330,7 @@ class ActionContext(Context):
         logger.debug("Executing ActionContext decision")        
 
         # Handle 'None' free_action
-        if self.action_method == None:
+        if self.action_name == "None":
             return
         
         # All other actions       
