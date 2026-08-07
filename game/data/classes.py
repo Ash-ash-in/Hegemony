@@ -200,7 +200,7 @@ class Config:
             if os.path.exists(os.path.join("training", "game_ids.csv")):
                 ids = pd.read_csv(os.path.join("training", "game_ids.csv"))
             else:
-                ids = pd.DataFrame(columns=["game_id", "expansion", "player_count", "count"])
+                ids = pd.DataFrame(columns=["game_id", "expansion", "player_count", "iterator"])
 
             # Player Count
             self.player_count = config.player_count
@@ -220,7 +220,7 @@ class Config:
                     self.expansion = "C"
 
             # Iterator
-            self.iterator = len(ids[(ids["expansion"] == self.expansion) & (ids["player_count"] == self.player_count)])
+            self.iterator = int(len(ids[(ids["expansion"] == self.expansion) & (ids["player_count"] == self.player_count)]))
 
             # Full ID
             self.game_id = f"{self.expansion}_{self.player_count}_{self.iterator}"
@@ -233,7 +233,7 @@ class Config:
             if os.path.exists(os.path.join("training", "game_ids.csv")):
                 ids = pd.read_csv(os.path.join("training", "game_ids.csv"))
             else:
-                ids = pd.DataFrame(columns=["ID", "expansion", "player_count", "count"])
+                ids = pd.DataFrame(columns=["game_id", "expansion", "player_count", "iterator"])
 
             # Prepare new instance
             id_append = {}

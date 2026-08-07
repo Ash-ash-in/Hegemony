@@ -119,7 +119,11 @@ class RandomAgent(Agent):
             answer[request_type] = rand.choice(options)
 
         response = AgentAnswer(answer, None, None)
-        decision_log.append(DecsionLogEntry(call, response))
+
+        # Save to Log
+        from dataclasses import asdict
+        decision_log.append(asdict(DecsionLogEntry(call, response)))
+
         return response
 
 agent_refs = {

@@ -106,11 +106,13 @@ The training of the model will be handled by training.py (not yet implimented), 
 # To Do
 ### Now
 - Finish Neural Net Training Data Pipeline
+    - Decisions saving  both actions properly
+    - Decisions appends to existing file
+    - End-game file
     - Post-processing script
         - Split per faction
         - Assign rewards
         - Backfill terminal reward
-    - End-game script
     - Short term rewards
     - Terminal rewards
 - Run Neural Net on test actions, based on optimising money, as POC

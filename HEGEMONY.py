@@ -41,10 +41,20 @@ config.game_id.save()
 
 ### Decision Log
 from game.agents import decision_log
-from dataclasses import asdict
-decisions = {}
-for i in range(len(decision_log)):
-    decisions[i] = asdict(decision_log[i])
-with open("decisions.json", "w", encoding='utf-8') as file:
-    json.dump(decisions, file, indent=4)
+import orjsonl
 
+# Read in old file
+try:
+    decisions = orjsonl.load(os.path.join("training","decisions.jsonl"))
+except:
+    decisions = []
+
+# Add new data from this session
+decisions.append(decision_log)
+
+# Save file
+orjsonl.save(os.path.join("training","decisions.jsonl"), decisions)
+
+
+### End-Game Log
+print(decisions)
