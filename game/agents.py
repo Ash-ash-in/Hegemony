@@ -121,8 +121,13 @@ class RandomAgent(Agent):
         response = AgentAnswer(answer, None, None)
 
         # Save to Log
+        import os
+        import orjson
         from dataclasses import asdict
-        decision_log.append(asdict(DecsionLogEntry(call, response)))
+        path = os.path.join("training", "decisions.jsonl")
+        with open(path, "ab") as f:   # append in binary mode
+            f.write(orjson.dumps(asdict(DecsionLogEntry(call, response))))
+            f.write(b"\n")
 
         return response
 

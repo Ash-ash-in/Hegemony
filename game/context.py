@@ -250,7 +250,7 @@ class ActionContext(Context):
 
         # Determine what actions have already been taken
         if len(self.decision_in_progress.keys()) > 0:
-            if self.decision_in_progress[self.step[0] - 1] in self.references["free_action"]:
+            if self.decision_in_progress[str(self.step[0] - 1)] in self.references["free_action"]:
                 allowed_free = False
                 allowed_main = True
             else:
@@ -317,7 +317,7 @@ class ActionContext(Context):
         logger.debug(f"Agent selected: {action_name}")
 
         # Update self with response
-        self.decision_in_progress[self.step[0]] = answer.answer["action"]
+        self.decision_in_progress[str(self.step[0])] = answer.answer["action"]
         self.answer = answer
         self.action_method = action_method
         self.action_type = "free_action" if action_name == "None" else action_type
@@ -410,7 +410,7 @@ class SpawnedWorkerSkillContext(Context):
             raise Exception("Agent selected a worker but no reference object exists in WorkerSpawnContext")
 
         # Update self with response
-        self.decision_in_progress[self.step[0]] = worker_skill # for next call to agent
+        self.decision_in_progress[str(self.step[0])] = worker_skill # for next call to agent
         self.answer = answer # for saving data
         self.selected_workers.append(self.references[worker_skill])
         self.step = (self.step[0] + 1, self.step[1])

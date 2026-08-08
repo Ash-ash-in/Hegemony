@@ -39,22 +39,5 @@ engine.flow(gamestate)
 ### Game ID
 config.game_id.save()
 
-### Decision Log
-from game.agents import decision_log
-import orjsonl
-
-# Read in old file
-try:
-    decisions = orjsonl.load(os.path.join("training","decisions.jsonl"))
-except:
-    decisions = []
-
-# Add new data from this session
-decisions.append(decision_log)
-
-# Save file
-orjsonl.save(os.path.join("training","decisions.jsonl"), decisions)
-
 
 ### End-Game Log
-print(decisions)
