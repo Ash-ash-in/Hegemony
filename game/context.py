@@ -9,85 +9,102 @@ This module pertains to every part of making a call to an agent
 - Summarising game for victory rewards and grouping sequences
 """
 import logging
-from typing import Any
 logger = logging.getLogger(__name__)
 
+from typing import Any
 from dataclasses import dataclass
 from game.states import GameState, Player
 from game.rules import ActionResult
 
+
 @dataclass
-class BasicMaskedState:
+class MaskedState:
     """
-    This is the masking process for all agents except the NN.
-    No concerns are taken over multicollinerarity.
-    Ease of representation is prioritised.
-    Raw values are submitted, nothing is normalised.
+    Masked representation of GameState.
+
+    The nested sections are dictionaries rather than nested dataclasses,
+    so asdict(MaskedState(...)) produces a normal nested dictionary.
     """
-    class _GameMetaData:
-        def __init__(self, gamestate: GameState) -> None:
-            self.player_count = gamestate.player_count,
-            self.round = gamestate.round,
-            self.phase = gamestate.phase,
-            self.turn = gamestate.turn,
-            self.player_turn = gamestate.active_player
 
-    class _BoardData:
-        def __init__(self, gamestate: GameState) -> None:
-            self.worker_pool = gamestate.worker_pool,
-            self.storages = gamestate.storages,
-            self.election_cubes = gamestate.election_cubes,
-            self.unemployed_workers = gamestate.unemployed_workers,
-            self.companies = gamestate.companies, # figure this out, may need to unpack
-            self.unions = gamestate.unions, # unpack too?
-            self.laws = gamestate.laws,
-            self.tariff_level = gamestate.tariff_level,
-            self.voting_area = gamestate.voting_area,
-            self.demonstration = gamestate.demonstration,
-            self.business_deals = gamestate.active_business_deals,
-            self.export_card = gamestate.active_export_card
-
-    class _PlayerData:
-        def __init__(self, gamestate: GameState) -> None:
-            for player in gamestate.players.values():
-                self.faction = player.faction,
-                self.victory_points = player.victory_points,
-                self.money = player.money,
-                self.loans = player.loans,
-                self.resources = player.resources,
-                self.influence = player.influence,
-                self.market = player.market
-                if player.faction in ("Working Class", "Middle Class"):
-                    self.population_track = player.population_track, # pyright: ignore[reportAttributeAccessIssue]
-                    self.population = player.population, # pyright: ignore[reportAttributeAccessIssue]
-                    self.prosperity = player.prosperity # pyright: ignore[reportAttributeAccessIssue]
-                if player.faction == "Working Class":
-                    self.strike_tokens = player.strike_tokens # pyright: ignore[reportAttributeAccessIssue]
-                else:
-                    self.storage = player.storage # pyright: ignore[reportAttributeAccessIssue]
-                if player.faction == "Middle Class":
-                    self.prosperity_track = player.prosperity_track # pyright: ignore[reportAttributeAccessIssue]
-                if player.faction in ("Middle Class", "Capitalists"):
-                    self.storages = player.storages # pyright: ignore[reportAttributeAccessIssue]
-                if player.faction == "Capitalists":
-                    self.revenue = player.revenue # pyright: ignore[reportAttributeAccessIssue]
-                    self.capital = player.capital # pyright: ignore[reportAttributeAccessIssue]
-                    self.free_trade_zone = player.free_trade_zone # pyright: ignore[reportAttributeAccessIssue]
-                    self.machinery_tokens = player.machinery_tokens # pyright: ignore[reportAttributeAccessIssue]
-                elif player.faction == "State" and gamestate.player_count == 4:
-                    self.legitimacy = player.legitimacy # pyright: ignore[reportAttributeAccessIssue]
-                    self.legitimacy_tokens = player.legitimacy_tokens # pyright: ignore[reportAttributeAccessIssue]
-    
-    class _Self:
-        def __init__(self, player: Player) -> None:
-            self.faction = player.faction
-            self.hand = player.hand
+    GameMetaData: dict[str, Any]
+    BoardData: dict[str, Any]
+    PlayerData: dict[str, Any]
+    Faction: dict[str, Any]
 
     def __init__(self, gamestate: GameState, player: Player) -> None:
-        self.GameMetaData = BasicMaskedState._GameMetaData(gamestate)
-        self.BoardData = BasicMaskedState._BoardData(gamestate)
-        self.PlayerData = BasicMaskedState._PlayerData(gamestate)
-        self.Faction = BasicMaskedState._Self(player)
+
+        self.GameMetaData = {
+            "player_count": gamestate.player_count,
+            "round": gamestate.round,
+            "phase": gamestate.phase,
+            "turn": gamestate.turn,
+            "player_turn": gamestate.active_player,
+        }
+
+        self.BoardData = {
+            "worker_pool": gamestate.worker_pool,
+            "storages": gamestate.storages,
+            "election_cubes": gamestate.election_cubes,
+            "unemployed_workers": gamestate.unemployed_workers,
+            "companies": gamestate.companies,
+            "unions": gamestate.unions,
+            "laws": gamestate.laws,
+            "tariff_level": gamestate.tariff_level,
+            "voting_area": gamestate.voting_area,
+            "demonstration": gamestate.demonstration,
+            "business_deals": gamestate.active_business_deals,
+            "export_card": gamestate.active_export_card,
+        }
+
+        # If you want one entry per player, use a dictionary keyed by
+        # whatever uniquely identifies the player.
+        self.PlayerData = {}
+
+        for player_id, player_data in gamestate.players.items():
+            data = {
+                "faction": player_data.faction,
+                "victory_points": player_data.victory_points,
+                "money": player_data.money,
+                "loans": player_data.loans,
+                "resources": player_data.resources,
+                "influence": player_data.influence,
+                "market": player_data.market,
+            }
+
+            if player_data.faction in ("Working Class", "Middle Class"):
+                data["population_track"] = player_data.population_track
+                data["population"] = player_data.population
+                data["prosperity"] = player_data.prosperity
+
+            if player_data.faction == "Working Class":
+                data["strike_tokens"] = player_data.strike_tokens
+            else:
+                data["storage"] = player_data.storage
+
+            if player_data.faction == "Middle Class":
+                data["prosperity_track"] = player_data.prosperity_track
+
+            if player_data.faction in ("Middle Class", "Capitalists"):
+                data["storages"] = player_data.storages
+
+            if player_data.faction == "Capitalists":
+                data["revenue"] = player_data.revenue
+                data["capital"] = player_data.capital
+                data["free_trade_zone"] = player_data.free_trade_zone
+                data["machinery_tokens"] = player_data.machinery_tokens
+
+            elif player_data.faction == "State" and gamestate.player_count == 4:
+                data["legitimacy"] = player_data.legitimacy
+                data["legitimacy_tokens"] = player_data.legitimacy_tokens
+
+            self.PlayerData[player_id] = data
+
+        self.Faction = {
+            "faction": player.faction,
+            "hand": player.hand,
+        }
+
+
         
 @dataclass
 class ContextCall:
@@ -113,7 +130,7 @@ class ContextCall:
     - It needs to detail what action is in progress, and the actions taken so far (which workers are moved so far)
     - If needs to detail the actual options for the agent to make (which worker to move, and where)
     """
-    masked_gamestate: BasicMaskedState
+    masked_gamestate: MaskedState
     seq: int
     game_id: str
     parent_seq: int
@@ -142,19 +159,21 @@ class AgentAnswer:
     log_prob: float | None
 
 
-
-@ dataclass
 class DecsionLogEntry:
 
-    # Context at Observation
-    call: ContextCall
+    def __init__(self, call: ContextCall, response: AgentAnswer, reward = None, outcome = None) -> None:
 
-    # Response at Observation
-    response: AgentAnswer
+        from dataclasses import asdict
+        # Context at Observation
+        self.call = asdict(call)
 
-    # Agent Evaluation
-    reward: None = None
-    game_outcome: None = None
+        # Response at Observation
+        self.response = asdict(response)
+
+        # Agent Evaluation
+        self.reward = reward
+        self.outcome = outcome
+
 
 @dataclass
 class GameSummary:
@@ -181,8 +200,8 @@ class Context:
             player: Player
         ):
         # Update State
-        from game.context import BasicMaskedState
-        self.masked_state = BasicMaskedState(gamestate, player)
+        from game.context import MaskedState
+        self.masked_state = MaskedState(gamestate, player)
         # Context Metadata
         self.seq = next(self.seq_gen)
         self.game_id = gamestate.game_id

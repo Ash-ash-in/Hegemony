@@ -108,6 +108,8 @@ The training of the model will be handled by training.py (not yet implimented), 
 - Finish Neural Net Training Data Pipeline
     - Decisions saving  both actions properly - DONE
     - Decisions appends to existing file - DONE
+    - Masked gamestate blank in decisions log
+    - Fixed length for gamestate attributes
     - End-game file
     - Post-processing script
         - Split per faction

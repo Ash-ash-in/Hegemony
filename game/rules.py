@@ -483,7 +483,7 @@ class _CompanyFound:
         logger.debug(changes[-1])
 
         # Update CompanySlot's workers list
-        worker_count = len(company.worker_requirements.keys())
+        worker_count = len(company.worker_requirements)
         for i in range(worker_count):
             slot.workers.append(None)
         logger.debug(f"{worker_count} empty worker slots founded in CompanySlot.workers")

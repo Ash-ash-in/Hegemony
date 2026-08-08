@@ -2,6 +2,7 @@ import logging
 logger = logging.getLogger(__name__)
 from dataclasses import dataclass, field
 
+@dataclass
 class CompanySlot:
     """
     The main element to interact with companies and workers.
@@ -13,19 +14,26 @@ class CompanySlot:
     The validation checks only maintain internal consistency and are a last resort, 
     real validity should take place at the rules layer
     """
+    from game.data.classes import Company, Worker
+    faction: str
+    company: Company | None
+    workers: list[Worker | None]
+    wage: int
+    bonus_active: bool
+    committed: bool
+    strike: bool
     
     def __init__(
                 self,
                 faction: str
             ):
-        from game.data.classes import Company, Worker
-        self.faction: str = faction # Name of faction owning the slot
-        self.company: Company | None = None
-        self.workers: list[Worker | None] = []
-        self.wage: int = 0
-        self.bonus_active: bool = False
-        self.committed: bool = False
-        self.strike: bool = False
+        self.faction = faction # Name of faction owning the slot
+        self.company = None
+        self.workers = []
+        self.wage = 0
+        self.bonus_active = False
+        self.committed = False
+        self.strike = False
 
     def __repr__(self) -> str:
         return f"Company: ({self.company}). Workers: {self.workers}"

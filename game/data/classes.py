@@ -1,11 +1,16 @@
 import logging
 logger = logging.getLogger(__name__)
 from dataclasses import dataclass
-
+from typing import Any 
 
 ## Economics
+@dataclass
 class Worker:
     """Immuatable information about a worker"""
+    faction: str
+    skill: str
+    id: str
+
     import itertools
     wc_gen = itertools.count()
     mc_gen = itertools.count()
@@ -65,22 +70,25 @@ class Union:
         self.occupant = None
         return
 
+@dataclass
 class Company:
     """Immutable information about a company"""
+    _name: str
+    _faction: str
+    _industry: str
+    _cost: int
+    _production: int
+    _production_bonus: int
+    _wages: dict[str, int] | None # eg. 'L1': 5
+    _worker_requirements: list[dict[str,str]] # eg. 1: {'faction': 'Working Class', 'skill': 'Luxury'}
+        
     import itertools
     id_gen = itertools.count()
 
     ### Init ###
     def __init__(
-            self,
-            name: str,
-            faction: str,
-            industry: str,
-            cost: int,
-            production: int,
-            production_bonus: int,
-            wages: dict[str, int] | None, # eg. 'L1': 5
-            worker_requirements: dict[int,dict[str,str]] # eg. 1: {'faction': 'Working Class', 'skill': 'Luxury'}
+            self,name,faction,industry,cost,production,
+            production_bonus,wages,worker_requirements
         ):
         self._name = name
         self._faction = faction
@@ -119,13 +127,17 @@ class Company:
     def wages(self) -> dict | None:
         return self._wages
     @property
-    def worker_requirements(self) -> dict:
+    def worker_requirements(self) -> list:
         return self._worker_requirements
     @property
     def id(self) -> str:
         return self._id
 
+@dataclass
 class Storage:
+    resource: str
+    size: int
+
     def __init__(self, resource: str):
         self.resource = resource
         if resource == 'Food':

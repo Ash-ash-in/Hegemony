@@ -104,14 +104,15 @@ class Engine:
         def hire_from_scratch(_companyslot, _faction) -> None:
             """Handy tool to spawn all workers for and staff a company"""
             logger.debug("Hiring 'from scratch'")
-            for slotname, ref in _companyslot.company.worker_requirements.items():
+            for i in range(len(_companyslot.company.worker_requirements)):
+                ref = _companyslot.company.worker_requirements[i]
                 if ref['skill'] == 'Any':
                     skill = 'Unskilled'
                 else:
                     skill = ref['skill']
                 rules._WorkerSpawn.resolve(gamestate, _faction, skill)
                 worker = gamestate.unemployed_workers[_faction.faction][-1]
-                rules._WorkerHire.resolve(gamestate, worker, _companyslot, slotname)
+                rules._WorkerHire.resolve(gamestate, worker, _companyslot, i)
             return
 
         ### Found  Capitalist Companies ###

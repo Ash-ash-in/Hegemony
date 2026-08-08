@@ -59,13 +59,13 @@ def build_company_decks() -> dict[str,tuple]:
             wages = {'L1': row['L1'], 'L2': row['L2'], 'L3': row['L3']}
         
         # Worker requirements
-        slots = {}
+        slots = []
         if not pd.isnull(row['Class1']):
-            slots[0] = {"faction":row['Class1'], "skill": row['Skill1']}
+            slots.append({"faction":row['Class1'], "skill": row['Skill1']})
         if not pd.isnull(row['Class2']):
-            slots[1] = {"faction":row['Class2'], "skill": row['Skill2']}
+            slots.append({"faction":row['Class2'], "skill": row['Skill2']})
         if not pd.isnull(row['Class3']):
-            slots[2] = {"faction":row['Class3'], "skill": row['Skill3']}    
+            slots.append({"faction":row['Class3'], "skill": row['Skill3']})  
         comp = Company(
             row['Name'], 
             row['Owner'], 

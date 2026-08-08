@@ -5,3 +5,5 @@ __pycache__/
 saves/
 game.log
 testing.log
+training/decisions.jsonl
+training/game_ids.csv

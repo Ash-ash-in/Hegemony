@@ -16,7 +16,7 @@ class Agent:
     If this agent is actually used, it will just pick the first option every time.
     """
     from game.states import GameState, Player
-    from game.context import ContextCall, AgentAnswer, BasicMaskedState
+    from game.context import ContextCall, AgentAnswer, MaskedState
     player: Player
     name = 'Template Agent'
 
@@ -68,20 +68,20 @@ class Agent:
         # To ease development, we will just return an empty answer for now
         return self.AgentAnswer({}, None, None)
 
-    def spawn_worker(self, masked_state: BasicMaskedState, options: dict) -> AgentAnswer:
+    def spawn_worker(self, masked_state: MaskedState, options: dict) -> AgentAnswer:
         """Used to decide which worker to spawn"""
         logger.debug("Agent's worker process called")
         from game.context import AgentAnswer
         answer = AgentAnswer({})
         return answer
 
-    def action(self, masked_state: BasicMaskedState, options: dict) -> AgentAnswer:
+    def action(self, masked_state: MaskedState, options: dict) -> AgentAnswer:
         logger.debug("Agent's action process called")
         from game.context import AgentAnswer
         answer = AgentAnswer({})
         return answer
     
-    def election(self, masked_state: BasicMaskedState, options: dict) -> AgentAnswer:
+    def election(self, masked_state: MaskedState, options: dict) -> AgentAnswer:
         logger.debug("Agent's election process called")
         from game.context import AgentAnswer
         answer = AgentAnswer({})
@@ -126,7 +126,7 @@ class RandomAgent(Agent):
         from dataclasses import asdict
         path = os.path.join("training", "decisions.jsonl")
         with open(path, "ab") as f:   # append in binary mode
-            f.write(orjson.dumps(asdict(DecsionLogEntry(call, response))))
+            f.write(orjson.dumps(DecsionLogEntry(call, response).__dict__))
             f.write(b"\n")
 
         return response
