@@ -17,13 +17,13 @@ def build_laws() -> dict:
     logger.debug("Building law refs")
     from game.data.classes import Law
     laws = {
-        1: Law(1, "Fiscal Policy", 3),
-        2: Law(2, "Labour Market", 2),
-        3: Law(3, "Taxation", 1),
-        4: Law(4, "Healthcare and Benefits", 2),
-        5: Law(5, "Education", 3),
-        6: Law(6, "Foreign Trade", 2),
-        7: Law(7, "Immigration", 2)
+        "Fiscal Policy": Law(1, "Fiscal Policy", 3),
+        "Labour Market": Law(2, "Labour Market", 2),
+        "Taxation": Law(3, "Taxation", 1),
+        "Healthcare and Benefits": Law(4, "Healthcare and Benefits", 2),
+        "Education": Law(5, "Education", 3),
+        "Foreign Trade": Law(6, "Foreign Trade", 2),
+        "Immigration": Law(7, "Immigration", 2)
     }
     return laws
 

@@ -103,9 +103,7 @@ class MaskedState:
             "faction": player.faction,
             "hand": player.hand,
         }
-
-
-        
+     
 @dataclass
 class ContextCall:
     """
@@ -157,7 +155,6 @@ class AgentAnswer:
     answer: dict[str, str]
     value_estimate: float | None
     log_prob: float | None
-
 
 class DecsionLogEntry:
 

@@ -607,7 +607,7 @@ class GameState:
         self.unions = deepcopy(refs.unions)
         # Laws / Elections
         self.laws: dict = deepcopy(refs.default_laws)
-        self.tariff_level: int = self.laws[6 - 1].position
+        self.tariff_level: int = self.laws["Foreign Trade"].position
         self.voting_area = deepcopy(refs.voting_area)
         self.voting_bag: dict = {player.faction: 0 for player in self.players.values()}
 
@@ -651,7 +651,7 @@ class GameState:
         and moves them to the back"""
         logger.debug("updating active business deals")
         self.active_business_deals = []
-        position = self.laws[6].position
+        position = self.laws["Foreign Trade"].position
         if position == 0:
             logger.debug("no business deal cards required")
         else:
