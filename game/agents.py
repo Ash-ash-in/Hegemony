@@ -3,9 +3,6 @@ logger = logging.getLogger(__name__)
 
 from dataclasses import dataclass
 
-# Setup Decision Log
-decision_log = []
-
 @dataclass
 class Agent:
     """
@@ -118,7 +115,9 @@ class RandomAgent(Agent):
         for request_type, options in call.available_choices.items():
             answer[request_type] = rand.choice(options)
 
+        # Final Output
         response = AgentAnswer(answer, None, None)
+        decision_log.append(DecsionLogEntry(call, response))
 
         # Save to Log
         import os
@@ -145,6 +144,7 @@ class RandomAgent(Agent):
         with open(path, "ab") as f:   # append in binary mode
             f.write(orjson.dumps(DecsionLogEntry(call, response).__dict__))
             f.write(b"\n")
+
 
         return response
 

@@ -6,10 +6,12 @@
 # -------------
 import logging
 import os
+
 try:
-    os.remove(os.path.join("logs", "game.log"))
+    os.remove(os.path.join("logs", "game.log")) # Do we really want to remove every time?
 except(FileNotFoundError):
     pass
+
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -38,6 +40,7 @@ engine.flow(gamestate)
 
 ### Game ID
 config.game_id.save()
+from training.postprocessing import decision_rewards
 
 
 ### End-Game Log

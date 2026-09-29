@@ -1,14 +1,18 @@
 import logging
 logger = logging.getLogger(__name__)
+from training.postprocessing import decision_log
+from game.states import GameState, Player, WorkingClass, MiddleClass, Capitalists, PlayerState, NPCState
+from game.agents import agent_refs
 from dataclasses import dataclass, field
 from game.data.classes import Config
+from game.data.references import faction_play_order, phases
+import game.rules as rules
+from game.context import ActionContext, MaskedState
 
 class Engine:
-    from game.states import GameState
-
+    
     def setup_gamestate(self, config: Config):
         logger.debug("Establishing gamestate in engine")
-        from game.states import GameState
 
         # Validity Checks
         if config.player_count < 2 or config.player_count > 4:
@@ -18,7 +22,6 @@ class Engine:
         
         # Setup Players
         logger.debug("Setting up players within gamestate setup")
-        from game.states import WorkingClass, MiddleClass, Capitalists, PlayerState, NPCState
         players = {}
         players["Working Class"] = WorkingClass()
         if config.player_count == 2:
@@ -31,7 +34,6 @@ class Engine:
         else:
             players["State"] = NPCState()
         
-
         # Setup GameState
         gamestate = GameState(
                 players,
@@ -48,8 +50,7 @@ class Engine:
         This modifies the engine and players in-place
         """
         logger.debug("Setting up agents")
-        from game.agents import agent_refs
-        from game.data.references import faction_play_order
+
         agent_references = {}
         for faction, agent_name in faction_agents.items():
             if faction not in faction_play_order:
@@ -77,7 +78,7 @@ class Engine:
         Only use this in a brand new game.
         """
         logger.debug('Called Engine.start_position')
-        import game.rules as rules
+        
 
         # Build player refs
         for name, cls in gamestate.players.items():
@@ -259,7 +260,7 @@ class Engine:
 
             # Middle Class first worker
             from game.context import SpawnedWorkerSkillContext
-            SpawnedWorkerSkillContext(gamestate, middle_class, "", 1)
+            SpawnedWorkerSkillContext(gamestate, middle_class, "", len(decision_log), 1)
             # Middle Class immigration cards
             rules.ImmigrationCardDraw.resolve(gamestate, middle_class)
             rules.ImmigrationCardDraw.resolve(gamestate, middle_class)
@@ -276,14 +277,13 @@ class Engine:
         All actions are mandatory.
         """
         logger.debug('Called Engine.preparation_phase')
-        from game.rules import _MoneyTransfer
 
         # Pay interest on loans
         logger.info("Paying interest on any loans")
         for player in gamestate.players.values():
             for i in range(player.loans):
-                assert _MoneyTransfer.check(player, None, 5, True).validity == True
-                _MoneyTransfer.resolve(player, None, 5, True)
+                assert rules._MoneyTransfer.check(player, None, 5, True).validity == True
+                rules._MoneyTransfer.resolve(player, None, 5, True)
 
         return gamestate
     
@@ -295,8 +295,6 @@ class Engine:
         WARNING: This modifies GameState's 'turn', 'active_player', and 'free_action_taken' in place. 
         WARNING: This replaces the GameState based on ~decisions taken~
         """
-        from game.context import ActionContext
-        from game.data.references import faction_play_order
         logger.debug('Called Engine.action_phase')
 
         ### Start the Action Phase ###
@@ -347,7 +345,6 @@ class Engine:
         WARNING: This modifies GameState's 'round' and 'phase' in place.
         """
         logger.debug('Called Engine.flow')
-        from game.data.references import phases
 
         for round in range(0,6):
             logger.info(f'Starting Round {round}')
@@ -380,4 +377,8 @@ class Engine:
                     logger.info(f"\n{'#'*20} SCORING PHASE {'#'*20}")
                     gamestate = self.scoring_phase(gamestate)
 
+        # Save final gamestate for reward post-processing
+        self.final_gamestate = MaskedState(gamestate, gamestate.players[gamestate.active_player])
+
+        # Final scoring
         gamestate = self.endgame_scoring(gamestate)

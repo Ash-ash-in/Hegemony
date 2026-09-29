@@ -113,7 +113,7 @@ The training of the model will be handled by training.py (not yet implimented), 
     - End-game file
     - Post-processing script
         - Split per faction
-        - Assign rewards
+        - Assign rewards - <<<STARTED - 
         - Backfill terminal reward
     - Short term rewards
     - Terminal rewards
@@ -124,6 +124,7 @@ The training of the model will be handled by training.py (not yet implimented), 
     - game.engine INFO log always records player money as 0 - DONE
     - NPC state has its own influence
     - Action phase is only recording one decision in output json - DONE
+    - Phase is always "Preparation" in decision log
 - Engine
     - Prep Phase
         - Political agenda cards
