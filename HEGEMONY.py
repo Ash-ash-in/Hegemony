@@ -40,7 +40,8 @@ engine.flow(gamestate)
 
 ### Game ID
 config.game_id.save()
-from training.postprocessing import decision_rewards
+from training.postprocessing import save_decision_log
+save_decision_log()
 
 
 ### End-Game Log

@@ -21,8 +21,6 @@ from dataclasses import dataclass
 from game.rules import FreeAction, MainAction, _WorkerSpawn
 from game.data.references import industries
 from game.states import GameState, Player
-from training.postprocessing import dense_score, d_chain, DecisionLogEntry
-
 
 @dataclass
 class MaskedState:
@@ -163,8 +161,8 @@ class AgentAnswer:
     Example: {"Worker": "WC1", "Slot": "Company3Slot2"}
     """
     answer: dict[str, str]
-    value_estimate: float | None
-    log_prob: float | None
+    value_estimate: float | None = None
+    log_prob: float | None = None
 
 @dataclass
 class GameSummary:
@@ -235,13 +233,11 @@ class ActionContext(Context):
     - Runs until turn is complete (recursive contexts inside 2 actions)
     """
 
-    def __init__(
-            self,
-            gamestate: GameState, 
-            player: Player
-        ):
+    def __init__(self, gamestate: GameState, player: Player):
         logger.debug('New ActionContext')
         global d_chain
+        from training.postprocessing import d_chain
+
         super().__init__(gamestate, player)
         self.decision_type = "choose_action"
         self.step = (1,2)
@@ -255,7 +251,7 @@ class ActionContext(Context):
             self._compile_options(gamestate, player)
             self._call(gamestate, player)
             self._execute(gamestate, player)
-            self._reward(d_chain, gamestate, player)
+            self._reward(gamestate, player)
             
     def _compile_options(self, gamestate: GameState, player: Player) -> None:
         """
@@ -337,10 +333,6 @@ class ActionContext(Context):
             if action_method is None:
                 raise Exception("Action not found in context references")
 
-        # Update decision chain
-        global d_chain
-        d_chain.append(DecisionLogEntry(call, answer))
-
         # Update self with response
         self.decision_in_progress[str(self.step[0])] = answer.answer["action"]
         self.call = call
@@ -379,7 +371,8 @@ class ActionContext(Context):
         - Clears the decision chain
         """
         logger.debug("Rewarding ActionContext decision")     
-        global d_chain  
+        global d_chain
+        from training.postprocessing import dense_score, d_chain 
 
         dense_score(d_chain, gamestate, player)
         d_chain = []
@@ -447,10 +440,6 @@ class SpawnedWorkerSkillContext(Context):
         logger.debug(f"Agent selected: {worker_skill}")
         if worker_skill not in self.references.keys():
             raise Exception("Agent selected a worker but no reference object exists in WorkerSpawnContext")
-
-        # Update decision chain
-        global d_chain
-        d_chain.append(DecisionLogEntry(call, answer))
 
         # Update self with response
         self.decision_in_progress[str(self.step[0])] = worker_skill # for next call to agent

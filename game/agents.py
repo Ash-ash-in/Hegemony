@@ -13,7 +13,6 @@ class Agent:
     If this agent is actually used, it will just pick the first option every time.
     """
     from game.states import GameState, Player
-    from game.context import ContextCall, AgentAnswer, MaskedState
     player: Player
     name = 'Template Agent'
 
@@ -31,7 +30,7 @@ class Agent:
                 possible[name] = (method, check)
         return possible
 
-    def call(self, call: ContextCall) -> AgentAnswer:
+    def call(self, call):
         """
         Determines the behaviour when the agent is called by the DecisionContext
         - Validates incoming calls
@@ -39,6 +38,11 @@ class Agent:
         - Appends the call and answer to the decision log
         """
         logger.debug(f"Call made to {self.name}")
+        from game.context import ContextCall, AgentAnswer
+        
+        # Check dtypes (done here to avoid circular imports)
+        if not isinstance(call, ContextCall):
+            raise Exception(TypeError)
 
         # Validation
         if call.faction != self.player.faction:
@@ -63,42 +67,60 @@ class Agent:
 
         # Normally you would forward the answer from the commented section above.
         # To ease development, we will just return an empty answer for now
-        return self.AgentAnswer({}, None, None)
+        return AgentAnswer({})
 
-    def spawn_worker(self, masked_state: MaskedState, options: dict) -> AgentAnswer:
+    def spawn_worker(self, masked_state, options: dict):
         """Used to decide which worker to spawn"""
         logger.debug("Agent's worker process called")
-        from game.context import AgentAnswer
+        from game.context import MaskedState, AgentAnswer
+    
+        # Check dtypes (done here to avoid circular imports)
+        if not isinstance(masked_state, MaskedState):
+            raise Exception(TypeError)
+
         answer = AgentAnswer({})
         return answer
 
-    def action(self, masked_state: MaskedState, options: dict) -> AgentAnswer:
+    def action(self, masked_state, options: dict):
         logger.debug("Agent's action process called")
-        from game.context import AgentAnswer
+        from game.context import MaskedState, AgentAnswer
+        
+        # Check dtypes (done here to avoid circular imports)
+        if not isinstance(masked_state, MaskedState):
+            raise Exception(TypeError)        
         answer = AgentAnswer({})
         return answer
     
-    def election(self, masked_state: MaskedState, options: dict) -> AgentAnswer:
+    def election(self, masked_state, options: dict):
         logger.debug("Agent's election process called")
-        from game.context import AgentAnswer
+        from game.context import MaskedState, AgentAnswer
+        
+        # Check dtypes (done here to avoid circular imports)
+        if not isinstance(masked_state, MaskedState):
+            raise Exception(TypeError)        
         answer = AgentAnswer({})
         return answer
 
 @dataclass
 class RandomAgent(Agent):
     from game.states import GameState
-    from game.context import ContextCall, AgentAnswer
     operator = 'Script'
     name = 'Randy Random'
 
-    def call(self, call: ContextCall) -> AgentAnswer:
+    def call(self, call):
         """
         Rather than triaging, Randy just loops through all options and picks one at random.
         The decision is still added to the log
         """
         logger.debug(f"Call made to {self.name}")
         import random as rand
-        from game.context import AgentAnswer, DecsionLogEntry
+        global d_chain
+        from training.postprocessing import DecisionLogEntry, d_chain
+        from game.context import ContextCall, AgentAnswer
+        
+        # Check dtypes (done here to avoid circular imports)
+        if not isinstance(call, ContextCall):
+            raise Exception(TypeError)    
 
         # Validation
         if call.faction != self.player.faction:
@@ -117,12 +139,12 @@ class RandomAgent(Agent):
 
         # Final Output
         response = AgentAnswer(answer, None, None)
-        decision_log.append(DecsionLogEntry(call, response))
+        d_chain.append(DecisionLogEntry(call, response))
 
-        # Save to Log
-        import os
-        import orjson
-        from dataclasses import asdict
+        # # Save to Log
+        # import os
+        # import orjson
+        # from dataclasses import asdict
 
         ### TEMP CODE TO FIX JSON KEYS BUG ###
         # print(DecsionLogEntry(call, response).__dict__)
@@ -140,11 +162,10 @@ class RandomAgent(Agent):
         # assert False
         ### TEMP CODE TO FIX JSON KEYS BUG ###
 
-        path = os.path.join("training", "decisions.jsonl")
-        with open(path, "ab") as f:   # append in binary mode
-            f.write(orjson.dumps(DecsionLogEntry(call, response).__dict__))
-            f.write(b"\n")
-
+        # path = os.path.join("training", "decisions.jsonl")
+        # with open(path, "ab") as f:   # append in binary mode
+        #     f.write(orjson.dumps(DecsionLogEntry(call, response).__dict__))
+        #     f.write(b"\n")
 
         return response
 
