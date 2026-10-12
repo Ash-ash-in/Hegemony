@@ -4,8 +4,8 @@ from training.postprocessing import decision_log
 from game.states import GameState, Player, WorkingClass, MiddleClass, Capitalists, PlayerState, NPCState
 from game.agents import agent_refs
 from dataclasses import dataclass, field
-from game.data.classes import Config
-from game.data.references import faction_play_order, phases
+from game.assets.classes import Config
+from game.assets.references import faction_play_order, phases
 import game.rules as rules
 from game.context import ActionContext, MaskedState
 

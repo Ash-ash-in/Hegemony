@@ -56,7 +56,7 @@ class _PointAssign:
         str             - failure reason if bool = False
         """
         logger.debug("PointAssign check called")
-        import game.data.references as refs
+        import game.assets.references as refs
         global player_count
 
         # Basic check flow
@@ -296,7 +296,7 @@ class _WorkerHire:
     Handles checks related to worker skill and class.
     """
     logger.debug("called WorkerHire class")
-    from game.data.classes import Company, Worker
+    from game.assets.classes import Company, Worker
     from game.states import CompanySlot
 
     @staticmethod
@@ -418,7 +418,7 @@ class _CompanyFound:
     but does not involve any exchange of money or assignment of workers.
     """
     from game.states import Player, GameState
-    from game.data.classes import Company
+    from game.assets.classes import Company
         
     @staticmethod
     def check(player: Player, gamestate: GameState, company: Company) -> CheckResponse:

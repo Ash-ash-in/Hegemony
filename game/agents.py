@@ -1,3 +1,19 @@
+"""
+game/agents.py
+
+    This file contains everything to do with Agent classes.
+
+Generic Process:
+- Extract options passed in the Context Call
+- Triage incoming calls, to decide which of its internal processes should handle it.
+- The internal process uses its decision logic to select an answer
+- The decision is appended to the log
+- The AgentAnswer is returned
+
+Hierarchy:
+    TCB
+"""
+
 import logging
 logger = logging.getLogger(__name__)
 

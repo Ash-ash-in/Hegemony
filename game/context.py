@@ -1,12 +1,20 @@
 """
+game/conext.py
+
+    This file SHOULD contain everything to do with creating snapshots of the game from a players perspective,
+    to provide that information to an agent and format it uniformly
+
+
+
+Hierarchy:
+    TBC
+"""
+"""
 This module pertains to every part of making a call to an agent
 - Masking the gamestate
 - Building the file format (Context) to send
 - Activating the agent's call function
 - Updating the Context with the response
-- Adding rewards?
-- Saving all communications for model training
-- Summarising game for victory rewards and grouping sequences
 """
 
 # Imports and Logging
@@ -19,7 +27,7 @@ import inspect
 from dataclasses import dataclass
 
 from game.rules import FreeAction, MainAction, _WorkerSpawn
-from game.data.references import industries
+from game.assets.references import industries
 from game.states import GameState, Player
 
 @dataclass

@@ -101,7 +101,7 @@ class Company:
         self._id = "company_"+str(next(self.id_gen))
 
     def __repr__(self) -> str:
-        from game.data.references import industries
+        from game.assets.references import industries
         return f"{self.name}: {self.faction} company with {len(self.worker_requirements)} worker slots. Produces {self.production} {industries[self.industry]}"
 
     ### Attributes ###
@@ -209,8 +209,8 @@ class Config:
             # Read in previously used IDs
             import os
             import pandas as pd
-            if os.path.exists(os.path.join("training", "game_ids.csv")):
-                ids = pd.read_csv(os.path.join("training", "game_ids.csv"))
+            if os.path.exists(os.path.join("training", "data", "game_ids.csv")):
+                ids = pd.read_csv(os.path.join("training", "data", "game_ids.csv"))
             else:
                 ids = pd.DataFrame(columns=["game_id", "expansion", "player_count", "iterator"])
 
@@ -257,7 +257,7 @@ class Config:
 
             # Append new ID
             ids = pd.concat([ids, pd.DataFrame([id_append])], axis=0, ignore_index=True)
-            ids.to_csv(os.path.join("training", "game_ids.csv"), index=False)
+            ids.to_csv(os.path.join("training", "data", "game_ids.csv"), index=False)
 
 
     def __init__(self, config: dict):

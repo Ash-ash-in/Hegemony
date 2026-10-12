@@ -9,7 +9,7 @@ class Player():
 
     It is stored in the Gamestate
     """
-    from game.data.classes import Company
+    from game.assets.classes import Company
     ### Init ### 
     def __init__(
             self,

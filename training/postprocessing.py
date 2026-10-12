@@ -89,7 +89,7 @@ def save_decision_log():
     # assert False
     ## TEMP CODE TO FIX JSON KEYS BUG ###
 
-    path = os.path.join("training", "decisions.jsonl")
+    path = os.path.join("training", "data", "decisions.jsonl")
     with open(path, "ab") as f:   # append in binary mode
         for d in decision_log:
             f.write(orjson.dumps(d.__dict__))

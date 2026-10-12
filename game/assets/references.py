@@ -4,10 +4,10 @@ from dataclasses import dataclass, field
 
 # ----------- Functions ------------ #
 # Core Mechanics (Mutable)
-from game.data.classes import Union
+from game.assets.classes import Union
 def build_unions() -> dict[str,Union]:
     logger.debug("Building unions")
-    from game.data.classes import Union
+    from game.assets.classes import Union
     unions = {}
     for ind in industries:
         unions[ind] = Union(ind, None)
@@ -15,7 +15,7 @@ def build_unions() -> dict[str,Union]:
 
 def build_laws() -> dict:
     logger.debug("Building law refs")
-    from game.data.classes import Law
+    from game.assets.classes import Law
     laws = {
         "Fiscal Policy": Law(1, "Fiscal Policy", 3),
         "Labour Market": Law(2, "Labour Market", 2),
@@ -28,7 +28,7 @@ def build_laws() -> dict:
     return laws
 
 def build_voting_area():
-    from game.data.classes import Election
+    from game.assets.classes import Election
     return Election({},{})
 
 # Card Decks and Pools (Immutable)
@@ -41,7 +41,7 @@ def build_company_decks() -> dict[str,tuple]:
     """
     import pandas as pd
     import os
-    from game.data.classes import Company
+    from game.assets.classes import Company
     logger.debug("Reading in companies")
     root = os.getcwd()
     comp_df = pd.read_csv(os.path.join(root, "game", "data", "companies.csv"))
@@ -97,7 +97,7 @@ def build_company_decks() -> dict[str,tuple]:
 
 def build_worker_pool() -> dict[str,tuple]:
     logger.debug("Building worker pool")
-    from game.data.classes import Worker
+    from game.assets.classes import Worker
     WC = []
     MC = []
 
@@ -143,7 +143,7 @@ def build_worker_pool() -> dict[str,tuple]:
 
 def build_immigration_cards() -> tuple:
     logger.debug("Building immigration card deck")
-    from game.data.classes import ImmigrationCard
+    from game.assets.classes import ImmigrationCard
     immigration_cards = []
     for industry in industries:
         for i in range(3):
@@ -163,7 +163,7 @@ def build_immigration_cards() -> tuple:
 
 def build_export_cards() -> tuple:
     logger.debug("Building export card deck")
-    from game.data.classes import ExportCard
+    from game.assets.classes import ExportCard
     export_cards = []
     
     # Temporary function
@@ -186,7 +186,7 @@ def build_export_cards() -> tuple:
 
 def build_political_agenda_cards() -> tuple:
     logger.debug("Building political agenda card deck")
-    from game.data.classes import PoliticalAgendaCard
+    from game.assets.classes import PoliticalAgendaCard
     cards = []
 
     # Temporary Process
@@ -205,7 +205,7 @@ def build_political_agenda_cards() -> tuple:
 
 def build_business_deal_cards() -> tuple:
     logger.debug("Building business card deal cards")
-    from game.data.classes import BusinessDealCard
+    from game.assets.classes import BusinessDealCard
     cards = []
 
     # Temporary function

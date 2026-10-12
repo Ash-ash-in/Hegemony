@@ -14,7 +14,7 @@ class CompanySlot:
     The validation checks only maintain internal consistency and are a last resort, 
     real validity should take place at the rules layer
     """
-    from game.data.classes import Company, Worker
+    from game.assets.classes import Company, Worker
     faction: str
     company: Company | None
     workers: list[Worker | None]
@@ -69,7 +69,7 @@ class Player():
 
     It is stored in the Gamestate
     """
-    from game.data.classes import Company
+    from game.assets.classes import Company
     ### Init ### 
     def __init__(
             self,
@@ -349,7 +349,7 @@ class MiddleClass(Player):
     
     def _add_storage(self, type):
         logger.debug("Called MiddleClass _add_storage")
-        from game.data.classes import Storage
+        from game.assets.classes import Storage
         storage = Storage(type)
         self._storage[type] += storage.size
         self._storages += 1
@@ -359,7 +359,7 @@ class MiddleClass(Player):
         logger.debug("Called MiddleClass _remove_storage")
         if self._storages <= 0:
             raise Exception("Attempted to remove storage, but none were found")
-        from game.data.classes import Storage
+        from game.assets.classes import Storage
         storage = Storage(type)
         self._storage[type] -= storage.size
         self._storages -= 1
@@ -429,7 +429,7 @@ class Capitalists(Player):
 
     def _add_storage(self, type):
         logger.debug("Called Capitalists _add_storage")
-        from game.data.classes import Storage
+        from game.assets.classes import Storage
         storage = Storage(type)
         self._storage[type] += storage.size
         self._storages += 1
@@ -439,7 +439,7 @@ class Capitalists(Player):
         logger.debug("Called Capitalists _remove_storage")
         if self._storages <= 0:
             raise Exception("Attempted to remove storage, but none were found")
-        from game.data.classes import Storage
+        from game.assets.classes import Storage
         storage = Storage(type)
         self._storage[type] -= storage.size
         self._storages -= 1
@@ -562,7 +562,7 @@ class GameState:
         These frameworks may be empty and should be set up later, to aid implementation of expansion packs
         """
         logger.debug("Instantiating gamestate")
-        import game.data.references as refs
+        import game.assets.references as refs
         import random as rand
         from copy import copy, deepcopy
         self.player_count = player_count

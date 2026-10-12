@@ -13,7 +13,7 @@ class ActionContext:
     logger.debug('Called ActionContext')
     from game.old_game.old_factions import Player
     from game.old_game.old_agents import Agent, AgentAnswer
-    from game.data.classes import GameState
+    from game.assets.classes import GameState
 
     @staticmethod
     def compile_options(player: Player, allowed_free: bool, allowed_main: bool) -> dict:
@@ -74,7 +74,7 @@ class ActionContext:
 
 @dataclass
 class SimpleContext:
-    from game.data.classes import GameState
+    from game.assets.classes import GameState
     from game.old_game.old_factions import Player
     from game.old_game.old_agents import Agent, AgentAnswer
 
@@ -85,7 +85,7 @@ class SimpleContext:
         Checks the worker pool for a players available skills, and sends it to the agent
         """
         logger.debug("Engine.Call.worker_call called")
-        from game.data.classes import industries
+        from game.assets.classes import industries
         from game.old_game.old_rules import CheckResponse
         from game.old_game.old_agents import ContextCall
 

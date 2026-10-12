@@ -5,7 +5,7 @@ logger.debug("Importing rules.rules module")
 from dataclasses import dataclass
 from enum import Enum, auto
 from game.old_game.old_factions import Player, WorkingClass, MiddleClass
-from game.data.classes import GameState
+from game.assets.classes import GameState
 
 ######################### Utilities #######################################
 class Outcome(Enum):
@@ -61,7 +61,7 @@ class CompanyFound:
     """
     logger.debug("called CompanyFound class")
     from game.old_game.old_factions import Player
-    from game.data.classes import GameState, Company
+    from game.assets.classes import GameState, Company
 
     @staticmethod
     def check(player: Player, gamestate: GameState, comp: Company) -> CheckResponse:
@@ -123,7 +123,7 @@ class WorkerHire:
     Handles checks related to worker skill and class.
     """
     logger.debug("called WorkerHire class")
-    from game.data.classes import GameState, Company, Worker
+    from game.assets.classes import GameState, Company, Worker
 
     @staticmethod
     def check(gamestate: GameState, worker: Worker, target_company: Company, target_slot: int) -> CheckResponse:
@@ -194,7 +194,7 @@ class WorkerSpawn:
     """
     logger.debug("called WorkerSpawn class")
     from game.old_game.old_factions import WorkingClass, MiddleClass
-    from game.data.classes import GameState
+    from game.assets.classes import GameState
 
     @staticmethod
     def check(gamestate: GameState, player: WorkingClass | MiddleClass, skill: str):
