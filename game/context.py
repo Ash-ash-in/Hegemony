@@ -1,15 +1,26 @@
 """
-game/conext.py
+# game/context.py
 
-    This file SHOULD contain everything to do with creating snapshots of the game from a players perspective,
-    to provide that information to an agent and format it uniformly
+This file SHOULD contain everything to do with controlling the steps of a decision process. 
+Including: 
+- Creating snapshots of the game from a players perspective 
+- Determining available options to a player
+- Providing that information to an agent in a uniform format
+- Passing parent_seq values around to maintain records of a chain
+- Creating new seq values
 
-
-
-Hierarchy:
-    TBC
+## Hierarchy
+Sits above:
+- messages.py
+Sit alongside (no interaction):
+- agents.py
+- rules.py
+Sits below:
+- engine.py
+- HEGEMONY.py
 """
 """
+OLD DESC
 This module pertains to every part of making a call to an agent
 - Masking the gamestate
 - Building the file format (Context) to send
@@ -28,207 +39,140 @@ from dataclasses import dataclass
 
 from game.rules import FreeAction, MainAction, _WorkerSpawn
 from game.assets.references import industries
+from game.assets.messages import MaskedState, ContextCall
 from game.states import GameState, Player
 
-@dataclass
-class MaskedState:
+
+class BaseContext:
     """
-    Masked representation of GameState.
+    Parent Class for Context objects, it cannot be called directly.
 
-    The nested sections are dictionaries rather than nested dataclasses,
-    so asdict(MaskedState(...)) produces a normal nested dictionary.
+    - Establishes the basic structure of a context
+    - Stores the seq generator
+    - Masks gamestate from the players perspective
+    - Compiles options for the player (unique per Context class)
     """
-
-    GameMetaData: dict[str, Any]
-    BoardData: dict[str, Any]
-    PlayerData: dict[str, Any]
-    Faction: dict[str, Any]
-
-    def __init__(self, gamestate: GameState, player: Player) -> None:
-
-        self.GameMetaData = {
-            "player_count": gamestate.player_count,
-            "round": gamestate.round,
-            "phase": gamestate.phase,
-            "turn": gamestate.turn,
-            "player_turn": gamestate.active_player,
-        }
-
-        self.BoardData = {
-            "worker_pool": gamestate.worker_pool,
-            "storages": gamestate.storages,
-            "election_cubes": gamestate.election_cubes,
-            "unemployed_workers": gamestate.unemployed_workers,
-            "companies": gamestate.companies,
-            "unions": gamestate.unions,
-            "laws": gamestate.laws,
-            "tariff_level": gamestate.tariff_level,
-            "voting_area": gamestate.voting_area,
-            "demonstration": gamestate.demonstration,
-            "business_deals": gamestate.active_business_deals,
-            "export_card": gamestate.active_export_card,
-        }
-
-        # If you want one entry per player, use a dictionary keyed by
-        # whatever uniquely identifies the player.
-        self.PlayerData = {}
-
-        for player_id, player_data in gamestate.players.items():
-            data = {
-                "faction": player_data.faction,
-                "victory_points": player_data.victory_points,
-                "money": player_data.money,
-                "loans": player_data.loans,
-                "resources": player_data.resources,
-                "influence": player_data.influence,
-                "market": player_data.market,
-            }
-
-            if player_data.faction in ("Working Class", "Middle Class"):
-                data["population_track"] = player_data.population_track
-                data["population"] = player_data.population
-                data["prosperity"] = player_data.prosperity
-
-            if player_data.faction == "Working Class":
-                data["strike_tokens"] = player_data.strike_tokens
-            else:
-                data["storage"] = player_data.storage
-
-            if player_data.faction == "Middle Class":
-                data["prosperity_track"] = player_data.prosperity_track
-
-            if player_data.faction in ("Middle Class", "Capitalists"):
-                data["storages"] = player_data.storages
-
-            if player_data.faction == "Capitalists":
-                data["revenue"] = player_data.revenue
-                data["capital"] = player_data.capital
-                data["free_trade_zone"] = player_data.free_trade_zone
-                data["machinery_tokens"] = player_data.machinery_tokens
-
-            elif player_data.faction == "State" and gamestate.player_count == 4:
-                data["legitimacy"] = player_data.legitimacy
-                data["legitimacy_tokens"] = player_data.legitimacy_tokens
-
-            self.PlayerData[player_id] = data
-
-        self.Faction = {
-            "faction": player.faction,
-            "hand": player.hand,
-        }
-     
-@dataclass
-class ContextCall:
-    """
-    # ContextCall
-    This class contains the infomation that is sent to an agent.
-    This is the uniform call class that must be sent.
-    Forcing all types on contexts to use the same call class ensures uniformity
-
-    ### Game information
-    - Meta information about the game itself
-    - It must contain all necessary masked data (player hands, card decks etc.)
-    - If must be perosonalised for the agent's faction
-    - It should only contain the bare minimum representation of that data (eg. a law will be "6B")
-    - It must contain "temporal" data of what stage of the game this is from
-
-    ### Decision information
-    - It needs to state what level of decision this is (primary, sub)
-        - Assign Workers is primary
-        - Each movement is a sub
-    - It needs a unique ID for the request
-    - It needs a parent ID for the main request, to keep subs grouped together
-    - It needs to detail what action is in progress, and the actions taken so far (which workers are moved so far)
-    - If needs to detail the actual options for the agent to make (which worker to move, and where)
-    """
-    gamestate: MaskedState
-    seq: int
-    game_id: str
-    parent_seq: int
-    faction: str
-    agent_type: str
-    decision_in_progress: dict
-    decision_type: str
-    step: tuple
-    parent_name: str
-    available_choices: dict
-
-@dataclass
-class AgentAnswer:
-    """
-    # Agent Answer
-    Contains:
-    - the response for the agent
-    - the value_estimate of the critic (none if not NN)
-    - the log_prob of the critic (none if not NN)
-
-    The "answer" should be a simple dict that can be understood by the requester that made the call. 
-    Dictionary values must be strings, so that the NN can read them. 
-    This means objects and methods can't be passed directly - those should be held in the context object and returned to the engine from there.
-
-    Example: {"Worker": "WC1", "Slot": "Company3Slot2"}
-    """
-    answer: dict[str, str]
-    value_estimate: float | None = None
-    log_prob: float | None = None
-
-@dataclass
-class GameSummary:
-
-    game_id: str
-    winner: str
-    scores: dict[str,int]
-    total_decisions: int
-
-class Context:
-    """
-    Parent Class for all Context types.
-    Child classes must compose all data for a ContextCall
-    
-    Ingests the least amount of variables, so that they can be parsed downstream
-    
-    Action and Election contexts also assign dense rewards. 
-    All other contexts have their rewards backfilled during postprocessing.
-    """
-    
     seq_gen = itertools.count()
+
+    def __new__(cls, *args, **kwargs):
+        """Prevents incorrect instantiation"""
+        if cls is BaseContext:
+            raise TypeError("BaseContext cannot be instantiated directly.")
+    
     def __init__(
             self,
             gamestate: GameState, 
-            player: Player
+            player: Player,
+            agent,
+            step_max: int,
+            parent: int | None = None,
+            parent_name: str | None = None
         ):
-        # Update State
-        self.masked_state = MaskedState(gamestate, player)
-        # Context Metadata
+        """Sets up the core components without masking or compiling options"""
         self.seq = next(self.seq_gen)
         self.game_id = gamestate.game_id
-        self.parent_seq = self.seq
+        self.parent_seq = parent if parent else self.seq
         self.faction = player.faction
-        self.agent_type = player.agent.name # type: ignore
-        self.decision_in_progress = {}
+        self.agent_type = agent.name
+        self.decision_in_progress = {} # Used for multi-step decisions like assign workers
         self.decision_type = ""
-        self.step = (0,0)
-        self.parent_name = ""
+        self.step = (
+            0 if step_max == 0 else 1,
+            step_max
+        )
+        self.parent_name = parent_name if parent_name else ""
         self.available_choices = {}
-        # Context internal attributes (not included in ContextCall)
-        self.references = {} # Objects and methods for easy selection
+        self.references = {}
 
-        # Context Lifecycle
-        # while self.step[0] < self.step[1]:
-        #     self._compile_options(gamestate, player)
-        #     self._call(gamestate, player)
-        #     self._execute(gamestate, player)
-
-    def _compile_options(self, gamestate: GameState, player: Player) -> None:
+    def compile_options(self, gamestate, player) -> tuple[dict[str, list], dict]:
         raise Exception("Parent compile_options method called")
-        
-    def _call(self, gamestate: GameState, player: Player) -> None:
-        raise Exception("Parent call method called")
-    
-    def _execute(self, gamestate: GameState, player: Player) -> None:
-        raise Exception("Parent execute method called")
 
-class ActionContext(Context):
+    def mask_state(self, gamestate, player) -> MaskedState:
+        return MaskedState(gamestate, player)
+
+    def build_call(self, gamestate, player) -> ContextCall:
+        if self.decision_type == "":
+            raise TypeError("decision_type not set, cannot build call")
+        self.masked_state = self.mask_state(gamestate, player)
+        self.options = self.compile_options(gamestate, player)
+
+        call = ContextCall(
+            self.masked_state, self.seq, self.game_id, self.parent_seq,
+            self.faction, self.agent_type, self.decision_in_progress,
+            self.decision_type, self.step, self.parent_name,
+            self.options
+        )
+        return call
+
+    def update_decision_in_progress(self, decision: dict) -> None:
+        """Updates decision in progress for multi-step decisions"""
+        self.decision_in_progress.update(decision)
+        return
+
+    def next_step(self) -> None:
+        assert self.step[0] != self.step[-1]
+        self.step = (self.step[0] + 1, self.step[-1])
+        return
+
+
+class ActionContext(BaseContext):
+    def __init__(self, gamestate, player, agent) -> None:
+        # Set up a context with 2 steps and no parent
+        super().__init__(gamestate, player, agent, 2)
+        self.decision_type = 'choose_action'
+
+    def compile_options(self, gamestate: GameState, player: Player) -> tuple[dict[str, list], dict]:
+        """
+        Takes the list of attributes from the Action classes. 
+        Looks for a 'check' method (which all actions should have). 
+        Runs the check and records the result. 
+        Classes with a valid check are appended to self.available_choices.
+        """
+
+        self.available_choices["action"] = []
+
+        # Determine what actions have already been taken
+        if len(self.decision_in_progress.keys()) > 0:
+            if self.decision_in_progress[str(self.step[0] - 1)] in self.references["free_action"]:
+                allowed_free = False
+                allowed_main = True
+            else:
+                allowed_free = True
+                allowed_main = False
+        else:
+            allowed_free = True
+            allowed_main = True
+
+        # Compile free actions from rules
+        if allowed_free:
+            self.references["free_action"] = {}
+            for name, clsmthd in inspect.getmembers(FreeAction, inspect.isclass):
+                if hasattr(clsmthd, "check"):
+                    if clsmthd.check(gamestate, player).validity:
+                        self.references["free_action"][name] = clsmthd
+                        self.available_choices["action"].append(name)
+
+            # Create a default option if only free action is available
+            if not allowed_main:
+                self.references["free_action"]['None'] = None
+                self.available_choices["action"].append("None")
+
+        # Compile main actions from rules
+        if allowed_main:
+            self.references["main_action"] = {}
+            for name, clsmthd in inspect.getmembers(MainAction, inspect.isclass):
+                if hasattr(clsmthd, "check"):
+                    if clsmthd.check(gamestate, player).validity:
+                        self.references["main_action"][name] = clsmthd
+                        self.available_choices["action"].append(name)
+
+        logger.debug(f'Compiled ActionContext options for {player.faction}')
+        return self.available_choices, self.references
+
+
+
+
+class __ActionContext(Context):
     """
     ActionContext is one of two primary decisions taken. 
     All other context windows cascade from here until a full move is made.
@@ -256,7 +200,7 @@ class ActionContext(Context):
             if len(d_chain) != 0:
                 logger.warning("Decision chain is not empty at start of ActionContext run")
             d_chain = []
-            self._compile_options(gamestate, player)
+            self.compile_options(gamestate, player)
             self._call(gamestate, player)
             self._execute(gamestate, player)
             self._reward(gamestate, player)

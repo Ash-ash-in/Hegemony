@@ -1,23 +1,31 @@
 """
-game/agents.py
+# game/agents.py
 
     This file contains everything to do with Agent classes.
 
-Generic Process:
+## Generic Process
 - Extract options passed in the Context Call
 - Triage incoming calls, to decide which of its internal processes should handle it.
 - The internal process uses its decision logic to select an answer
 - The decision is appended to the log
 - The AgentAnswer is returned
 
-Hierarchy:
-    TCB
+## Hierarchy
+Sits above:
+- messages.py
+Sit alongside (no interaction):
+- context.py
+- rules.py
+Sits below:
+- engine.py
+- HEGEMONY.py
 """
 
 import logging
 logger = logging.getLogger(__name__)
 
 from dataclasses import dataclass
+import assets.messages as m
 
 @dataclass
 class Agent:
@@ -54,10 +62,9 @@ class Agent:
         - Appends the call and answer to the decision log
         """
         logger.debug(f"Call made to {self.name}")
-        from game.context import ContextCall, AgentAnswer
-        
+
         # Check dtypes (done here to avoid circular imports)
-        if not isinstance(call, ContextCall):
+        if not isinstance(call, m.ContextCall):
             raise Exception(TypeError)
 
         # Validation
@@ -83,38 +90,35 @@ class Agent:
 
         # Normally you would forward the answer from the commented section above.
         # To ease development, we will just return an empty answer for now
-        return AgentAnswer({})
+        return m.AgentAnswer({})
 
     def spawn_worker(self, masked_state, options: dict):
         """Used to decide which worker to spawn"""
         logger.debug("Agent's worker process called")
-        from game.context import MaskedState, AgentAnswer
     
         # Check dtypes (done here to avoid circular imports)
-        if not isinstance(masked_state, MaskedState):
+        if not isinstance(masked_state, m.MaskedState):
             raise Exception(TypeError)
 
-        answer = AgentAnswer({})
+        answer = m.AgentAnswer({})
         return answer
 
     def action(self, masked_state, options: dict):
         logger.debug("Agent's action process called")
-        from game.context import MaskedState, AgentAnswer
         
         # Check dtypes (done here to avoid circular imports)
-        if not isinstance(masked_state, MaskedState):
+        if not isinstance(masked_state, m.MaskedState):
             raise Exception(TypeError)        
-        answer = AgentAnswer({})
+        answer = m.AgentAnswer({})
         return answer
     
     def election(self, masked_state, options: dict):
         logger.debug("Agent's election process called")
-        from game.context import MaskedState, AgentAnswer
         
         # Check dtypes (done here to avoid circular imports)
-        if not isinstance(masked_state, MaskedState):
+        if not isinstance(masked_state, m.MaskedState):
             raise Exception(TypeError)        
-        answer = AgentAnswer({})
+        answer = m.AgentAnswer({})
         return answer
 
 @dataclass
@@ -132,10 +136,9 @@ class RandomAgent(Agent):
         import random as rand
         global d_chain
         from training.postprocessing import DecisionLogEntry, d_chain
-        from game.context import ContextCall, AgentAnswer
         
         # Check dtypes (done here to avoid circular imports)
-        if not isinstance(call, ContextCall):
+        if not isinstance(call, m.ContextCall):
             raise Exception(TypeError)    
 
         # Validation
@@ -154,7 +157,7 @@ class RandomAgent(Agent):
             answer[request_type] = rand.choice(options)
 
         # Final Output
-        response = AgentAnswer(answer, None, None)
+        response = m.AgentAnswer(answer, None, None)
         d_chain.append(DecisionLogEntry(call, response))
 
         # # Save to Log

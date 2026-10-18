@@ -1,32 +1,12 @@
 import logging
 logger = logging.getLogger(__name__)
 
-from game.context import ContextCall, AgentAnswer, GameState, Player
-
-# Setup Decision Log
-decision_log = []
-d_chain = []
-
-class DecisionLogEntry:
-    """Controls formatting for saving the outcome of decisions."""
-
-    def __init__(self, call: ContextCall, response: AgentAnswer, 
-                 reward = 0) -> None:
-
-        from dataclasses import asdict
-        # Context at Observation
-        self.call = asdict(call)
-        # Response at Observation
-        self.response = asdict(response)
-        # Agent Evaluation
-        self.reward = reward # Rewards should only be handled in post-processing
-
-    def assign_reward(self, value: int) -> None:
-        self.reward = value
+from game.states import GameState, Player
+from game.assets.messages import DecisionLogEntry
 
     
-def dense_score(chain: list[DecisionLogEntry], 
-                new_state: GameState, player: Player) -> None:
+def score_decision(chain: list[DecisionLogEntry], 
+                new_state: GameState, player: Player) -> list[DecisionLogEntry]:
     """Calculates reward for a decision chain, and appends it to the log"""
 
     # Read in key variables to compare
@@ -60,37 +40,15 @@ def dense_score(chain: list[DecisionLogEntry],
     # Modify the last record in the chain to assign reward
     chain[-1].assign_reward(reward)
 
-    # Add the chain to the decision log and clear
-    global decision_log, d_chain
-    decision_log += d_chain
-    d_chain = []
+    return chain
 
-    return
-
-def save_decision_log():
+def save_decision_log(decision_chain):
     # Save to Log
     import os
     import orjson
-    from dataclasses import asdict
-
-    ## TEMP CODE TO FIX JSON KEYS BUG ###
-    # print(DecsionLogEntry(call, response).__dict__)
-    # def check_keys(obj, path="root"):
-    #     if isinstance(obj, dict):
-    #         for k, v in obj.items():
-    #             if not isinstance(k, str):
-    #                 print(f"Non-string key at {path}: {k!r} ({type(k).__name__})")
-    #             check_keys(v, f"{path}[{k!r}]")
-    #     elif isinstance(obj, list):
-    #         for i, v in enumerate(obj):
-    #             check_keys(v, f"{path}[{i}]")
-
-    # check_keys(DecsionLogEntry(call, response).__dict__)
-    # assert False
-    ## TEMP CODE TO FIX JSON KEYS BUG ###
 
     path = os.path.join("training", "data", "decisions.jsonl")
     with open(path, "ab") as f:   # append in binary mode
-        for d in decision_log:
+        for d in decision_chain:
             f.write(orjson.dumps(d.__dict__))
             f.write(b"\n")
