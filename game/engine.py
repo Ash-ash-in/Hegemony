@@ -1,6 +1,5 @@
 import logging
 logger = logging.getLogger(__name__)
-from training.postprocessing import decision_log
 from game.states import GameState, Player, WorkingClass, MiddleClass, Capitalists, PlayerState, NPCState
 from game.agents import agent_refs
 from dataclasses import dataclass, field
@@ -9,65 +8,64 @@ from game.assets.references import faction_play_order, phases
 import game.rules as rules
 from game.context import ActionContext, MaskedState
 
+# ----- Setup Functions ----- #
+def setup_players(player_count: int) -> dict[str, Player]:
+    if player_count < 2 or player_count > 4:
+        raise Exception('player count must be between 2 and 4')
+    
+    players = {}
+    players["Working Class"] = WorkingClass()
+    if player_count == 2:
+        players["Capitalists"] = Capitalists()
+    else:
+        players["Middle Class"] = MiddleClass()
+        players['Capitalists'] = Capitalists()
+    if player_count == 4:
+        players["State"] = PlayerState()
+    else:
+        players["State"] = NPCState()
+    return players
+
+
+def setup_gamestate(player_count: int, game_id: str) -> GameState:
+    # Setup Players
+    logger.debug("Setting up players within gamestate setup")
+    players = setup_players(player_count)
+    # Setup GameState
+    gamestate = GameState(
+            players,
+            player_count,
+            game_id
+        )
+    return gamestate
+
+
+def setup_agents(faction_agents: dict, gamestate: GameState) -> dict:
+    """
+    Creates the agent instances according to those defined in the dictionary passed.
+    Agents can be found in the engine, or in the player objects
+    This modifies the engine and players in-place
+    """
+    agent_references = {}
+    for faction, agent_name in faction_agents.items():
+        if faction not in faction_play_order:
+            raise Exception(f"{faction} not recognised")
+        if agent_name not in agent_refs.keys():
+            raise Exception(f"{agent_name} not recognised")
+        faction_instance = gamestate.players[faction]
+        agent_references[faction] = agent_refs[agent_name](faction_instance)
+        faction_instance.agent = agent_references[faction]
+    return agent_references
+
+# ----- Engine Class ----- #
 class Engine:
-    
-    def setup_gamestate(self, config: Config):
-        logger.debug("Establishing gamestate in engine")
-
-        # Validity Checks
-        if config.player_count < 2 or config.player_count > 4:
-            raise Exception('player count must be between 2 and 4')
-        if config.player_count != len(config.agents.keys()):
-            raise Exception("player_count and agents mismatch")
-        
-        # Setup Players
-        logger.debug("Setting up players within gamestate setup")
-        players = {}
-        players["Working Class"] = WorkingClass()
-        if config.player_count == 2:
-            players["Capitalists"] = Capitalists()
-        else:
-            players["Middle Class"] = MiddleClass()
-            players['Capitalists'] = Capitalists()
-        if config.player_count == 4:
-            players["State"] = PlayerState()
-        else:
-            players["State"] = NPCState()
-        
-        # Setup GameState
-        gamestate = GameState(
-                players,
-                config.player_count,
-                config.game_id.game_id
-            )
-
-        return gamestate
-
-    def setup_agents(self, faction_agents: dict, gamestate: GameState) -> None:
-        """
-        Creates the agent instances according to those defined in the dictionary passed.
-        Agents can be found in the engine, or in the player objects
-        This modifies the engine and players in-place
-        """
-        logger.debug("Setting up agents")
-
-        agent_references = {}
-        for faction, agent_name in faction_agents.items():
-            if faction not in faction_play_order:
-                raise Exception(f"{faction} not recognised")
-            if agent_name not in agent_refs.keys():
-                raise Exception(f"{agent_name} not recognised")
-            faction_instance = gamestate.players[faction]
-            agent_references[faction] = agent_refs[agent_name](faction_instance)
-            faction_instance.agent = agent_references[faction]
-        self.agents = agent_references
-        return
-    
     def engine_startup(self, config) -> GameState:
         """Runs all the engine setup functions"""
-        logger.debug("Executing engine startup")
-        gamestate = self.setup_gamestate(config)
-        self.setup_agents(config.agents, gamestate)
+        # Validity Checks
+        if config.player_count != len(config.agents.keys()):
+            raise Exception("player_count and agents mismatch")
+        gamestate = setup_gamestate(config.player_count, config.agents, config.game_id)
+        self.agents = setup_agents(config.agents, gamestate)
         return gamestate
 
     @staticmethod

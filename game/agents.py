@@ -25,7 +25,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from dataclasses import dataclass
-import assets.messages as m
+import game.assets.messages as m
 
 @dataclass
 class Agent:
@@ -134,8 +134,6 @@ class RandomAgent(Agent):
         """
         logger.debug(f"Call made to {self.name}")
         import random as rand
-        global d_chain
-        from training.postprocessing import DecisionLogEntry, d_chain
         
         # Check dtypes (done here to avoid circular imports)
         if not isinstance(call, m.ContextCall):
@@ -158,34 +156,6 @@ class RandomAgent(Agent):
 
         # Final Output
         response = m.AgentAnswer(answer, None, None)
-        d_chain.append(DecisionLogEntry(call, response))
-
-        # # Save to Log
-        # import os
-        # import orjson
-        # from dataclasses import asdict
-
-        ### TEMP CODE TO FIX JSON KEYS BUG ###
-        # print(DecsionLogEntry(call, response).__dict__)
-        # def check_keys(obj, path="root"):
-        #     if isinstance(obj, dict):
-        #         for k, v in obj.items():
-        #             if not isinstance(k, str):
-        #                 print(f"Non-string key at {path}: {k!r} ({type(k).__name__})")
-        #             check_keys(v, f"{path}[{k!r}]")
-        #     elif isinstance(obj, list):
-        #         for i, v in enumerate(obj):
-        #             check_keys(v, f"{path}[{i}]")
-
-        # check_keys(DecsionLogEntry(call, response).__dict__)
-        # assert False
-        ### TEMP CODE TO FIX JSON KEYS BUG ###
-
-        # path = os.path.join("training", "decisions.jsonl")
-        # with open(path, "ab") as f:   # append in binary mode
-        #     f.write(orjson.dumps(DecsionLogEntry(call, response).__dict__))
-        #     f.write(b"\n")
-
         return response
 
 agent_refs = {

@@ -22,13 +22,14 @@ logger = logging.getLogger(__name__)
 
 from typing import Any
 from dataclasses import dataclass
+from copy import deepcopy
 
 from game.assets.references import industries
 from game.states import GameState, Player
 
 # ---------------------------------------------------
 # Message Classes
-
+@dataclass (init=False)
 class MaskedState:
     """
     Masked representation of GameState.
@@ -44,6 +45,8 @@ class MaskedState:
 
     def __init__(self, gamestate: GameState, player: Player) -> None:
 
+        gamestate = deepcopy(gamestate)
+        player = deepcopy(player)
         self.GameMetaData = {
             "player_count": gamestate.player_count,
             "round": gamestate.round,
@@ -172,7 +175,6 @@ class AgentAnswer:
 
 @dataclass
 class GameSummary:
-
     game_id: str
     winner: str
     scores: dict[str,int]

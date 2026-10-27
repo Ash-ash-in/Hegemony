@@ -66,12 +66,10 @@ class Decision(ABC):
             ) from None
         return decision_cls(gamestate, player, agent)
 
-    @classmethod
-    def _build_call(cls, context: ctx.BaseContext) -> msg.ContextCall:
-        return context.build_call(cls.current_gamestate, cls.current_player)
+    def _build_call(self, gamestate: GameState, player: Player, context: ctx.BaseContext) -> msg.ContextCall:
+        return context.build_call(gamestate, player)
 
-    @classmethod
-    def _call_agent(cls, agent: ag.Agent, ctx_call: msg.ContextCall) -> msg.AgentAnswer:
+    def _call_agent(self, agent: ag.Agent, ctx_call: msg.ContextCall) -> msg.AgentAnswer:
         return agent.call(ctx_call)
 
     @abstractmethod
@@ -149,7 +147,7 @@ class ActionDecision(Decision):
         context = self._get_context(gamestate, player, agent)
         self.original_context = context
         episode.append(context)
-        call = self._build_call(context)
+        call = self._build_call(gamestate, player, context)
 
         # Call Agent
         agent_response = self._call_agent(self.agent, call)
